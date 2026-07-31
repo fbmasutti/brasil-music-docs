@@ -3,6 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 
+// Generic table helpers: the generated Supabase types cannot express a
+// table-name generic, so use a loose client inside these helpers only.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = supabase as any;
+
 type TableName =
   | "profiles"
   | "team_members"
@@ -69,7 +74,7 @@ export function useList<T extends TableName>(table: T, options: ListOptions = {}
     queryKey: [table, eq ?? null, order ?? null],
     enabled,
     queryFn: async () => {
-      let query = supabase.from(table).select("*");
+      let query = db.from(table).select("*");
       if (eq) {
         for (const [key, value] of Object.entries(eq)) {
           query = value === null ? query.is(key, null) : query.eq(key, value);
@@ -95,9 +100,9 @@ export function useInsert<T extends TableName>(table: T, successMessage = "Salvo
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
       if (!userId) throw new Error("Sessão expirada. Entre novamente.");
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from(table)
-        .insert({ ...values, user_id: userId } as unknown as TablesInsert<T>)
+        .insert({ ...values, user_id: userId })
         .select("*")
         .single();
       if (error) throw error;
@@ -115,10 +120,9 @@ export function useUpdate<T extends TableName>(table: T, successMessage = "Atual
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, values }: { id: string; values: TablesUpdate<T> }) => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from(table)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .update(values as any)
+        .update(values)
         .eq("id", id)
         .select("*")
         .single();
@@ -137,7 +141,7 @@ export function useRemove<T extends TableName>(table: T, successMessage = "Remov
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from(table).delete().eq("id", id);
+      const { error } = await db.from(table).delete().eq("id", id);
       if (error) throw error;
       return id;
     },
