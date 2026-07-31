@@ -7,8 +7,8 @@ export function PageHeader({
   actions,
 }: {
   title: string;
-  subtitle?: string;
-  actions?: ReactNode;
+  subtitle?: string | undefined;
+  actions?: ReactNode | undefined;
 }) {
   return (
     <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
@@ -30,9 +30,9 @@ export function StatCard({
 }: {
   label: string;
   value: string;
-  hint?: string;
-  icon?: ReactNode;
-  tone?: "violet" | "cyan" | "amber" | "muted";
+  hint?: string | undefined;
+  icon?: ReactNode | undefined;
+  tone?: "violet" | "cyan" | "amber" | "muted" | undefined;
 }) {
   const tones: Record<string, string> = {
     violet: "text-primary bg-primary/10 border-primary/20",
@@ -64,9 +64,9 @@ export function EmptyState({
   description,
   action,
 }: {
-  icon?: ReactNode;
+  icon?: ReactNode | undefined;
   title: string;
-  description?: string;
+  description?: string | undefined;
   action?: ReactNode;
 }) {
   return (
@@ -90,11 +90,11 @@ export function Section({
   children,
   className,
 }: {
-  title?: string;
-  description?: string;
-  actions?: ReactNode;
+  title?: string | undefined;
+  description?: string | undefined;
+  actions?: ReactNode | undefined;
   children: ReactNode;
-  className?: string;
+  className?: string | undefined;
 }) {
   return (
     <section className={cn("panel p-5", className)}>
@@ -112,6 +112,6 @@ export function Section({
   );
 }
 
-export function FieldGrid({ children, className }: { children: ReactNode; className?: string }) {
+export function FieldGrid({ children, className }: { children: ReactNode; className?: string | undefined }) {
   return <div className={cn("grid gap-4 sm:grid-cols-2", className)}>{children}</div>;
 }

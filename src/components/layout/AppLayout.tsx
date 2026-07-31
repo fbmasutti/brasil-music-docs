@@ -129,7 +129,7 @@ export function AppLayout() {
   );
 }
 
-function Brand({ compact }: { compact?: boolean }) {
+function Brand({ compact }: { compact?: boolean | undefined }) {
   return (
     <div className={cn("flex items-center gap-2.5", compact ? "" : "px-5 pb-6")}>
       <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground glow-violet">
@@ -143,7 +143,7 @@ function Brand({ compact }: { compact?: boolean }) {
   );
 }
 
-function UserBox({ profileName, onSignOut }: { profileName?: string; onSignOut: () => void }) {
+function UserBox({ profileName, onSignOut }: { profileName?: string | undefined; onSignOut: () => void }) {
   return (
     <div className="mt-4 border-t border-sidebar-border px-3 pt-4">
       <div className="flex items-center gap-2 rounded-lg px-2 py-1.5">
