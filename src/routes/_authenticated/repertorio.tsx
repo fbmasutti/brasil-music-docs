@@ -163,7 +163,7 @@ function RepertoirePage() {
                         {
                           title: song.title,
                           genre: song.genre || null,
-                          duration_seconds: parseDuration(song.duration_input),
+                          duration_seconds: parseDuration(song.duration_input) ?? 0,
                           isrc: song.isrc || null,
                           iswc: song.iswc || null,
                           publisher: song.publisher || null,

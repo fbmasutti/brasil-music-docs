@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated/documentos'
 import { Route as AuthenticatedElencoRouteImport } from './routes/_authenticated/elenco'
+import { Route as AuthenticatedRepertorioRouteImport } from './routes/_authenticated/repertorio'
 import { Route as AuthenticatedEventosIndexRouteImport } from './routes/_authenticated/eventos.index'
 import { Route as AuthenticatedEventosEventIdRouteImport } from './routes/_authenticated/eventos.$eventId'
 
@@ -47,6 +48,11 @@ const AuthenticatedElencoRoute = AuthenticatedElencoRouteImport.update({
   path: '/elenco',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRepertorioRoute = AuthenticatedRepertorioRouteImport.update({
+  id: '/repertorio',
+  path: '/repertorio',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedEventosIndexRoute =
   AuthenticatedEventosIndexRouteImport.update({
     id: '/eventos/',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
   '/elenco': typeof AuthenticatedElencoRoute
+  '/repertorio': typeof AuthenticatedRepertorioRoute
   '/eventos/$eventId': typeof AuthenticatedEventosEventIdRoute
   '/eventos/': typeof AuthenticatedEventosIndexRoute
 }
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
   '/elenco': typeof AuthenticatedElencoRoute
+  '/repertorio': typeof AuthenticatedRepertorioRoute
   '/eventos/$eventId': typeof AuthenticatedEventosEventIdRoute
   '/eventos': typeof AuthenticatedEventosIndexRoute
 }
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/documentos': typeof AuthenticatedDocumentosRoute
   '/_authenticated/elenco': typeof AuthenticatedElencoRoute
+  '/_authenticated/repertorio': typeof AuthenticatedRepertorioRoute
   '/_authenticated/eventos/$eventId': typeof AuthenticatedEventosEventIdRoute
   '/_authenticated/eventos/': typeof AuthenticatedEventosIndexRoute
 }
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/documentos'
     | '/elenco'
+    | '/repertorio'
     | '/eventos/$eventId'
     | '/eventos/'
   fileRoutesByTo: FileRoutesByTo
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/documentos'
     | '/elenco'
+    | '/repertorio'
     | '/eventos/$eventId'
     | '/eventos'
   id:
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/documentos'
     | '/_authenticated/elenco'
+    | '/_authenticated/repertorio'
     | '/_authenticated/eventos/$eventId'
     | '/_authenticated/eventos/'
   fileRoutesById: FileRoutesById
@@ -170,6 +182,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedElencoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/repertorio': {
+      id: '/_authenticated/repertorio'
+      path: '/repertorio'
+      fullPath: '/repertorio'
+      preLoaderRoute: typeof AuthenticatedRepertorioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/eventos/': {
       id: '/_authenticated/eventos/'
       path: '/eventos'
@@ -191,6 +210,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRoute
   AuthenticatedElencoRoute: typeof AuthenticatedElencoRoute
+  AuthenticatedRepertorioRoute: typeof AuthenticatedRepertorioRoute
   AuthenticatedEventosEventIdRoute: typeof AuthenticatedEventosEventIdRoute
   AuthenticatedEventosIndexRoute: typeof AuthenticatedEventosIndexRoute
 }
@@ -199,6 +219,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDocumentosRoute: AuthenticatedDocumentosRoute,
   AuthenticatedElencoRoute: AuthenticatedElencoRoute,
+  AuthenticatedRepertorioRoute: AuthenticatedRepertorioRoute,
   AuthenticatedEventosEventIdRoute: AuthenticatedEventosEventIdRoute,
   AuthenticatedEventosIndexRoute: AuthenticatedEventosIndexRoute,
 }
