@@ -124,6 +124,7 @@
 }
 
 @utility panel {
+  border-radius: var(--radius-xl);
   background: linear-gradient(
     160deg,
     color-mix(in oklab, var(--card) 92%, var(--primary) 8%),

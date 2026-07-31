@@ -1,0 +1,797 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.15"
+  }
+  public: {
+    Tables: {
+      clients: {
+        Row: {
+          address: string | null
+          city: string | null
+          contact_name: string | null
+          created_at: string
+          doc: string | null
+          email: string | null
+          id: string
+          legal_name: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          state: string | null
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          contact_name?: string | null
+          created_at?: string
+          doc?: string | null
+          email?: string | null
+          id?: string
+          legal_name?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          state?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          contact_name?: string | null
+          created_at?: string
+          doc?: string | null
+          email?: string | null
+          id?: string
+          legal_name?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          state?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      event_checklists: {
+        Row: {
+          created_at: string
+          done: boolean
+          due_date: string | null
+          event_id: string | null
+          id: string
+          label: string
+          phase: string
+          position: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          done?: boolean
+          due_date?: string | null
+          event_id?: string | null
+          id?: string
+          label: string
+          phase?: string
+          position?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          done?: boolean
+          due_date?: string | null
+          event_id?: string | null
+          id?: string
+          label?: string
+          phase?: string
+          position?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_checklists_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          balance_due_date: string | null
+          city: string | null
+          client_id: string | null
+          created_at: string
+          deposit_due_date: string | null
+          ecad_sent: boolean
+          event_date: string | null
+          event_type: string
+          fee_deposit: number
+          fee_total: number
+          id: string
+          notes: string | null
+          soundcheck_time: string | null
+          start_time: string | null
+          state: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+          venue: string | null
+        }
+        Insert: {
+          balance_due_date?: string | null
+          city?: string | null
+          client_id?: string | null
+          created_at?: string
+          deposit_due_date?: string | null
+          ecad_sent?: boolean
+          event_date?: string | null
+          event_type?: string
+          fee_deposit?: number
+          fee_total?: number
+          id?: string
+          notes?: string | null
+          soundcheck_time?: string | null
+          start_time?: string | null
+          state?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+          venue?: string | null
+        }
+        Update: {
+          balance_due_date?: string | null
+          city?: string | null
+          client_id?: string | null
+          created_at?: string
+          deposit_due_date?: string | null
+          ecad_sent?: boolean
+          event_date?: string | null
+          event_type?: string
+          fee_deposit?: number
+          fee_total?: number
+          id?: string
+          notes?: string | null
+          soundcheck_time?: string | null
+          start_time?: string | null
+          state?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          venue?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      generated_documents: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          doc_type: string
+          event_id: string | null
+          file_url: string | null
+          id: string
+          payload: Json
+          signed_at: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          doc_type: string
+          event_id?: string | null
+          file_url?: string | null
+          id?: string
+          payload?: Json
+          signed_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          doc_type?: string
+          event_id?: string | null
+          file_url?: string | null
+          id?: string
+          payload?: Json
+          signed_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_documents_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_documents_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolio_clippings: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          event_name: string | null
+          happened_at: string | null
+          id: string
+          link_url: string | null
+          media_url: string | null
+          title: string
+          user_id: string
+          year: number | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          event_name?: string | null
+          happened_at?: string | null
+          id?: string
+          link_url?: string | null
+          media_url?: string | null
+          title: string
+          user_id: string
+          year?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          event_name?: string | null
+          happened_at?: string | null
+          id?: string
+          link_url?: string | null
+          media_url?: string | null
+          title?: string
+          user_id?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          bank_account: string | null
+          bank_agency: string | null
+          bank_name: string | null
+          cae_ipi: string | null
+          cep: string | null
+          city: string | null
+          cnae: string | null
+          cnd_expires_at: string | null
+          cpf_cnpj: string | null
+          created_at: string
+          doc_type: string | null
+          ecad_association: string | null
+          ecad_client_number: string | null
+          email: string | null
+          entity_type: string
+          id: string
+          inscricao_estadual: string | null
+          inscricao_municipal: string | null
+          legal_name: string | null
+          logo_url: string | null
+          onboarded: boolean
+          phone: string | null
+          pix_key: string | null
+          stage_name: string
+          state: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          bank_account?: string | null
+          bank_agency?: string | null
+          bank_name?: string | null
+          cae_ipi?: string | null
+          cep?: string | null
+          city?: string | null
+          cnae?: string | null
+          cnd_expires_at?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          doc_type?: string | null
+          ecad_association?: string | null
+          ecad_client_number?: string | null
+          email?: string | null
+          entity_type?: string
+          id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
+          legal_name?: string | null
+          logo_url?: string | null
+          onboarded?: boolean
+          phone?: string | null
+          pix_key?: string | null
+          stage_name?: string
+          state?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          bank_account?: string | null
+          bank_agency?: string | null
+          bank_name?: string | null
+          cae_ipi?: string | null
+          cep?: string | null
+          city?: string | null
+          cnae?: string | null
+          cnd_expires_at?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          doc_type?: string | null
+          ecad_association?: string | null
+          ecad_client_number?: string | null
+          email?: string | null
+          entity_type?: string
+          id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
+          legal_name?: string | null
+          logo_url?: string | null
+          onboarded?: boolean
+          phone?: string | null
+          pix_key?: string | null
+          stage_name?: string
+          state?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      setlist_songs: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          position: number
+          setlist_id: string
+          song_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          position?: number
+          setlist_id: string
+          song_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          position?: number
+          setlist_id?: string
+          song_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "setlist_songs_setlist_id_fkey"
+            columns: ["setlist_id"]
+            isOneToOne: false
+            referencedRelation: "setlists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "setlist_songs_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      setlists: {
+        Row: {
+          created_at: string
+          event_id: string | null
+          id: string
+          name: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "setlists_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      song_writers: {
+        Row: {
+          association: string | null
+          cae_ipi: string | null
+          created_at: string
+          id: string
+          name: string
+          role: string | null
+          share_percent: number
+          song_id: string
+          user_id: string
+        }
+        Insert: {
+          association?: string | null
+          cae_ipi?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          role?: string | null
+          share_percent?: number
+          song_id: string
+          user_id: string
+        }
+        Update: {
+          association?: string | null
+          cae_ipi?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          role?: string | null
+          share_percent?: number
+          song_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "song_writers_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      songs: {
+        Row: {
+          created_at: string
+          duration_seconds: number
+          genre: string | null
+          id: string
+          isrc: string | null
+          iswc: string | null
+          notes: string | null
+          performers: string | null
+          producer: string | null
+          publisher: string | null
+          studio: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number
+          genre?: string | null
+          id?: string
+          isrc?: string | null
+          iswc?: string | null
+          notes?: string | null
+          performers?: string | null
+          producer?: string | null
+          publisher?: string | null
+          studio?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number
+          genre?: string | null
+          id?: string
+          isrc?: string | null
+          iswc?: string | null
+          notes?: string | null
+          performers?: string | null
+          producer?: string | null
+          publisher?: string | null
+          studio?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          cpf: string | null
+          created_at: string
+          email: string | null
+          food_restrictions: string | null
+          id: string
+          instrument: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          pis_pasep: string | null
+          pix_key: string | null
+          rg: string | null
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          cpf?: string | null
+          created_at?: string
+          email?: string | null
+          food_restrictions?: string | null
+          id?: string
+          instrument?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          pis_pasep?: string | null
+          pix_key?: string | null
+          rg?: string | null
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          cpf?: string | null
+          created_at?: string
+          email?: string | null
+          food_restrictions?: string | null
+          id?: string
+          instrument?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          pis_pasep?: string | null
+          pix_key?: string | null
+          rg?: string | null
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      technical_riders: {
+        Row: {
+          backline: string | null
+          channel_list: Json
+          created_at: string
+          event_id: string | null
+          hospitality: string | null
+          id: string
+          lighting_requirements: string | null
+          name: string
+          rooming_list: string | null
+          sound_requirements: string | null
+          stage_plot: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          backline?: string | null
+          channel_list?: Json
+          created_at?: string
+          event_id?: string | null
+          hospitality?: string | null
+          id?: string
+          lighting_requirements?: string | null
+          name?: string
+          rooming_list?: string | null
+          sound_requirements?: string | null
+          stage_plot?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          backline?: string | null
+          channel_list?: Json
+          created_at?: string
+          event_id?: string | null
+          hospitality?: string | null
+          id?: string
+          lighting_requirements?: string | null
+          name?: string
+          rooming_list?: string | null
+          sound_requirements?: string | null
+          stage_plot?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technical_riders_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const

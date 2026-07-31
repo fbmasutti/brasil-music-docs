@@ -10,33 +10,168 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated/documentos'
+import { Route as AuthenticatedElencoRouteImport } from './routes/_authenticated/elenco'
+import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
+import { Route as AuthenticatedPortfolioRouteImport } from './routes/_authenticated/portfolio'
+import { Route as AuthenticatedRepertorioRouteImport } from './routes/_authenticated/repertorio'
+import { Route as AuthenticatedRidersRouteImport } from './routes/_authenticated/riders'
+import { Route as AuthenticatedEventosIndexRouteImport } from './routes/_authenticated/eventos.index'
+import { Route as AuthenticatedEventosEventIdRouteImport } from './routes/_authenticated/eventos.$eventId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDocumentosRoute = AuthenticatedDocumentosRouteImport.update({
+  id: '/documentos',
+  path: '/documentos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedElencoRoute = AuthenticatedElencoRouteImport.update({
+  id: '/elenco',
+  path: '/elenco',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPortfolioRoute = AuthenticatedPortfolioRouteImport.update({
+  id: '/portfolio',
+  path: '/portfolio',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRepertorioRoute = AuthenticatedRepertorioRouteImport.update({
+  id: '/repertorio',
+  path: '/repertorio',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRidersRoute = AuthenticatedRidersRouteImport.update({
+  id: '/riders',
+  path: '/riders',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEventosIndexRoute =
+  AuthenticatedEventosIndexRouteImport.update({
+    id: '/eventos/',
+    path: '/eventos/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedEventosEventIdRoute =
+  AuthenticatedEventosEventIdRouteImport.update({
+    id: '/eventos/$eventId',
+    path: '/eventos/$eventId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/documentos': typeof AuthenticatedDocumentosRoute
+  '/elenco': typeof AuthenticatedElencoRoute
+  '/perfil': typeof AuthenticatedPerfilRoute
+  '/portfolio': typeof AuthenticatedPortfolioRoute
+  '/repertorio': typeof AuthenticatedRepertorioRoute
+  '/riders': typeof AuthenticatedRidersRoute
+  '/eventos/$eventId': typeof AuthenticatedEventosEventIdRoute
+  '/eventos/': typeof AuthenticatedEventosIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/documentos': typeof AuthenticatedDocumentosRoute
+  '/elenco': typeof AuthenticatedElencoRoute
+  '/perfil': typeof AuthenticatedPerfilRoute
+  '/portfolio': typeof AuthenticatedPortfolioRoute
+  '/repertorio': typeof AuthenticatedRepertorioRoute
+  '/riders': typeof AuthenticatedRidersRoute
+  '/eventos/$eventId': typeof AuthenticatedEventosEventIdRoute
+  '/eventos': typeof AuthenticatedEventosIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/documentos': typeof AuthenticatedDocumentosRoute
+  '/_authenticated/elenco': typeof AuthenticatedElencoRoute
+  '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
+  '/_authenticated/portfolio': typeof AuthenticatedPortfolioRoute
+  '/_authenticated/repertorio': typeof AuthenticatedRepertorioRoute
+  '/_authenticated/riders': typeof AuthenticatedRidersRoute
+  '/_authenticated/eventos/$eventId': typeof AuthenticatedEventosEventIdRoute
+  '/_authenticated/eventos/': typeof AuthenticatedEventosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/documentos'
+    | '/elenco'
+    | '/perfil'
+    | '/portfolio'
+    | '/repertorio'
+    | '/riders'
+    | '/eventos/$eventId'
+    | '/eventos/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/documentos'
+    | '/elenco'
+    | '/perfil'
+    | '/portfolio'
+    | '/repertorio'
+    | '/riders'
+    | '/eventos/$eventId'
+    | '/eventos'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/documentos'
+    | '/_authenticated/elenco'
+    | '/_authenticated/perfil'
+    | '/_authenticated/portfolio'
+    | '/_authenticated/repertorio'
+    | '/_authenticated/riders'
+    | '/_authenticated/eventos/$eventId'
+    | '/_authenticated/eventos/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +183,117 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/documentos': {
+      id: '/_authenticated/documentos'
+      path: '/documentos'
+      fullPath: '/documentos'
+      preLoaderRoute: typeof AuthenticatedDocumentosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/elenco': {
+      id: '/_authenticated/elenco'
+      path: '/elenco'
+      fullPath: '/elenco'
+      preLoaderRoute: typeof AuthenticatedElencoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/perfil': {
+      id: '/_authenticated/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof AuthenticatedPerfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/portfolio': {
+      id: '/_authenticated/portfolio'
+      path: '/portfolio'
+      fullPath: '/portfolio'
+      preLoaderRoute: typeof AuthenticatedPortfolioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/repertorio': {
+      id: '/_authenticated/repertorio'
+      path: '/repertorio'
+      fullPath: '/repertorio'
+      preLoaderRoute: typeof AuthenticatedRepertorioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/riders': {
+      id: '/_authenticated/riders'
+      path: '/riders'
+      fullPath: '/riders'
+      preLoaderRoute: typeof AuthenticatedRidersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/eventos/': {
+      id: '/_authenticated/eventos/'
+      path: '/eventos'
+      fullPath: '/eventos/'
+      preLoaderRoute: typeof AuthenticatedEventosIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/eventos/$eventId': {
+      id: '/_authenticated/eventos/$eventId'
+      path: '/eventos/$eventId'
+      fullPath: '/eventos/$eventId'
+      preLoaderRoute: typeof AuthenticatedEventosEventIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRoute
+  AuthenticatedElencoRoute: typeof AuthenticatedElencoRoute
+  AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
+  AuthenticatedPortfolioRoute: typeof AuthenticatedPortfolioRoute
+  AuthenticatedRepertorioRoute: typeof AuthenticatedRepertorioRoute
+  AuthenticatedRidersRoute: typeof AuthenticatedRidersRoute
+  AuthenticatedEventosEventIdRoute: typeof AuthenticatedEventosEventIdRoute
+  AuthenticatedEventosIndexRoute: typeof AuthenticatedEventosIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDocumentosRoute: AuthenticatedDocumentosRoute,
+  AuthenticatedElencoRoute: AuthenticatedElencoRoute,
+  AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
+  AuthenticatedPortfolioRoute: AuthenticatedPortfolioRoute,
+  AuthenticatedRepertorioRoute: AuthenticatedRepertorioRoute,
+  AuthenticatedRidersRoute: AuthenticatedRidersRoute,
+  AuthenticatedEventosEventIdRoute: AuthenticatedEventosEventIdRoute,
+  AuthenticatedEventosIndexRoute: AuthenticatedEventosIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
