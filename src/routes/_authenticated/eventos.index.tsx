@@ -23,7 +23,7 @@ import { PageHeader, Section, EmptyState, FieldGrid, TextField } from "@/compone
 import { useList, useInsert, useRemove } from "@/lib/queries";
 import { dateBR, money, EVENT_STATUS } from "@/lib/format";
 
-export const Route = createFileRoute("/_authenticated/eventos")({
+export const Route = createFileRoute("/_authenticated/eventos/")({
   head: () => ({
     meta: [
       { title: "Agenda de shows e eventos — StageDocs" },

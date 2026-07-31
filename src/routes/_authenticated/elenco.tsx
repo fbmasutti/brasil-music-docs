@@ -117,7 +117,7 @@ function TeamTab() {
               <TextField label="Telefone" value={form.phone} onChange={set("phone")} />
               <TextField label="E-mail" value={form.email} onChange={set("email")} />
               <TextField label="Chave PIX" value={form.pix_key} onChange={set("pix_key")} />
-              <Text
+              <TextField
                 label="Restrições alimentares"
                 value={form.food_restrictions}
                 onChange={set("food_restrictions")}
