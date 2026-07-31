@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 export function PageHeader({
   title,
@@ -114,4 +117,56 @@ export function Section({
 
 export function FieldGrid({ children, className }: { children: ReactNode; className?: string | undefined }) {
   return <div className={cn("grid gap-4 sm:grid-cols-2", className)}>{children}</div>;
+}
+
+export function TextField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string | undefined;
+  type?: string | undefined;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <Input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder ?? ""}
+      />
+    </div>
+  );
+}
+
+export function TextAreaField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  rows = 4,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string | undefined;
+  rows?: number | undefined;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <Textarea
+        rows={rows}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder ?? ""}
+      />
+    </div>
+  );
 }

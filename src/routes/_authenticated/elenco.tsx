@@ -14,7 +14,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { PageHeader, Section, EmptyState, FieldGrid } from "@/components/ui-kit";
+import { PageHeader, Section, EmptyState, FieldGrid, TextField } from "@/components/ui-kit";
 import { useList, useInsert, useRemove } from "@/lib/queries";
 import { maskCpfCnpj, maskPis } from "@/lib/format";
 
@@ -108,15 +108,15 @@ function TeamTab() {
               <DialogTitle>Novo integrante</DialogTitle>
             </DialogHeader>
             <FieldGrid>
-              <Text label="Nome completo" value={form.name} onChange={set("name")} />
-              <Text label="Função" value={form.role} onChange={set("role")} placeholder="Baixista, técnico de som..." />
-              <Text label="Instrumento" value={form.instrument} onChange={set("instrument")} />
-              <Text label="CPF" value={form.cpf} onChange={(v) => set("cpf")(maskCpfCnpj(v))} />
-              <Text label="RG" value={form.rg} onChange={set("rg")} />
-              <Text label="PIS/PASEP" value={form.pis_pasep} onChange={(v) => set("pis_pasep")(maskPis(v))} />
-              <Text label="Telefone" value={form.phone} onChange={set("phone")} />
-              <Text label="E-mail" value={form.email} onChange={set("email")} />
-              <Text label="Chave PIX" value={form.pix_key} onChange={set("pix_key")} />
+              <TextField label="Nome completo" value={form.name} onChange={set("name")} />
+              <TextField label="Função" value={form.role} onChange={set("role")} placeholder="Baixista, técnico de som..." />
+              <TextField label="Instrumento" value={form.instrument} onChange={set("instrument")} />
+              <TextField label="CPF" value={form.cpf} onChange={(v) => set("cpf")(maskCpfCnpj(v))} />
+              <TextField label="RG" value={form.rg} onChange={set("rg")} />
+              <TextField label="PIS/PASEP" value={form.pis_pasep} onChange={(v) => set("pis_pasep")(maskPis(v))} />
+              <TextField label="Telefone" value={form.phone} onChange={set("phone")} />
+              <TextField label="E-mail" value={form.email} onChange={set("email")} />
+              <TextField label="Chave PIX" value={form.pix_key} onChange={set("pix_key")} />
               <Text
                 label="Restrições alimentares"
                 value={form.food_restrictions}
@@ -201,15 +201,15 @@ function ClientsTab() {
               <DialogTitle>Novo contratante</DialogTitle>
             </DialogHeader>
             <FieldGrid>
-              <Text label="Nome / Fantasia" value={form.name} onChange={set("name")} />
-              <Text label="Razão social" value={form.legal_name} onChange={set("legal_name")} />
-              <Text label="CPF/CNPJ" value={form.doc} onChange={(v) => set("doc")(maskCpfCnpj(v))} />
-              <Text label="Responsável" value={form.contact_name} onChange={set("contact_name")} />
-              <Text label="Telefone" value={form.phone} onChange={set("phone")} />
-              <Text label="E-mail" value={form.email} onChange={set("email")} />
-              <Text label="Endereço" value={form.address} onChange={set("address")} />
-              <Text label="Cidade" value={form.city} onChange={set("city")} />
-              <Text label="UF" value={form.state} onChange={set("state")} />
+              <TextField label="Nome / Fantasia" value={form.name} onChange={set("name")} />
+              <TextField label="Razão social" value={form.legal_name} onChange={set("legal_name")} />
+              <TextField label="CPF/CNPJ" value={form.doc} onChange={(v) => set("doc")(maskCpfCnpj(v))} />
+              <TextField label="Responsável" value={form.contact_name} onChange={set("contact_name")} />
+              <TextField label="Telefone" value={form.phone} onChange={set("phone")} />
+              <TextField label="E-mail" value={form.email} onChange={set("email")} />
+              <TextField label="Endereço" value={form.address} onChange={set("address")} />
+              <TextField label="Cidade" value={form.city} onChange={set("city")} />
+              <TextField label="UF" value={form.state} onChange={set("state")} />
             </FieldGrid>
             <DialogFooter>
               <Button
@@ -256,24 +256,5 @@ function ClientsTab() {
         </ul>
       )}
     </Section>
-  );
-}
-
-export function Text({
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string | undefined;
-}) {
-  return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder ?? ""} />
-    </div>
   );
 }
