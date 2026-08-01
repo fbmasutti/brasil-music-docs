@@ -12,6 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHeader, Section, FieldGrid, TextField, TextAreaField } from "@/components/ui-kit";
+import { QuickAddClientDialog } from "@/components/QuickAddClientDialog";
+
 import { useList, useInsert, useRemove, useProfile } from "@/lib/queries";
 import { DOC_TEMPLATES, getTemplate } from "@/lib/documents";
 import { downloadPdf, pdfPreviewUrl, type PdfDoc } from "@/lib/pdf";
