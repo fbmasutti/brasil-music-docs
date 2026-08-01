@@ -71,8 +71,19 @@ export function buildPdf(spec: PdfDoc): jsPDF {
   doc.line(M, y, W - M, y);
   y += 8;
 
-  for (const block of spec.blocks) {
+  // Motor flexível: descarta blocos sem conteúdo real para não imprimir vazios/traços.
+  const blocks = spec.blocks.filter((b) => {
+    if (b.type === "kv") return b.rows.some(([, v]) => Boolean(v && String(v).trim()));
+    if (b.type === "table") return b.rows.length > 0;
+    if (b.type === "para" || b.type === "heading" || b.type === "note") return Boolean(b.text?.trim());
+    if (b.type === "clause") return Boolean(b.text?.trim() || b.title?.trim());
+    if (b.type === "signatures") return b.names.some((n) => Boolean(n && n.trim()));
+    return true;
+  });
+
+  for (const block of blocks) {
     switch (block.type) {
+
       case "heading": {
         ensure(14);
         doc.setFont("helvetica", "bold");
@@ -115,19 +126,21 @@ export function buildPdf(spec: PdfDoc): jsPDF {
       case "kv": {
         doc.setFontSize(9.5);
         for (const [k, v] of block.rows) {
+          if (!v || !String(v).trim()) continue;
           ensure(7);
           doc.setFont("helvetica", "bold");
           doc.setTextColor(80, 80, 90);
           doc.text(`${k}:`, M, y);
           doc.setFont("helvetica", "normal");
           doc.setTextColor(20, 20, 22);
-          const lines = doc.splitTextToSize(v || "—", CONTENT - 45);
+          const lines = doc.splitTextToSize(String(v).trim(), CONTENT - 45);
           doc.text(lines, M + 45, y);
           y += Math.max(5.5, lines.length * 5);
         }
         y += 3;
         break;
       }
+
       case "table": {
         const cols = block.head.length;
         const widths =

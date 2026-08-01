@@ -12,6 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHeader, Section, FieldGrid, TextField, TextAreaField } from "@/components/ui-kit";
+import { QuickAddClientDialog } from "@/components/QuickAddClientDialog";
+
 import { useList, useInsert, useRemove, useProfile } from "@/lib/queries";
 import { DOC_TEMPLATES, getTemplate } from "@/lib/documents";
 import { downloadPdf, pdfPreviewUrl, type PdfDoc } from "@/lib/pdf";
@@ -124,8 +126,12 @@ function DocumentsPage() {
               <FieldGrid className="mt-4">
                 {template.useClient ? (
                   <div className="space-y-2">
-                    <Label>Contratante</Label>
+                    <div className="flex items-center justify-between gap-2">
+                      <Label>Contratante</Label>
+                      <QuickAddClientDialog onCreated={setClientId} />
+                    </div>
                     <Select value={clientId} onValueChange={setClientId}>
+
                       <SelectTrigger>
                         <SelectValue placeholder="Selecionar contratante" />
                       </SelectTrigger>

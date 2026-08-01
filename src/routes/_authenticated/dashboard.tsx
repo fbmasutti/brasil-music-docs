@@ -86,7 +86,39 @@ function Dashboard() {
         }
       />
 
+      <div className="mb-6 grid gap-4 md:grid-cols-2">
+        <Link
+          to="/documentos"
+          className="panel group flex items-start gap-4 border-primary/30 bg-primary/5 p-5 transition hover:border-primary/60"
+        >
+          <span className="flex size-11 items-center justify-center rounded-xl border border-primary/30 bg-primary/15 text-primary">
+            <FileText className="size-5" />
+          </span>
+          <span>
+            <span className="block text-sm font-semibold">Gerador de Contrato de Show</span>
+            <span className="mt-1 block text-xs text-muted-foreground">
+              Contrato completo com cachê, W.O., ECAD e assinatura — PDF instantâneo.
+            </span>
+          </span>
+        </Link>
+        <Link
+          to="/repertorio"
+          className="panel group flex items-start gap-4 border-accent/30 bg-accent/5 p-5 transition hover:border-accent/60"
+        >
+          <span className="flex size-11 items-center justify-center rounded-xl border border-accent/30 bg-accent/15 text-accent">
+            <Music4 className="size-5" />
+          </span>
+          <span>
+            <span className="block text-sm font-semibold">Gerador de Roteiro ECAD</span>
+            <span className="mt-1 block text-xs text-muted-foreground">
+              Relatório de execução pública com autores e percentuais — PDF e CSV.
+            </span>
+          </span>
+        </Link>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
         <StatCard
           label="Shows confirmados"
           value={String(confirmed.length)}
