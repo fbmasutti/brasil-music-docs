@@ -4,7 +4,7 @@ import { Sliders, Plus, Download, Trash2, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader, Section, EmptyState, FieldGrid, TextField, TextAreaField } from "@/components/ui-kit";
 import { useList, useInsert, useRemove, useProfile } from "@/lib/queries";
-import { downloadPdf } from "@/lib/pdf";
+import { downloadPdf, type PdfBlock } from "@/lib/pdf";
 import { StagePlot, StageItemLabels, parseStagePlot, type StageItem } from "@/components/StagePlot";
 import { RIDER_PRESETS, presetToStageItems } from "@/lib/rider-presets";
 
@@ -85,7 +85,7 @@ function RidersPage() {
                   widths: [1, 4],
                   rows: channels.map((line, i) => [String(i + 1), String(line)]),
                 },
-              ] as const)
+              ] as PdfBlock[])
             : []),
           ...(plot.length
             ? ([
@@ -102,20 +102,20 @@ function RidersPage() {
                       `${["fundo", "meio", "frente"][i.row] ?? `linha ${i.row + 1}`} · coluna ${i.col + 1}`,
                     ]),
                 },
-              ] as const)
+              ] as PdfBlock[])
             : []),
           ...(rider.sound_requirements
-            ? ([{ type: "heading", text: "Sonorização (P.A.)" }, { type: "para", text: rider.sound_requirements }] as const)
+            ? ([{ type: "heading", text: "Sonorização (P.A.)" }, { type: "para", text: rider.sound_requirements }] as PdfBlock[])
             : []),
           ...(rider.lighting_requirements
-            ? ([{ type: "heading", text: "Iluminação" }, { type: "para", text: rider.lighting_requirements }] as const)
+            ? ([{ type: "heading", text: "Iluminação" }, { type: "para", text: rider.lighting_requirements }] as PdfBlock[])
             : []),
-          ...(rider.backline ? ([{ type: "heading", text: "Backline" }, { type: "para", text: rider.backline }] as const) : []),
+          ...(rider.backline ? ([{ type: "heading", text: "Backline" }, { type: "para", text: rider.backline }] as PdfBlock[]) : []),
           ...(rider.hospitality
-            ? ([{ type: "heading", text: "Hospitality / Camarim" }, { type: "para", text: rider.hospitality }] as const)
+            ? ([{ type: "heading", text: "Hospitality / Camarim" }, { type: "para", text: rider.hospitality }] as PdfBlock[])
             : []),
           ...(rider.rooming_list
-            ? ([{ type: "heading", text: "Rooming list / Transporte" }, { type: "para", text: rider.rooming_list }] as const)
+            ? ([{ type: "heading", text: "Rooming list / Transporte" }, { type: "para", text: rider.rooming_list }] as PdfBlock[])
             : []),
           {
             type: "note",
