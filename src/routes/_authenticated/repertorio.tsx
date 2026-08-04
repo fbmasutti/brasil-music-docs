@@ -33,7 +33,7 @@ export const Route = createFileRoute("/_authenticated/repertorio")({
         content:
           "Cadastre obras com ISRC, ISWC e divisão de autoria e gere relatórios de execução pública para o ECAD.",
       },
-      { property: "og:title", content: "Repertório e ECAD — StageDocs" },
+      { property: "og:title", content: "Repertório e ECAD — StageKit" },
       { property: "og:description", content: "Obras, autores e relatórios de execução pública organizados." },
     ],
   }),
@@ -78,9 +78,9 @@ function RepertoirePage() {
     downloadPdf(
       {
         title: "Relatório de execução pública (ECAD)",
-        brand: profile?.stage_name ?? "StageDocs",
+        brand: profile?.stage_name ?? "StageKit",
         subtitle: `Associação: ${profile?.ecad_association ?? "não informada"} · CAE/IPI: ${profile?.cae_ipi ?? "—"}`,
-        footer: `${profile?.stage_name ?? "StageDocs"} · relatório de execução pública`,
+        footer: `${profile?.stage_name ?? "StageKit"} · relatório de execução pública`,
         blocks: [
           {
             type: "kv",

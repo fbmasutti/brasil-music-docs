@@ -26,12 +26,12 @@ import { dateBR, money, EVENT_STATUS } from "@/lib/format";
 export const Route = createFileRoute("/_authenticated/eventos/")({
   head: () => ({
     meta: [
-      { title: "Agenda de shows e eventos — StageDocs" },
+      { title: "Agenda de shows e eventos — StageKit" },
       {
         name: "description",
         content: "Controle de shows com cachê, sinal, vencimentos, status de negociação e checklist de produção.",
       },
-      { property: "og:title", content: "Agenda de shows e eventos — StageDocs" },
+      { property: "og:title", content: "Agenda de shows e eventos — StageKit" },
       { property: "og:description", content: "Cachês, sinais e checklists de cada apresentação." },
     ],
   }),

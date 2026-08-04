@@ -53,7 +53,7 @@ export function buildPdf(spec: PdfDoc): jsPDF {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
-  doc.text((spec.brand || "StageDocs").toUpperCase(), headerX, 13);
+  doc.text((spec.brand || "StageKit").toUpperCase(), headerX, 13);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(190, 180, 250);
@@ -226,7 +226,7 @@ export function buildPdf(spec: PdfDoc): jsPDF {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
     doc.setTextColor(140, 140, 150);
-    doc.text(spec.footer || "Gerado com StageDocs", M, H - 10);
+    doc.text(spec.footer || "Gerado com StageKit", M, H - 10);
     doc.text(`${p}/${pages}`, W - M, H - 10, { align: "right" });
   }
 

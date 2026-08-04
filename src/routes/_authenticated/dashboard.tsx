@@ -20,12 +20,12 @@ import { dateBR, money, EVENT_STATUS } from "@/lib/format";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Painel executivo — StageDocs" },
+      { title: "Painel executivo — StageKit" },
       {
         name: "description",
         content: "Visão geral de shows confirmados, cachês a receber, documentos gerados e pendências de ECAD.",
       },
-      { property: "og:title", content: "Painel executivo — StageDocs" },
+      { property: "og:title", content: "Painel executivo — StageKit" },
       { property: "og:description", content: "Acompanhe cachês, documentos e pendências da sua agenda." },
     ],
   }),
@@ -54,7 +54,7 @@ function Dashboard() {
 
   const alerts: { text: string; to: string }[] = [];
   if (!profile?.cpf_cnpj)
-    alerts.push({ text: "Cadastre seu CPF/CNPJ no Cofre da Entidade para gerar contratos válidos.", to: "/perfil" });
+    alerts.push({ text: "Cadastre seu CPF/CNPJ no Dados do Artista para gerar contratos válidos.", to: "/perfil" });
   if (!profile?.ecad_association)
     alerts.push({ text: "Informe sua associação ECAD e CAE/IPI para relatórios de execução pública.", to: "/perfil" });
   if (profile?.cnd_expires_at && profile.cnd_expires_at < today)
@@ -86,36 +86,30 @@ function Dashboard() {
         }
       />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2">
-        <Link
-          to="/documentos"
-          className="panel group flex items-start gap-4 border-primary/30 bg-primary/5 p-5 transition hover:border-primary/60"
-        >
-          <span className="flex size-11 items-center justify-center rounded-xl border border-primary/30 bg-primary/15 text-primary">
-            <FileText className="size-5" />
-          </span>
-          <span>
-            <span className="block text-sm font-semibold">Gerador de Contrato de Show</span>
-            <span className="mt-1 block text-xs text-muted-foreground">
-              Contrato completo com cachê, W.O., ECAD e assinatura — PDF instantâneo.
-            </span>
-          </span>
-        </Link>
-        <Link
+      <div className="mb-6 grid gap-4 md:grid-cols-3">
+        <IntentCard
+          to="/contrato"
+          emoji="🎪"
+          title="Fechar um Show"
+          text="Contrato de apresentação + rider técnico em 3 passos, com envio por WhatsApp."
+          tone="primary"
+        />
+        <IntentCard
+          to="/portfolio"
+          emoji="🏛️"
+          title="Aplicar para Edital"
+          text="Carta de anuência, declarações e portfólio de comprovação em PDF."
+          tone="accent"
+        />
+        <IntentCard
           to="/repertorio"
-          className="panel group flex items-start gap-4 border-accent/30 bg-accent/5 p-5 transition hover:border-accent/60"
-        >
-          <span className="flex size-11 items-center justify-center rounded-xl border border-accent/30 bg-accent/15 text-accent">
-            <Music4 className="size-5" />
-          </span>
-          <span>
-            <span className="block text-sm font-semibold">Gerador de Roteiro ECAD</span>
-            <span className="mt-1 block text-xs text-muted-foreground">
-              Relatório de execução pública com autores e percentuais — PDF e CSV.
-            </span>
-          </span>
-        </Link>
+          emoji="🎵"
+          title="Registrar Música"
+          text="Split sheet de autoria e setlist para relatório de ECAD (PDF e CSV)."
+          tone="primary"
+        />
       </div>
+
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
@@ -222,7 +216,7 @@ function Dashboard() {
       </div>
 
       <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-        <QuickCard to="/elenco" icon={<Users className="size-5" />} label="Elenco" value={`${team.length} integrantes`} />
+        <QuickCard to="/equipe" icon={<Users className="size-5" />} label="Elenco" value={`${team.length} integrantes`} />
         <QuickCard to="/repertorio" icon={<Music4 className="size-5" />} label="Repertório" value={`${songs.length} obras`} />
         <QuickCard to="/riders" icon={<Sliders className="size-5" />} label="Riders técnicos" value="Montar rider" />
         <QuickCard to="/portfolio" icon={<Images className="size-5" />} label="Portfólio" value="Clipping & releases" />
@@ -250,6 +244,39 @@ function QuickCard({
       <span>
         <span className="block text-sm font-semibold">{label}</span>
         <span className="block text-xs text-muted-foreground">{value}</span>
+      </span>
+    </Link>
+  );
+}
+
+function IntentCard({
+  to,
+  emoji,
+  title,
+  text,
+  tone,
+}: {
+  to: string;
+  emoji: string;
+  title: string;
+  text: string;
+  tone: "primary" | "accent";
+}) {
+  return (
+    <Link
+      to={to}
+      className={
+        tone === "primary"
+          ? "panel group flex items-start gap-4 border-primary/30 bg-primary/5 p-5 transition hover:border-primary/60"
+          : "panel group flex items-start gap-4 border-accent/30 bg-accent/5 p-5 transition hover:border-accent/60"
+      }
+    >
+      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-border bg-background/60 text-lg">
+        {emoji}
+      </span>
+      <span>
+        <span className="block text-sm font-semibold">{title}</span>
+        <span className="mt-1 block text-xs text-muted-foreground">{text}</span>
       </span>
     </Link>
   );

@@ -12,9 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedContratoRouteImport } from './routes/_authenticated/contrato'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated/documentos'
-import { Route as AuthenticatedElencoRouteImport } from './routes/_authenticated/elenco'
+import { Route as AuthenticatedEquipeRouteImport } from './routes/_authenticated/equipe'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedPortfolioRouteImport } from './routes/_authenticated/portfolio'
 import { Route as AuthenticatedRepertorioRouteImport } from './routes/_authenticated/repertorio'
@@ -36,6 +37,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedContratoRoute = AuthenticatedContratoRouteImport.update({
+  id: '/contrato',
+  path: '/contrato',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -46,9 +52,9 @@ const AuthenticatedDocumentosRoute = AuthenticatedDocumentosRouteImport.update({
   path: '/documentos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedElencoRoute = AuthenticatedElencoRouteImport.update({
-  id: '/elenco',
-  path: '/elenco',
+const AuthenticatedEquipeRoute = AuthenticatedEquipeRouteImport.update({
+  id: '/equipe',
+  path: '/equipe',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
@@ -87,9 +93,10 @@ const AuthenticatedEventosEventIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/contrato': typeof AuthenticatedContratoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
-  '/elenco': typeof AuthenticatedElencoRoute
+  '/equipe': typeof AuthenticatedEquipeRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/portfolio': typeof AuthenticatedPortfolioRoute
   '/repertorio': typeof AuthenticatedRepertorioRoute
@@ -100,9 +107,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/contrato': typeof AuthenticatedContratoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
-  '/elenco': typeof AuthenticatedElencoRoute
+  '/equipe': typeof AuthenticatedEquipeRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/portfolio': typeof AuthenticatedPortfolioRoute
   '/repertorio': typeof AuthenticatedRepertorioRoute
@@ -115,9 +123,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/contrato': typeof AuthenticatedContratoRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/documentos': typeof AuthenticatedDocumentosRoute
-  '/_authenticated/elenco': typeof AuthenticatedElencoRoute
+  '/_authenticated/equipe': typeof AuthenticatedEquipeRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/portfolio': typeof AuthenticatedPortfolioRoute
   '/_authenticated/repertorio': typeof AuthenticatedRepertorioRoute
@@ -130,9 +139,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/contrato'
     | '/dashboard'
     | '/documentos'
-    | '/elenco'
+    | '/equipe'
     | '/perfil'
     | '/portfolio'
     | '/repertorio'
@@ -143,9 +153,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/contrato'
     | '/dashboard'
     | '/documentos'
-    | '/elenco'
+    | '/equipe'
     | '/perfil'
     | '/portfolio'
     | '/repertorio'
@@ -157,9 +168,10 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/contrato'
     | '/_authenticated/dashboard'
     | '/_authenticated/documentos'
-    | '/_authenticated/elenco'
+    | '/_authenticated/equipe'
     | '/_authenticated/perfil'
     | '/_authenticated/portfolio'
     | '/_authenticated/repertorio'
@@ -197,6 +209,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/contrato': {
+      id: '/_authenticated/contrato'
+      path: '/contrato'
+      fullPath: '/contrato'
+      preLoaderRoute: typeof AuthenticatedContratoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -211,11 +230,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDocumentosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/elenco': {
-      id: '/_authenticated/elenco'
-      path: '/elenco'
-      fullPath: '/elenco'
-      preLoaderRoute: typeof AuthenticatedElencoRouteImport
+    '/_authenticated/equipe': {
+      id: '/_authenticated/equipe'
+      path: '/equipe'
+      fullPath: '/equipe'
+      preLoaderRoute: typeof AuthenticatedEquipeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/perfil': {
@@ -264,9 +283,10 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedContratoRoute: typeof AuthenticatedContratoRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRoute
-  AuthenticatedElencoRoute: typeof AuthenticatedElencoRoute
+  AuthenticatedEquipeRoute: typeof AuthenticatedEquipeRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedPortfolioRoute: typeof AuthenticatedPortfolioRoute
   AuthenticatedRepertorioRoute: typeof AuthenticatedRepertorioRoute
@@ -276,9 +296,10 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedContratoRoute: AuthenticatedContratoRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDocumentosRoute: AuthenticatedDocumentosRoute,
-  AuthenticatedElencoRoute: AuthenticatedElencoRoute,
+  AuthenticatedEquipeRoute: AuthenticatedEquipeRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedPortfolioRoute: AuthenticatedPortfolioRoute,
   AuthenticatedRepertorioRoute: AuthenticatedRepertorioRoute,

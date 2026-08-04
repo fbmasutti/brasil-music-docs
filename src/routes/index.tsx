@@ -14,13 +14,13 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "StageDocs — Documentação e contratos para músicos no Brasil" },
+      { title: "StageKit — Documentação e contratos para músicos no Brasil" },
       {
         name: "description",
         content:
           "Gere contratos de show, riders técnicos, split sheets, cartas de anuência e relatórios de ECAD em minutos. Feito para artistas, bandas, professores e produtores brasileiros.",
       },
-      { property: "og:title", content: "StageDocs — Documentação e contratos para músicos" },
+      { property: "og:title", content: "StageKit — Documentação e contratos para músicos" },
       {
         property: "og:description",
         content: "Contratos, riders, ECAD, editais e portfólio profissional em um único painel.",
@@ -58,7 +58,7 @@ const FEATURES = [
   },
   {
     icon: ShieldCheck,
-    title: "Cofre da Entidade",
+    title: "Dados do Artista",
     text: "CPF/CNPJ, CNAE, inscrição municipal, dados bancários e associação ECAD reaproveitados em todo documento.",
   },
 ];
@@ -71,7 +71,7 @@ function Landing() {
           <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground glow-violet">
             <Radio className="size-4.5" />
           </span>
-          <span className="font-extrabold tracking-tight">StageDocs</span>
+          <span className="font-extrabold tracking-tight">StageKit</span>
         </div>
         <Button asChild size="sm">
           <Link to="/auth">Entrar</Link>
@@ -80,14 +80,14 @@ function Landing() {
 
       <section className="mx-auto max-w-6xl px-5 pt-10 pb-16 md:pt-20">
         <p className="mb-4 inline-flex rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-          Hub burocrático da música brasileira
+          O toolkit anti-burocracia da música brasileira
         </p>
         <h1 className="max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">
           Toda a papelada da sua carreira musical resolvida{" "}
           <span className="text-primary">antes do soundcheck</span>.
         </h1>
         <p className="mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
-          StageDocs organiza contratos, riders técnicos, direito autoral, editais de fomento e portfólio
+          StageKit é o toolkit de gestão e burocracia para músicos e artistas profissionais: contratos, riders técnicos, direito autoral, editais de fomento e portfólio
           para artistas independentes, bandas, professores de música e produtores no Brasil.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
@@ -120,7 +120,7 @@ function Landing() {
       </section>
 
       <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground">
-        StageDocs · Documentação profissional para a música independente brasileira
+        StageKit · Documentação profissional para a música independente brasileira
       </footer>
     </div>
   );
