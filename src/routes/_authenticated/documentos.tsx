@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_authenticated/documentos")({
         content:
           "Gere contratos de show, RPA, cartas de anuência, cessão de imagem, split sheets e declarações em PDF.",
       },
-      { property: "og:title", content: "Central de Documentos — StageDocs" },
+      { property: "og:title", content: "Central de Documentos — StageKit" },
       { property: "og:description", content: "Modelos jurídicos prontos para a realidade da música brasileira." },
     ],
   }),
@@ -57,15 +57,15 @@ function DocumentsPage() {
   const spec: PdfDoc = useMemo(
     () => ({
       title: template.label,
-      brand: profile?.stage_name ?? "StageDocs",
+      brand: profile?.stage_name ?? "StageKit",
       subtitle: profile?.legal_name ?? "Documentação profissional para músicos",
-      footer: `${profile?.stage_name ?? "StageDocs"} · gerado em ${dateBR(new Date().toISOString().slice(0, 10))}`,
+      footer: `${profile?.stage_name ?? "StageKit"} · gerado em ${dateBR(new Date().toISOString().slice(0, 10))}`,
       blocks: template.build({ values, profile: profile ?? {}, client, event }),
     }),
     [template, values, profile, client, event],
   );
 
-  const filename = `${template.id.toLowerCase()}-${(profile?.stage_name ?? "stagedocs")
+  const filename = `${template.id.toLowerCase()}-${(profile?.stage_name ?? "stagekit")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")}`;
 
@@ -84,7 +84,7 @@ function DocumentsPage() {
     <div className="mx-auto max-w-6xl">
       <PageHeader
         title="Central de Documentos"
-        subtitle="Escolha um modelo, complete os campos e exporte o PDF. Seus dados do Cofre da Entidade entram automaticamente."
+        subtitle="Escolha um modelo, complete os campos e exporte o PDF. Seus dados do Dados do Artista entram automaticamente."
         actions={
           <>
             <Button variant="outline" size="sm" onClick={save} disabled={insert.isPending}>

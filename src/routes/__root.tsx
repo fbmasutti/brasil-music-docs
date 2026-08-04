@@ -79,13 +79,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "StageDocs — Gestão documental para músicos" },
+      { title: "StageKit — Gestão documental para músicos" },
       {
         name: "description",
         content:
           "Contratos, riders técnicos, ECAD, editais e portfólio: toda a burocracia da carreira musical em um só painel.",
       },
-      { property: "og:title", content: "StageDocs — Gestão documental para músicos" },
+      { property: "og:title", content: "StageKit — Gestão documental para músicos" },
       {
         property: "og:description",
         content: "Contratos, riders, ECAD e editais prontos em minutos para artistas brasileiros.",

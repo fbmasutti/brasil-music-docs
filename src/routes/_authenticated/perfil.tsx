@@ -11,12 +11,12 @@ import { maskCpfCnpj, maskCep, CNAE_OPTIONS, ECAD_ASSOCIATIONS } from "@/lib/for
 export const Route = createFileRoute("/_authenticated/perfil")({
   head: () => ({
     meta: [
-      { title: "Cofre da Entidade — dados legais do artista" },
+      { title: "Dados do Artista — dados legais do artista" },
       {
         name: "description",
         content: "CPF/CNPJ, CNAE, inscrição municipal, dados bancários e associação ECAD reutilizados em todos os documentos.",
       },
-      { property: "og:title", content: "Cofre da Entidade — StageDocs" },
+      { property: "og:title", content: "Dados do Artista — StageKit" },
       { property: "og:description", content: "Centralize seus dados legais e fiscais com segurança." },
     ],
   }),
@@ -74,7 +74,7 @@ function ProfilePage() {
   return (
     <div className="mx-auto max-w-4xl">
       <PageHeader
-        title="Cofre da Entidade"
+        title="Dados do Artista"
         subtitle="Estes dados alimentam automaticamente contratos, recibos, riders e declarações."
         actions={
           <Button size="sm" onClick={save} disabled={update.isPending}>

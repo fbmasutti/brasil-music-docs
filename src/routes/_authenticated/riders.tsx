@@ -11,12 +11,12 @@ import { RIDER_PRESETS, presetToStageItems } from "@/lib/rider-presets";
 export const Route = createFileRoute("/_authenticated/riders")({
   head: () => ({
     meta: [
-      { title: "Riders técnicos e hospitality — StageDocs" },
+      { title: "Riders técnicos e hospitality — StageKit" },
       {
         name: "description",
         content: "Monte channel list, mapa de palco visual, backline, iluminação e hospitality e exporte o rider em PDF.",
       },
-      { property: "og:title", content: "Riders técnicos — StageDocs" },
+      { property: "og:title", content: "Riders técnicos — StageKit" },
       { property: "og:description", content: "Rider técnico e de hospitalidade profissional em PDF." },
     ],
   }),
@@ -72,9 +72,9 @@ function RidersPage() {
     downloadPdf(
       {
         title: `Rider técnico — ${rider.name}`,
-        brand: profile?.stage_name ?? "StageDocs",
+        brand: profile?.stage_name ?? "StageKit",
         subtitle: profile?.legal_name ?? "Rider técnico e de hospitalidade",
-        footer: `${profile?.stage_name ?? "StageDocs"} · rider técnico`,
+        footer: `${profile?.stage_name ?? "StageKit"} · rider técnico`,
         blocks: [
           ...(channels.length
             ? ([

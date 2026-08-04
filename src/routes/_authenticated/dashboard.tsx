@@ -20,12 +20,12 @@ import { dateBR, money, EVENT_STATUS } from "@/lib/format";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Painel executivo — StageDocs" },
+      { title: "Painel executivo — StageKit" },
       {
         name: "description",
         content: "Visão geral de shows confirmados, cachês a receber, documentos gerados e pendências de ECAD.",
       },
-      { property: "og:title", content: "Painel executivo — StageDocs" },
+      { property: "og:title", content: "Painel executivo — StageKit" },
       { property: "og:description", content: "Acompanhe cachês, documentos e pendências da sua agenda." },
     ],
   }),
@@ -54,7 +54,7 @@ function Dashboard() {
 
   const alerts: { text: string; to: string }[] = [];
   if (!profile?.cpf_cnpj)
-    alerts.push({ text: "Cadastre seu CPF/CNPJ no Cofre da Entidade para gerar contratos válidos.", to: "/perfil" });
+    alerts.push({ text: "Cadastre seu CPF/CNPJ no Dados do Artista para gerar contratos válidos.", to: "/perfil" });
   if (!profile?.ecad_association)
     alerts.push({ text: "Informe sua associação ECAD e CAE/IPI para relatórios de execução pública.", to: "/perfil" });
   if (profile?.cnd_expires_at && profile.cnd_expires_at < today)
@@ -222,7 +222,7 @@ function Dashboard() {
       </div>
 
       <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-        <QuickCard to="/elenco" icon={<Users className="size-5" />} label="Elenco" value={`${team.length} integrantes`} />
+        <QuickCard to="/equipe" icon={<Users className="size-5" />} label="Elenco" value={`${team.length} integrantes`} />
         <QuickCard to="/repertorio" icon={<Music4 className="size-5" />} label="Repertório" value={`${songs.length} obras`} />
         <QuickCard to="/riders" icon={<Sliders className="size-5" />} label="Riders técnicos" value="Montar rider" />
         <QuickCard to="/portfolio" icon={<Images className="size-5" />} label="Portfólio" value="Clipping & releases" />

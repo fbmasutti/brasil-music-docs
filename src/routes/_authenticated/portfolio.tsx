@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_authenticated/portfolio")({
         name: "description",
         content: "Organize matérias, releases, prêmios e registros de shows por ano para anexar em editais de fomento.",
       },
-      { property: "og:title", content: "Portfólio e clipping — StageDocs" },
+      { property: "og:title", content: "Portfólio e clipping — StageKit" },
       { property: "og:description", content: "Seu histórico artístico documentado e pronto para comprovação." },
     ],
   }),

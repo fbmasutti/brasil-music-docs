@@ -10,12 +10,12 @@ import { dateBR, money, EVENT_STATUS } from "@/lib/format";
 export const Route = createFileRoute("/_authenticated/eventos/$eventId")({
   head: () => ({
     meta: [
-      { title: "Dossiê do evento — StageDocs" },
+      { title: "Dossiê do evento — StageKit" },
       {
         name: "description",
         content: "Checklist de pré-produção, palco e pós-show, cachês e documentos vinculados ao evento.",
       },
-      { property: "og:title", content: "Dossiê do evento — StageDocs" },
+      { property: "og:title", content: "Dossiê do evento — StageKit" },
       { property: "og:description", content: "Tudo o que precisa estar pronto antes, durante e depois do show." },
     ],
   }),

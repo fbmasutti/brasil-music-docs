@@ -18,15 +18,15 @@ import { PageHeader, Section, EmptyState, FieldGrid, TextField } from "@/compone
 import { useList, useInsert, useRemove } from "@/lib/queries";
 import { maskCpfCnpj, maskPis } from "@/lib/format";
 
-export const Route = createFileRoute("/_authenticated/elenco")({
+export const Route = createFileRoute("/_authenticated/equipe")({
   head: () => ({
     meta: [
-      { title: "Elenco e contratantes — StageDocs" },
+      { title: "Elenco e contratantes — StageKit" },
       {
         name: "description",
         content: "Cadastro de músicos, técnicos e contratantes com CPF, PIS, PIX e restrições alimentares.",
       },
-      { property: "og:title", content: "Elenco e contratantes — StageDocs" },
+      { property: "og:title", content: "Elenco e contratantes — StageKit" },
       { property: "og:description", content: "Dados completos da equipe e dos contratantes em um só lugar." },
     ],
   }),

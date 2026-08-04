@@ -24,11 +24,11 @@ const NAV = [
   { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
   { to: "/eventos", label: "Shows & Eventos", icon: CalendarDays },
   { to: "/documentos", label: "Central de Documentos", icon: FileText },
-  { to: "/elenco", label: "Elenco & Contratantes", icon: Users },
+  { to: "/equipe", label: "Elenco & Contratantes", icon: Users },
   { to: "/repertorio", label: "Repertório & ECAD", icon: Music4 },
   { to: "/riders", label: "Riders Técnicos", icon: Sliders },
   { to: "/portfolio", label: "Portfólio & Clipping", icon: Images },
-  { to: "/perfil", label: "Cofre da Entidade", icon: Settings },
+  { to: "/perfil", label: "Dados do Artista", icon: Settings },
 ] as const;
 
 export function AppLayout() {
@@ -110,7 +110,7 @@ export function AppLayout() {
           </Button>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-foreground">
-              {profile?.stage_name || "StageDocs"}
+              {profile?.stage_name || "StageKit"}
             </p>
             <p className="truncate text-xs text-muted-foreground">
               {profile?.entity_type === "PJ" ? "Pessoa Jurídica (MEI/LTDA)" : "Pessoa Física / MEI"} ·{" "}
@@ -136,7 +136,7 @@ function Brand({ compact }: { compact?: boolean | undefined }) {
         <Radio className="size-4.5" />
       </span>
       <div>
-        <p className="text-sm font-extrabold tracking-tight text-sidebar-foreground">StageDocs</p>
+        <p className="text-sm font-extrabold tracking-tight text-sidebar-foreground">StageKit</p>
         <p className="text-[11px] text-sidebar-foreground/60">Hub Músico Brasil</p>
       </div>
     </div>

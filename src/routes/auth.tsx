@@ -12,12 +12,12 @@ import { lovable } from "@/integrations/lovable/index";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Entrar no StageDocs — Painel do músico" },
+      { title: "Entrar no StageKit — Painel do músico" },
       {
         name: "description",
-        content: "Acesse seu painel StageDocs para gerar contratos, riders, documentos de ECAD e editais.",
+        content: "Acesse seu painel StageKit para gerar contratos, riders, documentos de ECAD e editais.",
       },
-      { property: "og:title", content: "Entrar no StageDocs" },
+      { property: "og:title", content: "Entrar no StageKit" },
       { property: "og:description", content: "Acesse o hub de documentação da sua carreira musical." },
     ],
   }),
@@ -94,7 +94,7 @@ function AuthPage() {
           <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground glow-violet">
             <Radio className="size-5" />
           </span>
-          <span className="text-lg font-extrabold tracking-tight">StageDocs</span>
+          <span className="text-lg font-extrabold tracking-tight">StageKit</span>
         </Link>
 
         <div className="panel p-6">
