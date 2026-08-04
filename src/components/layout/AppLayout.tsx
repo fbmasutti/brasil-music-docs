@@ -21,15 +21,16 @@ import { useProfile } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 
 const NAV = [
-  { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
-  { to: "/eventos", label: "Shows & Eventos", icon: CalendarDays },
-  { to: "/documentos", label: "Central de Documentos", icon: FileText },
-  { to: "/equipe", label: "Elenco & Contratantes", icon: Users },
-  { to: "/repertorio", label: "Repertório & ECAD", icon: Music4 },
-  { to: "/riders", label: "Riders Técnicos", icon: Sliders },
-  { to: "/portfolio", label: "Portfólio & Clipping", icon: Images },
-  { to: "/perfil", label: "Dados do Artista", icon: Settings },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/perfil", label: "Dados do Artista / Proponente", icon: Settings },
+  { to: "/equipe", label: "Equipe & Ficha Técnica", icon: Users },
+  { to: "/eventos", label: "Shows & Agenda", icon: CalendarDays },
+  { to: "/documentos", label: "Gerador Rápido", icon: FileText },
+  { to: "/repertorio", label: "Minhas Músicas & ECAD", icon: Music4 },
+  { to: "/riders", label: "Rider & Mapa de Palco", icon: Sliders },
+  { to: "/portfolio", label: "Comprovação & Portfólio", icon: Images },
 ] as const;
+
 
 export function AppLayout() {
   const [open, setOpen] = useState(false);
