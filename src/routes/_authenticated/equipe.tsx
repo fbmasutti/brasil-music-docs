@@ -21,12 +21,12 @@ import { maskCpfCnpj, maskPis } from "@/lib/format";
 export const Route = createFileRoute("/_authenticated/equipe")({
   head: () => ({
     meta: [
-      { title: "Elenco e contratantes — StageKit" },
+      { title: "Equipe e contratantes — StageKit" },
       {
         name: "description",
         content: "Cadastro de músicos, técnicos e contratantes com CPF, PIS, PIX e restrições alimentares.",
       },
-      { property: "og:title", content: "Elenco e contratantes — StageKit" },
+      { property: "og:title", content: "Equipe e contratantes — StageKit" },
       { property: "og:description", content: "Dados completos da equipe e dos contratantes em um só lugar." },
     ],
   }),
@@ -64,7 +64,7 @@ function RosterPage() {
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
-        title="Elenco & Contratantes"
+        title="Equipe & Ficha Técnica"
         subtitle="Base de dados da sua equipe e dos seus clientes — reaproveitada em contratos, riders e rooming lists."
       />
       <Tabs defaultValue="team">

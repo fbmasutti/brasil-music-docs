@@ -138,7 +138,7 @@ function Brand({ compact }: { compact?: boolean | undefined }) {
       </span>
       <div>
         <p className="text-sm font-extrabold tracking-tight text-sidebar-foreground">StageKit</p>
-        <p className="text-[11px] text-sidebar-foreground/60">Hub Músico Brasil</p>
+        <p className="text-[11px] text-sidebar-foreground/60">Toolkit do artista</p>
       </div>
     </div>
   );

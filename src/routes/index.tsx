@@ -80,14 +80,14 @@ function Landing() {
 
       <section className="mx-auto max-w-6xl px-5 pt-10 pb-16 md:pt-20">
         <p className="mb-4 inline-flex rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-          Hub burocrático da música brasileira
+          O toolkit anti-burocracia da música brasileira
         </p>
         <h1 className="max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">
           Toda a papelada da sua carreira musical resolvida{" "}
           <span className="text-primary">antes do soundcheck</span>.
         </h1>
         <p className="mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
-          StageKit organiza contratos, riders técnicos, direito autoral, editais de fomento e portfólio
+          StageKit é o toolkit de gestão e burocracia para músicos e artistas profissionais: contratos, riders técnicos, direito autoral, editais de fomento e portfólio
           para artistas independentes, bandas, professores de música e produtores no Brasil.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
