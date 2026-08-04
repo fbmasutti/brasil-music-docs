@@ -248,3 +248,36 @@ function QuickCard({
     </Link>
   );
 }
+
+function IntentCard({
+  to,
+  emoji,
+  title,
+  text,
+  tone,
+}: {
+  to: string;
+  emoji: string;
+  title: string;
+  text: string;
+  tone: "primary" | "accent";
+}) {
+  return (
+    <Link
+      to={to}
+      className={
+        tone === "primary"
+          ? "panel group flex items-start gap-4 border-primary/30 bg-primary/5 p-5 transition hover:border-primary/60"
+          : "panel group flex items-start gap-4 border-accent/30 bg-accent/5 p-5 transition hover:border-accent/60"
+      }
+    >
+      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-border bg-background/60 text-lg">
+        {emoji}
+      </span>
+      <span>
+        <span className="block text-sm font-semibold">{title}</span>
+        <span className="mt-1 block text-xs text-muted-foreground">{text}</span>
+      </span>
+    </Link>
+  );
+}
