@@ -115,6 +115,53 @@ function Dashboard() {
         }
       />
 
+      <Section
+        title="Ferramentas do dia a dia"
+        description="Tudo aqui funciona agora, sem depender de contratante ou show cadastrado."
+        className="mb-5"
+      >
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ToolCard
+            to="/contrato"
+            icon={<FileText className="size-5" />}
+            title="Gerar contrato de show"
+            hint="3 passos · PDF + WhatsApp"
+          />
+          <ToolCard
+            to="/riders"
+            icon={<Sliders className="size-5" />}
+            title="Rider & mapa de palco"
+            hint="Formato pronto em 1 clique"
+          />
+          <ToolCard
+            to="/gerador-cards"
+            icon={<Megaphone className="size-5" />}
+            title="Gerador de posts"
+            hint="Card de divulgação"
+          />
+          <ToolCard
+            to="/magic-paste"
+            icon={<Wand2 className="size-5" />}
+            title="Importar do WhatsApp"
+            hint="Extrai os dados do show"
+          />
+          <ToolCard
+            to="/documentos"
+            icon={<Receipt className="size-5" />}
+            title="Recibo, RPA & anuência"
+            hint="Kit de documentos"
+          />
+          <ToolCard
+            to="/repertorio"
+            icon={<Music4 className="size-5" />}
+            title="Roteiro ECAD"
+            hint="Setlist e direitos autorais"
+          />
+        </div>
+      </Section>
+
+
+
       {gettingStartedDone < gettingStarted.length ? (
         <Section
           title="Primeiros passos"
