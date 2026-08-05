@@ -310,71 +310,58 @@ function Dashboard() {
         />
       </div>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <QuickCard
-          to="/magic-paste"
-          icon={<Wand2 className="size-5" />}
-          label="Importar do WhatsApp"
-          value="Extrair dados do show"
-        />
-        <QuickCard
-          to="/gerador-cards"
-          icon={<Megaphone className="size-5" />}
-          label="Gerador de Cards"
-          value="Card de divulgação"
-        />
-        <QuickCard
-          to="/equipe"
-          icon={<Users className="size-5" />}
-          label="Elenco"
-          value={`${team.length} integrantes`}
-        />
-        <QuickCard
+      <div className="mt-5 flex flex-wrap gap-2">
+        <MiniLink to="/equipe" icon={<Users className="size-3.5" />} label={`Equipe · ${team.length}`} />
+        <MiniLink
           to="/repertorio"
-          icon={<Music4 className="size-5" />}
-          label="Repertório"
-          value={`${songs.length} obras`}
+          icon={<Music4 className="size-3.5" />}
+          label={`Repertório · ${songs.length}`}
         />
-        <QuickCard
-          to="/riders"
-          icon={<Sliders className="size-5" />}
-          label="Riders técnicos"
-          value="Montar rider"
-        />
-        <QuickCard
-          to="/portfolio"
-          icon={<Images className="size-5" />}
-          label="Portfólio"
-          value="Clipping & releases"
-        />
+        <MiniLink to="/formacoes" icon={<Sliders className="size-3.5" />} label="Formações" />
+        <MiniLink to="/portfolio" icon={<Images className="size-3.5" />} label="Portfólio" />
+        <MiniLink to="/marca" icon={<Megaphone className="size-3.5" />} label="Marca" />
+        <MiniLink to="/contratantes" icon={<FileText className="size-3.5" />} label="Contratantes" />
       </div>
     </div>
   );
 }
 
-function QuickCard({
+function ToolCard({
   to,
   icon,
-  label,
-  value,
+  title,
+  hint,
 }: {
   to: string;
   icon: React.ReactNode;
-  label: string;
-  value: string;
+  title: string;
+  hint: string;
 }) {
   return (
     <Link
       to={to}
-      className="panel flex items-center gap-3 p-4 transition-colors hover:border-primary/40"
+      className="panel flex items-center gap-3 p-4 transition-colors hover:border-primary/50 hover:bg-primary/5"
     >
-      <span className="flex size-10 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
         {icon}
       </span>
-      <span>
-        <span className="block text-sm font-semibold">{label}</span>
-        <span className="block text-xs text-muted-foreground">{value}</span>
+      <span className="min-w-0">
+        <span className="block truncate text-sm font-semibold">{title}</span>
+        <span className="block truncate text-xs text-muted-foreground">{hint}</span>
       </span>
     </Link>
   );
 }
+
+function MiniLink({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+    >
+      {icon}
+      {label}
+    </Link>
+  );
+}
+
