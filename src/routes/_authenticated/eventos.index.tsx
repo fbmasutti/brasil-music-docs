@@ -56,6 +56,7 @@ const empty = {
   city: "",
   state: "",
   client_id: "",
+  formation_id: "",
   fee_total: "",
   fee_deposit: "",
   deposit_due_date: "",
@@ -77,6 +78,8 @@ const DEFAULT_CHECKLIST: { label: string; phase: string }[] = [
 function EventsPage() {
   const { data: events = [] } = useList("events", { order: { column: "event_date", ascending: false } });
   const { data: clients = [] } = useList("clients", { order: { column: "name" } });
+  const { data: formations = [] } = useList("formations", { order: { column: "name" } });
+  const { data: gearItems = [] } = useList("gear_checklist_items", { order: { column: "position" } });
   const insertEvent = useInsert("events", "Evento criado");
   const insertTask = useInsert("event_checklists", "");
   const remove = useRemove("events", "Evento removido");
@@ -85,6 +88,7 @@ function EventsPage() {
   const set = (k: keyof typeof empty) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   function save() {
+    const formationGear = gearItems.filter((g) => g.formation_id === form.formation_id);
     insertEvent.mutate(
       {
         title: form.title,
@@ -97,6 +101,7 @@ function EventsPage() {
         city: form.city || null,
         state: form.state || null,
         client_id: form.client_id || null,
+        formation_id: form.formation_id || null,
         fee_total: Number(form.fee_total || 0),
         fee_deposit: Number(form.fee_deposit || 0),
         deposit_due_date: form.deposit_due_date || null,
@@ -112,11 +117,28 @@ function EventsPage() {
               position: index,
             }),
           );
+          formationGear.forEach((gear, index) =>
+            insertTask.mutate({
+              event_id: created.id,
+              label: gear.label,
+              phase: "EQUIPAMENTO",
+              position: index,
+            }),
+          );
           setForm(empty);
           setOpen(false);
         },
       },
     );
+  }
+
+  function selectFormation(formationId: string) {
+    const formation = formations.find((f) => f.id === formationId);
+    setForm((f) => ({
+      ...f,
+      formation_id: formationId,
+      fee_total: f.fee_total || (formation ? String(formation.base_fee) : f.fee_total),
+    }));
   }
 
   return (
@@ -177,6 +199,21 @@ function EventsPage() {
                       {clients.map((c) => (
                         <SelectItem key={c.id} value={c.id}>
                           {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Formação</Label>
+                  <Select value={form.formation_id} onValueChange={selectFormation}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecionar" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {formations.map((f) => (
+                        <SelectItem key={f.id} value={f.id}>
+                          {f.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

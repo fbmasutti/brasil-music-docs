@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   Radio,
+  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/perfil", label: "Dados do Artista / Proponente", icon: Settings },
   { to: "/equipe", label: "Equipe & Ficha Técnica", icon: Users },
+  { to: "/formacoes", label: "Formações", icon: Layers },
   { to: "/eventos", label: "Shows & Agenda", icon: CalendarDays },
   { to: "/documentos", label: "Gerador Rápido", icon: FileText },
   { to: "/repertorio", label: "Minhas Músicas & ECAD", icon: Music4 },

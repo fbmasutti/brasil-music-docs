@@ -2,6 +2,14 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Sliders, Plus, Download, Trash2, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PageHeader, Section, EmptyState, FieldGrid, TextField, TextAreaField } from "@/components/ui-kit";
 import { useList, useInsert, useRemove, useProfile } from "@/lib/queries";
 import { downloadPdf, type PdfBlock } from "@/lib/pdf";
@@ -25,6 +33,7 @@ export const Route = createFileRoute("/_authenticated/riders")({
 
 const empty = {
   name: "",
+  formation_id: "",
   channel_list: "",
   sound_requirements: "",
   lighting_requirements: "",
@@ -36,6 +45,7 @@ const empty = {
 function RidersPage() {
   const { data: profile } = useProfile();
   const { data: riders = [] } = useList("technical_riders", { order: { column: "name" } });
+  const { data: formations = [] } = useList("formations", { order: { column: "name" } });
   const insert = useInsert("technical_riders", "Rider salvo");
   const remove = useRemove("technical_riders", "Rider removido");
   const [form, setForm] = useState(empty);
@@ -159,6 +169,21 @@ function RidersPage() {
       <Section title="Novo rider" className="mb-5">
         <FieldGrid>
           <TextField label="Nome do rider" value={form.name} onChange={set("name")} placeholder="Trio elétrico / Voz e violão" />
+          <div className="space-y-2">
+            <Label>Formação (opcional)</Label>
+            <Select value={form.formation_id} onValueChange={set("formation_id")}>
+              <SelectTrigger>
+                <SelectValue placeholder="Nenhuma — rider avulso" />
+              </SelectTrigger>
+              <SelectContent>
+                {formations.map((f) => (
+                  <SelectItem key={f.id} value={f.id}>
+                    {f.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </FieldGrid>
         <div className="mt-4 space-y-4">
           <TextAreaField
@@ -185,6 +210,7 @@ function RidersPage() {
             insert.mutate(
               {
                 name: form.name,
+                formation_id: form.formation_id || null,
                 channel_list: form.channel_list.split("\n").filter(Boolean),
                 stage_plot: stage,
                 sound_requirements: form.sound_requirements || null,
@@ -211,7 +237,9 @@ function RidersPage() {
           <EmptyState icon={<Sliders className="size-5" />} title="Nenhum rider salvo" />
         ) : (
           <ul className="divide-y divide-border">
-            {riders.map((r) => (
+            {riders.map((r) => {
+              const formation = formations.find((f) => f.id === r.formation_id);
+              return (
               <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                 <div>
                   <p className="font-medium">{r.name}</p>
@@ -220,6 +248,7 @@ function RidersPage() {
                     {parseStagePlot(r.stage_plot).length
                       ? ` · ${parseStagePlot(r.stage_plot).length} elementos no palco`
                       : ""}
+                    {formation ? ` · padrão de ${formation.name}` : ""}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -231,7 +260,8 @@ function RidersPage() {
                   </Button>
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </Section>

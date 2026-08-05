@@ -20,7 +20,14 @@ type TableName =
   | "technical_riders"
   | "generated_documents"
   | "portfolio_clippings"
-  | "event_checklists";
+  | "event_checklists"
+  | "formations"
+  | "formation_members"
+  | "brand_kits"
+  | "gear_checklist_items"
+  | "event_expenses"
+  | "gear_assets"
+  | "maintenance_fund_entries";
 
 export function useSession() {
   return useQuery({

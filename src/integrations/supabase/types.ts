@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      brand_kits: {
+        Row: {
+          created_at: string
+          id: string
+          logo_url: string | null
+          name: string
+          palette: Json
+          photo_url: string | null
+          preset: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          palette?: Json
+          photo_url?: string | null
+          preset?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          palette?: Json
+          photo_url?: string | null
+          preset?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null
@@ -106,6 +142,44 @@ export type Database = {
           },
         ]
       }
+      event_expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          event_id: string
+          id: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          created_at?: string
+          event_id: string
+          id?: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_expenses_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           balance_due_date: string | null
@@ -118,6 +192,8 @@ export type Database = {
           event_type: string
           fee_deposit: number
           fee_total: number
+          formation_id: string | null
+          full_address: string | null
           id: string
           notes: string | null
           soundcheck_time: string | null
@@ -140,6 +216,8 @@ export type Database = {
           event_type?: string
           fee_deposit?: number
           fee_total?: number
+          formation_id?: string | null
+          full_address?: string | null
           id?: string
           notes?: string | null
           soundcheck_time?: string | null
@@ -162,6 +240,8 @@ export type Database = {
           event_type?: string
           fee_deposit?: number
           fee_total?: number
+          formation_id?: string | null
+          full_address?: string | null
           id?: string
           notes?: string | null
           soundcheck_time?: string | null
@@ -179,6 +259,158 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_formation_id_fkey"
+            columns: ["formation_id"]
+            isOneToOne: false
+            referencedRelation: "formations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      formation_members: {
+        Row: {
+          created_at: string
+          formation_id: string
+          id: string
+          split_percent: number
+          team_member_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          formation_id: string
+          id?: string
+          split_percent?: number
+          team_member_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          formation_id?: string
+          id?: string
+          split_percent?: number
+          team_member_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "formation_members_formation_id_fkey"
+            columns: ["formation_id"]
+            isOneToOne: false
+            referencedRelation: "formations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "formation_members_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      formations: {
+        Row: {
+          base_fee: number
+          brand_kit_id: string | null
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          base_fee?: number
+          brand_kit_id?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          base_fee?: number
+          brand_kit_id?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "formations_brand_kit_id_fkey"
+            columns: ["brand_kit_id"]
+            isOneToOne: false
+            referencedRelation: "brand_kits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gear_assets: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+          value?: number
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: []
+      }
+      gear_checklist_items: {
+        Row: {
+          created_at: string
+          formation_id: string
+          id: string
+          label: string
+          position: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          formation_id: string
+          id?: string
+          label: string
+          position?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          formation_id?: string
+          id?: string
+          label?: string
+          position?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gear_checklist_items_formation_id_fkey"
+            columns: ["formation_id"]
+            isOneToOne: false
+            referencedRelation: "formations"
             referencedColumns: ["id"]
           },
         ]
@@ -236,6 +468,41 @@ export type Database = {
           },
           {
             foreignKeyName: "generated_documents_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_fund_entries: {
+        Row: {
+          amount: number
+          created_at: string
+          event_id: string | null
+          id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_fund_entries_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
@@ -607,6 +874,7 @@ export type Database = {
           channel_list: Json
           created_at: string
           event_id: string | null
+          formation_id: string | null
           hospitality: string | null
           id: string
           lighting_requirements: string | null
@@ -622,6 +890,7 @@ export type Database = {
           channel_list?: Json
           created_at?: string
           event_id?: string | null
+          formation_id?: string | null
           hospitality?: string | null
           id?: string
           lighting_requirements?: string | null
@@ -637,6 +906,7 @@ export type Database = {
           channel_list?: Json
           created_at?: string
           event_id?: string | null
+          formation_id?: string | null
           hospitality?: string | null
           id?: string
           lighting_requirements?: string | null
@@ -653,6 +923,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technical_riders_formation_id_fkey"
+            columns: ["formation_id"]
+            isOneToOne: false
+            referencedRelation: "formations"
             referencedColumns: ["id"]
           },
         ]

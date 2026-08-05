@@ -31,6 +31,7 @@ export const Route = createFileRoute("/_authenticated/eventos/$eventId")({
 
 const PHASES: { key: string; label: string }[] = [
   { key: "PRE", label: "Pré-produção" },
+  { key: "EQUIPAMENTO", label: "Mala de gig" },
   { key: "PALCO", label: "Dia do show" },
   { key: "POS", label: "Pós-show" },
 ];
@@ -39,16 +40,22 @@ function EventDetail() {
   const { eventId } = Route.useParams();
   const { data: events = [] } = useList("events");
   const { data: clients = [] } = useList("clients");
+  const { data: formations = [] } = useList("formations");
+  const event = events.find((e) => e.id === eventId);
   const { data: tasks = [] } = useList("event_checklists", {
     eq: { event_id: eventId },
     order: { column: "position" },
   });
   const { data: docs = [] } = useList("generated_documents", { eq: { event_id: eventId } });
-  const { data: riders = [] } = useList("technical_riders", { eq: { event_id: eventId } });
+  const { data: eventRiders = [] } = useList("technical_riders", { eq: { event_id: eventId } });
+  const { data: formationRiders = [] } = useList("technical_riders", {
+    eq: { formation_id: event?.formation_id ?? "" },
+    enabled: Boolean(event?.formation_id),
+  });
+  const riders = [...eventRiders, ...formationRiders];
   const updateTask = useUpdate("event_checklists", "");
   const updateEvent = useUpdate("events");
 
-  const event = events.find((e) => e.id === eventId);
   if (!event) {
     return (
       <div className="mx-auto max-w-3xl">
@@ -62,6 +69,7 @@ function EventDetail() {
   }
 
   const client = clients.find((c) => c.id === event.client_id);
+  const formation = formations.find((f) => f.id === event.formation_id);
   const done = tasks.filter((t) => t.done).length;
   const status = EVENT_STATUS[event.status] ?? { label: event.status, tone: "" };
   const googleCalendarUrl = buildGoogleCalendarUrl(event);
@@ -76,7 +84,7 @@ function EventDetail() {
 
       <PageHeader
         title={event.title}
-        subtitle={`${dateBR(event.event_date)} · ${[event.venue, event.city].filter(Boolean).join(", ") || "local a definir"}${client ? ` · ${client.name}` : ""}`}
+        subtitle={`${dateBR(event.event_date)} · ${[event.venue, event.city].filter(Boolean).join(", ") || "local a definir"}${client ? ` · ${client.name}` : ""}${formation ? ` · ${formation.name}` : ""}`}
         actions={
           <>
             <Badge variant="outline" className={status.tone}>
@@ -198,6 +206,7 @@ function EventDetail() {
                 {riders.map((r) => (
                   <li key={r.id} className="truncate">
                     {r.name}
+                    {!r.event_id ? <span className="text-muted-foreground"> · padrão da formação</span> : null}
                   </li>
                 ))}
               </ul>
