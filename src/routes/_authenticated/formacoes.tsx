@@ -37,13 +37,13 @@ import { money } from "@/lib/format";
 export const Route = createFileRoute("/_authenticated/formacoes")({
   head: () => ({
     meta: [
-      { title: "Formações — StageKit" },
+      { title: "Formações & Presets — StageKit" },
       {
         name: "description",
         content:
           "Presets de formação (voz e violão, trio, banda completa) com roster, cachê base e mala de gig.",
       },
-      { property: "og:title", content: "Formações — StageKit" },
+      { property: "og:title", content: "Formações & Presets — StageKit" },
       {
         property: "og:description",
         content: "Cada formação carrega seu roster, cachê base e mala de gig padrão.",
@@ -92,7 +92,7 @@ function FormationsPage() {
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
-        title="Formações"
+        title="Formações & Presets"
         subtitle="Presets por formação — ao escolher uma no evento, o cachê base, o roster e a mala de gig entram sozinhos."
         actions={
           <Dialog open={open} onOpenChange={setOpen}>

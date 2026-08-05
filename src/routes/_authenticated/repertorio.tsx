@@ -27,14 +27,17 @@ import { downloadPdf } from "@/lib/pdf";
 export const Route = createFileRoute("/_authenticated/repertorio")({
   head: () => ({
     meta: [
-      { title: "Repertório e ECAD — obras, ISRC e split de autoria" },
+      { title: "ECAD & Direitos Autorais — obras, ISRC e split de autoria" },
       {
         name: "description",
         content:
           "Cadastre obras com ISRC, ISWC e divisão de autoria e gere relatórios de execução pública para o ECAD.",
       },
-      { property: "og:title", content: "Repertório e ECAD — StageKit" },
-      { property: "og:description", content: "Obras, autores e relatórios de execução pública organizados." },
+      { property: "og:title", content: "ECAD & Direitos Autorais — StageKit" },
+      {
+        property: "og:description",
+        content: "Obras, autores e relatórios de execução pública organizados.",
+      },
     ],
   }),
   component: RepertoirePage,
@@ -58,7 +61,9 @@ function RepertoirePage() {
   const { data: profile } = useProfile();
   const { data: songs = [] } = useList("songs", { order: { column: "title" } });
   const { data: writers = [] } = useList("song_writers");
-  const { data: events = [] } = useList("events", { order: { column: "event_date", ascending: false } });
+  const { data: events = [] } = useList("events", {
+    order: { column: "event_date", ascending: false },
+  });
   const insertSong = useInsert("songs", "Obra cadastrada");
   const insertWriter = useInsert("song_writers", "Autor adicionado");
   const removeSong = useRemove("songs", "Obra removida");
@@ -70,8 +75,10 @@ function RepertoirePage() {
   const [writer, setWriter] = useState(emptyWriter);
   const [ecadEventId, setEcadEventId] = useState("");
 
-  const setSongField = (k: keyof typeof emptySong) => (v: string) => setSong((s) => ({ ...s, [k]: v }));
-  const setWriterField = (k: keyof typeof emptyWriter) => (v: string) => setWriter((w) => ({ ...w, [k]: v }));
+  const setSongField = (k: keyof typeof emptySong) => (v: string) =>
+    setSong((s) => ({ ...s, [k]: v }));
+  const setWriterField = (k: keyof typeof emptyWriter) => (v: string) =>
+    setWriter((w) => ({ ...w, [k]: v }));
 
   function exportEcadReport() {
     const event = events.find((e) => e.id === ecadEventId);
@@ -122,7 +129,7 @@ function RepertoirePage() {
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
-        title="Repertório & ECAD"
+        title="ECAD & Direitos Autorais"
         subtitle="Obras com metadados completos, split de autoria e relatórios de execução pública prontos para a associação."
         actions={
           <>
@@ -150,10 +157,26 @@ function RepertoirePage() {
                   />
                   <TextField label="ISRC" value={song.isrc} onChange={setSongField("isrc")} />
                   <TextField label="ISWC" value={song.iswc} onChange={setSongField("iswc")} />
-                  <TextField label="Editora" value={song.publisher} onChange={setSongField("publisher")} />
-                  <TextField label="Produtor" value={song.producer} onChange={setSongField("producer")} />
-                  <TextField label="Estúdio" value={song.studio} onChange={setSongField("studio")} />
-                  <TextField label="Intérpretes" value={song.performers} onChange={setSongField("performers")} />
+                  <TextField
+                    label="Editora"
+                    value={song.publisher}
+                    onChange={setSongField("publisher")}
+                  />
+                  <TextField
+                    label="Produtor"
+                    value={song.producer}
+                    onChange={setSongField("producer")}
+                  />
+                  <TextField
+                    label="Estúdio"
+                    value={song.studio}
+                    onChange={setSongField("studio")}
+                  />
+                  <TextField
+                    label="Intérpretes"
+                    value={song.performers}
+                    onChange={setSongField("performers")}
+                  />
                 </FieldGrid>
                 <DialogFooter>
                   <Button
@@ -229,16 +252,29 @@ function RepertoirePage() {
                     <div>
                       <p className="font-medium">{s.title}</p>
                       <p className="text-xs text-muted-foreground">
-                        {[s.genre, duration(s.duration_seconds), s.isrc && `ISRC ${s.isrc}`, s.iswc && `ISWC ${s.iswc}`]
+                        {[
+                          s.genre,
+                          duration(s.duration_seconds),
+                          s.isrc && `ISRC ${s.isrc}`,
+                          s.iswc && `ISWC ${s.iswc}`,
+                        ]
                           .filter(Boolean)
                           .join(" · ")}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={total === 100 ? "text-success" : "text-warning"}>
+                      <Badge
+                        variant="outline"
+                        className={total === 100 ? "text-success" : "text-warning"}
+                      >
                         Split {total}%
                       </Badge>
-                      <Button variant="ghost" size="icon" onClick={() => removeSong.mutate(s.id)} aria-label="Remover">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeSong.mutate(s.id)}
+                        aria-label="Remover"
+                      >
                         <Trash2 className="size-4" />
                       </Button>
                     </div>
@@ -267,13 +303,33 @@ function RepertoirePage() {
                   {writerFor === s.id ? (
                     <div className="mt-3 space-y-3 rounded-lg border border-border bg-muted/20 p-3">
                       <FieldGrid>
-                        <TextField label="Autor" value={writer.name} onChange={setWriterField("name")} />
-                        <TextField label="Função" value={writer.role} onChange={setWriterField("role")} placeholder="Letra e música" />
-                        <TextField label="Percentual (%)" value={writer.share_percent} onChange={setWriterField("share_percent")} />
-                        <TextField label="CAE/IPI" value={writer.cae_ipi} onChange={setWriterField("cae_ipi")} />
+                        <TextField
+                          label="Autor"
+                          value={writer.name}
+                          onChange={setWriterField("name")}
+                        />
+                        <TextField
+                          label="Função"
+                          value={writer.role}
+                          onChange={setWriterField("role")}
+                          placeholder="Letra e música"
+                        />
+                        <TextField
+                          label="Percentual (%)"
+                          value={writer.share_percent}
+                          onChange={setWriterField("share_percent")}
+                        />
+                        <TextField
+                          label="CAE/IPI"
+                          value={writer.cae_ipi}
+                          onChange={setWriterField("cae_ipi")}
+                        />
                         <div className="space-y-2">
                           <Label>Associação</Label>
-                          <Select value={writer.association} onValueChange={setWriterField("association")}>
+                          <Select
+                            value={writer.association}
+                            onValueChange={setWriterField("association")}
+                          >
                             <SelectTrigger>
                               <SelectValue placeholder="Selecionar" />
                             </SelectTrigger>
@@ -318,7 +374,12 @@ function RepertoirePage() {
                       </div>
                     </div>
                   ) : (
-                    <Button size="sm" variant="ghost" className="mt-2" onClick={() => setWriterFor(s.id)}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="mt-2"
+                      onClick={() => setWriterFor(s.id)}
+                    >
                       <Users className="mr-1 size-4" /> Adicionar autor / split
                     </Button>
                   )}

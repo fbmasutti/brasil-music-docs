@@ -23,13 +23,13 @@ export const Route = createFileRoute("/_authenticated/gerador-cards")({
   }),
   head: () => ({
     meta: [
-      { title: "Gerador de Posts — StageKit" },
+      { title: "Gerador de Cards — StageKit" },
       {
         name: "description",
         content:
           "Card de divulgação pronto pro Stories, com a foto, logo e paleta da formação do show.",
       },
-      { property: "og:title", content: "Gerador de Posts — StageKit" },
+      { property: "og:title", content: "Gerador de Cards — StageKit" },
       { property: "og:description", content: "Divulgue seu próximo show em segundos." },
     ],
   }),
@@ -98,7 +98,7 @@ function CardGeneratorPage() {
   if (upcoming.length === 0) {
     return (
       <div className="mx-auto max-w-3xl">
-        <PageHeader title="Gerador de Posts" subtitle="Card de divulgação pronto pro Stories." />
+        <PageHeader title="Gerador de Cards" subtitle="Card de divulgação pronto pro Stories." />
         <EmptyState
           icon={<CalendarDays className="size-5" />}
           title="Nenhum show futuro cadastrado"
@@ -116,7 +116,7 @@ function CardGeneratorPage() {
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader
-        title="Gerador de Posts"
+        title="Gerador de Cards"
         subtitle="Card de divulgação (Stories) com a identidade visual da formação do show."
         actions={
           <Button onClick={exportPng} disabled={!event || exporting} size="sm">
@@ -125,7 +125,7 @@ function CardGeneratorPage() {
             ) : (
               <Download className="mr-1 size-4" />
             )}
-            Baixar PNG
+            Exportar Imagem (PNG)
           </Button>
         }
       />

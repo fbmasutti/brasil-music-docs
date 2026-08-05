@@ -33,17 +33,17 @@ export const Route = createFileRoute("/")({
 const FEATURES = [
   {
     icon: FileSignature,
-    title: "Central de Documentos",
+    title: "Contratos & Recibos",
     text: "Contratos de show, RPA, carta de anuência, cessão de imagem e declarações de não vínculo com cláusulas de W.O., hora extra e ECAD.",
   },
   {
     icon: Sliders,
-    title: "Riders Técnicos",
+    title: "Rider & Mapa de Palco",
     text: "Mapa de palco, channel list, backline e hospitality em PDF limpo para enviar ao produtor de som.",
   },
   {
     icon: Music4,
-    title: "Repertório & ECAD",
+    title: "ECAD & Direitos Autorais",
     text: "Cadastro de obras com ISRC, ISWC, split de autoria e setlists prontas para relatório de execução pública.",
   },
   {
@@ -87,8 +87,9 @@ function Landing() {
           <span className="text-primary">antes do soundcheck</span>.
         </h1>
         <p className="mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
-          StageKit é o toolkit de gestão e burocracia para músicos e artistas profissionais: contratos, riders técnicos, direito autoral, editais de fomento e portfólio
-          para artistas independentes, bandas, professores de música e produtores no Brasil.
+          StageKit é o toolkit de gestão e burocracia para músicos e artistas profissionais:
+          contratos, riders técnicos, direito autoral, editais de fomento e portfólio para artistas
+          independentes, bandas, professores de música e produtores no Brasil.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Button asChild size="lg">

@@ -30,18 +30,18 @@ import {
   TextField,
 } from "@/components/ui-kit";
 import { useList, useInsert, useRemove } from "@/lib/queries";
-import { dateBR, money } from "@/lib/format";
+import { dateBR, money, cacheStatus, CACHE_STATUS } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/financeiro")({
   head: () => ({
     meta: [
-      { title: "Financeiro — StageKit" },
+      { title: "Financeiro & Cachês — StageKit" },
       {
         name: "description",
         content:
           "Cachês a receber, DRE rápido por show, rateio de equipe e fundo de manutenção de instrumentos.",
       },
-      { property: "og:title", content: "Financeiro — StageKit" },
+      { property: "og:title", content: "Financeiro & Cachês — StageKit" },
       {
         property: "og:description",
         content: "Quanto entra, quanto sai e quanto sobra de cada show.",
@@ -98,7 +98,7 @@ function FinanceiroPage() {
   const receivable = withFee.filter((e) => Number(e.fee_total) - Number(e.fee_deposit) > 0);
   const paidInFull = withFee.filter((e) => Number(e.fee_total) - Number(e.fee_deposit) <= 0);
 
-  // Fundo de manutenção
+  // Reserva financeira
   const fundBalance = fundEntries.reduce((sum, e) => sum + Number(e.amount), 0);
 
   // Temporada (semestre atual)
@@ -135,8 +135,8 @@ function FinanceiroPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-5">
       <PageHeader
-        title="Financeiro"
-        subtitle="Cachês pendentes, DRE rápido por show e fundo de manutenção de instrumentos."
+        title="Financeiro & Cachês"
+        subtitle="Cachês pendentes, DRE rápido por show e reserva financeira de instrumentos."
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -149,7 +149,7 @@ function FinanceiroPage() {
           icon={<Wallet className="size-5" />}
         />
         <StatCard
-          label="Fundo de manutenção"
+          label="Reserva financeira"
           value={money(fundBalance)}
           tone="cyan"
           icon={<PiggyBank className="size-5" />}
@@ -175,6 +175,7 @@ function FinanceiroPage() {
               const client = clients.find((c) => c.id === e.client_id);
               const saldo = Number(e.fee_total) - Number(e.fee_deposit);
               const message = `Oi! Passando pra lembrar do saldo do show "${e.title}" (${dateBR(e.event_date)}): ${money(saldo)}. Qualquer coisa me chama!`;
+              const status = CACHE_STATUS[cacheStatus(Number(e.fee_total), Number(e.fee_deposit))];
               return (
                 <li key={e.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                   <div className="min-w-0">
@@ -191,6 +192,9 @@ function FinanceiroPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
+                    <Badge variant="outline" className={status.tone}>
+                      {status.label}
+                    </Badge>
                     <span className="text-sm font-semibold text-warning">{money(saldo)}</span>
                     {client?.phone ? (
                       <Button asChild size="sm" variant="outline">
@@ -199,7 +203,7 @@ function FinanceiroPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          <MessageCircle className="mr-1 size-4" /> Lembrar via Zap
+                          <MessageCircle className="mr-1 size-4" /> Enviar Lembrete de Cachê
                         </a>
                       </Button>
                     ) : null}
@@ -228,9 +232,14 @@ function FinanceiroPage() {
                   </Link>
                   <p className="text-xs text-muted-foreground">{dateBR(e.event_date)}</p>
                 </div>
-                <span className="text-sm font-semibold text-success">
-                  {money(Number(e.fee_total))}
-                </span>
+                <div className="flex items-center gap-3">
+                  <Badge variant="outline" className={CACHE_STATUS.QUITADO.tone}>
+                    {CACHE_STATUS.QUITADO.label}
+                  </Badge>
+                  <span className="text-sm font-semibold text-success">
+                    {money(Number(e.fee_total))}
+                  </span>
+                </div>
               </li>
             ))}
           </ul>
@@ -372,7 +381,7 @@ function FinanceiroPage() {
                           </span>
                           {pixKey ? (
                             <Button variant="ghost" size="sm" onClick={() => copyPix(pixKey)}>
-                              <Copy className="mr-1 size-3.5" /> PIX
+                              <Copy className="mr-1 size-3.5" /> Copiar Chave PIX
                             </Button>
                           ) : null}
                         </li>
@@ -418,8 +427,8 @@ function FinanceiroPage() {
       </Section>
 
       <Section
-        title="Fundo de manutenção (Fundo de Luthier)"
-        description="Instrumentos e equipamentos, e o quanto já foi reservado pra manutenção."
+        title="Reserva Financeira"
+        description="Instrumentos e equipamentos, e o quanto já foi reservado pra manutenção em luthier."
       >
         <div className="grid gap-5 lg:grid-cols-2">
           <div>

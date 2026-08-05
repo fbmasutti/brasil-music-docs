@@ -148,7 +148,7 @@ function EventsPage() {
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
-        title="Shows & Eventos"
+        title="Agenda de Shows"
         subtitle="Cada evento vira um dossiê: contrato, rider, setlist e checklist de produção."
         actions={
           <Dialog open={open} onOpenChange={setOpen}>

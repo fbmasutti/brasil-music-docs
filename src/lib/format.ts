@@ -85,7 +85,8 @@ export function isValidCnpj(raw: string) {
   const v = raw.replace(/\D/g, "");
   if (v.length !== 14 || /^(\d)\1+$/.test(v)) return false;
   const calc = (len: number) => {
-    const weights = len === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    const weights =
+      len === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
     let sum = 0;
     for (let i = 0; i < len; i++) sum += Number(v[i]) * (weights[i] as number);
     const rest = sum % 11;
@@ -110,5 +111,22 @@ export const EVENT_STATUS: Record<string, { label: string; tone: string }> = {
   NEGOCIACAO: { label: "Em negociação", tone: "bg-cyan/15 text-cyan border-cyan/30" },
   CONFIRMADO: { label: "Confirmado", tone: "bg-success/15 text-success border-success/30" },
   REALIZADO: { label: "Realizado", tone: "bg-primary/15 text-primary border-primary/30" },
-  CANCELADO: { label: "Cancelado", tone: "bg-destructive/15 text-destructive border-destructive/30" },
+  CANCELADO: {
+    label: "Cancelado",
+    tone: "bg-destructive/15 text-destructive border-destructive/30",
+  },
 };
+
+export const CACHE_STATUS = {
+  PENDENTE: { label: "Pendente", tone: "bg-warning/15 text-warning border-warning/30" },
+  SINAL_PAGO: { label: "Sinal Pago", tone: "bg-cyan/15 text-cyan border-cyan/30" },
+  QUITADO: { label: "Quitado", tone: "bg-success/15 text-success border-success/30" },
+} as const;
+
+export type CacheStatusKey = keyof typeof CACHE_STATUS;
+
+export function cacheStatus(feeTotal: number, feeDeposit: number): CacheStatusKey {
+  if (feeDeposit <= 0) return "PENDENTE";
+  if (feeDeposit >= feeTotal) return "QUITADO";
+  return "SINAL_PAGO";
+}

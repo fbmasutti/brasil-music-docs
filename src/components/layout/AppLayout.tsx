@@ -34,22 +34,22 @@ type NavItem = { to: string; label: string; icon: LucideIcon };
 // Modo Diário: o que se usa no dia a dia de show. Fica sempre visível.
 const NAV_DAILY: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/magic-paste", label: "Colar do WhatsApp", icon: Wand2 },
-  { to: "/eventos", label: "Shows & Agenda", icon: CalendarDays },
-  { to: "/financeiro", label: "Cachês & Financeiro", icon: Wallet },
-  { to: "/documentos", label: "Gerador Rápido", icon: FileText },
-  { to: "/gerador-cards", label: "Gerador de Posts", icon: Megaphone },
+  { to: "/magic-paste", label: "Importar do WhatsApp", icon: Wand2 },
+  { to: "/eventos", label: "Agenda de Shows", icon: CalendarDays },
+  { to: "/financeiro", label: "Financeiro & Cachês", icon: Wallet },
+  { to: "/gerador-cards", label: "Gerador de Cards", icon: Megaphone },
 ];
 
 // Ferramentas Avançadas: cadastros e burocracia — configurados de vez em
 // quando, não todo dia. Ficam recolhidos por padrão.
 const NAV_PRO: NavItem[] = [
-  { to: "/formacoes", label: "Formações", icon: Layers },
+  { to: "/formacoes", label: "Formações & Presets", icon: Layers },
+  { to: "/documentos", label: "Contratos & Recibos", icon: FileText },
   { to: "/equipe", label: "Equipe", icon: Users },
   { to: "/contratantes", label: "Contratantes", icon: Building2 },
   { to: "/marca", label: "Marca & Brand Kit", icon: Palette },
   { to: "/riders", label: "Rider & Mapa de Palco", icon: Sliders },
-  { to: "/repertorio", label: "Minhas Músicas & ECAD", icon: Music4 },
+  { to: "/repertorio", label: "ECAD & Direitos Autorais", icon: Music4 },
   { to: "/portfolio", label: "Comprovação & Portfólio", icon: Images },
   { to: "/perfil", label: "Dados do Artista / Proponente", icon: Settings },
 ];

@@ -155,16 +155,22 @@ function Dashboard() {
           }
         >
           {upcoming.length === 0 ? (
-            <EmptyState
-              icon={<CalendarDays className="size-5" />}
-              title="Nenhum show na agenda"
-              description="Cadastre um evento para gerar contrato, rider e checklist automaticamente."
-              action={
-                <Button asChild size="sm">
-                  <Link to="/eventos">Cadastrar evento</Link>
-                </Button>
-              }
-            />
+            gettingStartedDone < gettingStarted.length ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                Sem compromissos por enquanto — comece pelos primeiros passos acima.
+              </p>
+            ) : (
+              <EmptyState
+                icon={<CalendarDays className="size-5" />}
+                title="Nenhum show na agenda"
+                description="Cadastre um evento para gerar contrato, rider e checklist automaticamente."
+                action={
+                  <Button asChild size="sm">
+                    <Link to="/eventos">Cadastrar evento</Link>
+                  </Button>
+                }
+              />
+            )
           ) : (
             <ul className="divide-y divide-border">
               {upcoming.slice(0, 6).map((e) => {
@@ -252,13 +258,13 @@ function Dashboard() {
         <QuickCard
           to="/magic-paste"
           icon={<Wand2 className="size-5" />}
-          label="Colar do WhatsApp"
+          label="Importar do WhatsApp"
           value="Extrair dados do show"
         />
         <QuickCard
           to="/gerador-cards"
           icon={<Megaphone className="size-5" />}
-          label="Gerador de Posts"
+          label="Gerador de Cards"
           value="Card de divulgação"
         />
         <QuickCard

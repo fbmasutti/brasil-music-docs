@@ -31,13 +31,13 @@ import type { Tables } from "@/integrations/supabase/types";
 export const Route = createFileRoute("/_authenticated/magic-paste")({
   head: () => ({
     meta: [
-      { title: "Colar do WhatsApp — StageKit" },
+      { title: "Importar do WhatsApp — StageKit" },
       {
         name: "description",
         content:
           "Cole a conversa do show e deixe o StageKit sugerir data, local, cachê e contato — você confere e confirma.",
       },
-      { property: "og:title", content: "Colar do WhatsApp — StageKit" },
+      { property: "og:title", content: "Importar do WhatsApp — StageKit" },
       {
         property: "og:description",
         content: "Da conversa pro evento, com revisão antes de salvar.",
@@ -179,7 +179,7 @@ function MagicPastePage() {
       : null;
     return (
       <div className="mx-auto max-w-2xl">
-        <PageHeader title="Colar do WhatsApp" subtitle="Show criado a partir da conversa." />
+        <PageHeader title="Importar do WhatsApp" subtitle="Show criado a partir da conversa." />
         <Section title="Evento salvo">
           <p className="mb-4 text-sm text-muted-foreground">
             <span className="font-medium text-foreground">{savedEvent.title}</span> —{" "}
@@ -219,7 +219,7 @@ function MagicPastePage() {
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader
-        title="Colar do WhatsApp"
+        title="Importar do WhatsApp"
         subtitle="Cole a conversa do fechamento do show — o StageKit sugere os campos, você confere antes de salvar."
       />
 
@@ -229,7 +229,7 @@ function MagicPastePage() {
           value={rawText}
           onChange={(e) => setRawText(e.target.value)}
           placeholder={
-            "Cole aqui a mensagem, por exemplo:\n\nShow dia 20 de agosto às 22h no Bar do Zé, em Belo Horizonte/MG. Cachê de R$ 1.500, sinal de R$ 500. Contato: João (31) 99888-7766"
+            "Cole aqui a conversa do WhatsApp para extrair data, local, cachê e contratante.\n\nExemplo: Show dia 20 de agosto às 22h no Bar do Zé, em Belo Horizonte/MG. Cachê de R$ 1.500, sinal de R$ 500. Contato: João (31) 99888-7766"
           }
         />
         <Button className="mt-3" onClick={extract} disabled={!rawText.trim()}>
@@ -350,7 +350,7 @@ function MagicPastePage() {
             disabled={!form.title || insertEvent.isPending}
             onClick={confirmSave}
           >
-            Confirmar e salvar evento
+            Salvar Evento
           </Button>
         </Section>
       ) : null}

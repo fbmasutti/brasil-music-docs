@@ -22,14 +22,17 @@ import { dateBR } from "@/lib/format";
 export const Route = createFileRoute("/_authenticated/documentos")({
   head: () => ({
     meta: [
-      { title: "Central de Documentos — contratos e declarações para músicos" },
+      { title: "Contratos & Recibos — StageKit" },
       {
         name: "description",
         content:
           "Gere contratos de show, RPA, cartas de anuência, cessão de imagem, split sheets e declarações em PDF.",
       },
-      { property: "og:title", content: "Central de Documentos — StageKit" },
-      { property: "og:description", content: "Modelos jurídicos prontos para a realidade da música brasileira." },
+      { property: "og:title", content: "Contratos & Recibos — StageKit" },
+      {
+        property: "og:description",
+        content: "Modelos jurídicos prontos para a realidade da música brasileira.",
+      },
     ],
   }),
   component: DocumentsPage,
@@ -38,7 +41,9 @@ export const Route = createFileRoute("/_authenticated/documentos")({
 function DocumentsPage() {
   const { data: profile } = useProfile();
   const { data: clients = [] } = useList("clients", { order: { column: "name" } });
-  const { data: events = [] } = useList("events", { order: { column: "event_date", ascending: false } });
+  const { data: events = [] } = useList("events", {
+    order: { column: "event_date", ascending: false },
+  });
   const { data: docs = [] } = useList("generated_documents", {
     order: { column: "created_at", ascending: false },
   });
@@ -83,7 +88,7 @@ function DocumentsPage() {
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
-        title="Central de Documentos"
+        title="Contratos & Recibos"
         subtitle="Escolha um modelo, complete os campos e exporte o PDF. Seus dados do Dados do Artista entram automaticamente."
         actions={
           <>
@@ -131,7 +136,6 @@ function DocumentsPage() {
                       <QuickAddClientDialog onCreated={setClientId} />
                     </div>
                     <Select value={clientId} onValueChange={setClientId}>
-
                       <SelectTrigger>
                         <SelectValue placeholder="Selecionar contratante" />
                       </SelectTrigger>
@@ -232,7 +236,12 @@ function DocumentsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline">{d.status}</Badge>
-                      <Button variant="ghost" size="icon" onClick={() => remove.mutate(d.id)} aria-label="Remover">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => remove.mutate(d.id)}
+                        aria-label="Remover"
+                      >
                         <Trash2 className="size-4" />
                       </Button>
                     </div>
@@ -257,7 +266,8 @@ function DocumentsPage() {
               />
             </div>
             <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-              <FileText className="size-3.5" /> PDF A4 gerado no seu navegador — nada é enviado sem você salvar.
+              <FileText className="size-3.5" /> PDF A4 gerado no seu navegador — nada é enviado sem
+              você salvar.
             </p>
           </Section>
         </div>
