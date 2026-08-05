@@ -18,9 +18,21 @@ const PATTERNS: { test: RegExp; message: string }[] = [
   },
 ];
 
+function extractMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  // Erros do Supabase/PostgREST (PostgrestError) são objetos simples com
+  // .message, não instâncias de Error — "instanceof Error" falha para eles
+  // e cai em String(error), que vira o inútil "[object Object]".
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message: unknown }).message;
+    if (typeof message === "string" && message) return message;
+  }
+  return String(error);
+}
+
 /** Traduz erros técnicos do Supabase/Postgres/PostgREST para uma mensagem que faz sentido pro usuário. */
 export function friendlyErrorMessage(error: unknown): string {
-  const raw = error instanceof Error ? error.message : String(error);
+  const raw = extractMessage(error);
   console.error(error);
   const match = PATTERNS.find((p) => p.test.test(raw));
   return match?.message ?? raw ?? "Algo deu errado. Tente novamente.";
