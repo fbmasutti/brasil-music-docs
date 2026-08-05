@@ -8,12 +8,12 @@ const PATTERNS: { test: RegExp; message: string }[] = [
       "O banco ainda não tem a estrutura desta área — falta aplicar o schema (supabase/APLICAR_NO_SUPABASE.sql) no Supabase.",
   },
   {
-    // Bucket ausente também é setup pendente, não erro do usuário: o script
-    // de schema cria as tabelas mas pode não conseguir tocar no schema
-    // storage, dependendo da permissão do projeto.
+    // Bucket ausente é setup pendente, não erro do usuário. O bucket é
+    // privado (a política do workspace bloqueia buckets públicos) e as
+    // imagens são servidas por URL assinada — ver src/lib/storage.ts.
     test: /bucket not found|nosuchbucket/i,
     message:
-      'Falta criar o bucket "artist-logos" (público) no storage — sem ele não é possível guardar fotos e logos.',
+      'O bucket "artist-logos" ainda não existe no storage — sem ele não é possível guardar fotos e logos.',
   },
   {
     test: /jwt expired|invalid refresh token|refresh_token_not_found|not authenticated|no autenticado/i,

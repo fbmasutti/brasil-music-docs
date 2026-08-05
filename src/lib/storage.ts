@@ -31,6 +31,7 @@ export async function uploadBrandAsset(file: File, userId: string, kind: "photo"
   const { data, error: signError } = await supabase.storage
     .from(BRAND_BUCKET)
     .createSignedUrl(path, TEN_YEARS);
-  if (signError || !data) throw new UploadError(signError?.message ?? "Falha ao gerar URL da imagem.");
+  if (signError || !data)
+    throw new UploadError(signError?.message ?? "Falha ao gerar URL da imagem.");
   return data.signedUrl;
 }
