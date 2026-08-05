@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Users, Plus, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Users, Plus, Trash2, Pencil } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -12,9 +12,21 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { PageHeader, Section, EmptyState, FieldGrid, TextField } from "@/components/ui-kit";
-import { useList, useInsert, useRemove } from "@/lib/queries";
+import { useList, useInsert, useUpdate, useRemove } from "@/lib/queries";
 import { maskCpfCnpj, maskPis } from "@/lib/format";
+import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/equipe")({
   head: () => ({
@@ -35,7 +47,7 @@ export const Route = createFileRoute("/_authenticated/equipe")({
   component: TeamPage,
 });
 
-const emptyMember = {
+const empty = {
   name: "",
   role: "",
   instrument: "",
@@ -49,90 +61,44 @@ const emptyMember = {
   notes: "",
 };
 
+type FormValues = typeof empty;
+
+function toFormValues(m: Tables<"team_members">): FormValues {
+  return {
+    name: m.name ?? "",
+    role: m.role ?? "",
+    instrument: m.instrument ?? "",
+    cpf: m.cpf ?? "",
+    rg: m.rg ?? "",
+    pis_pasep: m.pis_pasep ?? "",
+    phone: m.phone ?? "",
+    email: m.email ?? "",
+    pix_key: m.pix_key ?? "",
+    food_restrictions: m.food_restrictions ?? "",
+    notes: m.notes ?? "",
+  };
+}
+
 function TeamPage() {
   const { data: members = [] } = useList("team_members", { order: { column: "name" } });
-  const insert = useInsert("team_members", "Integrante adicionado");
   const remove = useRemove("team_members", "Integrante removido");
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState(emptyMember);
-
-  const set = (k: keyof typeof emptyMember) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
         title="Equipe"
         subtitle="Músicos, técnicos e produtores que viajam com você — reaproveitados em riders e rooming lists."
-      />
-      <Section
-        title={`Equipe (${members.length})`}
         actions={
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
+          <MemberFormDialog
+            trigger={
               <Button size="sm">
                 <Plus className="mr-1 size-4" /> Adicionar
               </Button>
-            </DialogTrigger>
-            <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Novo integrante</DialogTitle>
-              </DialogHeader>
-              <FieldGrid>
-                <TextField label="Nome completo" value={form.name} onChange={set("name")} />
-                <TextField
-                  label="Função"
-                  value={form.role}
-                  onChange={set("role")}
-                  placeholder="Baixista, técnico de som..."
-                />
-                <TextField
-                  label="Instrumento"
-                  value={form.instrument}
-                  onChange={set("instrument")}
-                />
-                <TextField
-                  label="CPF"
-                  value={form.cpf}
-                  onChange={(v) => set("cpf")(maskCpfCnpj(v))}
-                />
-                <TextField label="RG" value={form.rg} onChange={set("rg")} />
-                <TextField
-                  label="PIS/PASEP"
-                  value={form.pis_pasep}
-                  onChange={(v) => set("pis_pasep")(maskPis(v))}
-                />
-                <TextField label="Telefone" value={form.phone} onChange={set("phone")} />
-                <TextField label="E-mail" value={form.email} onChange={set("email")} />
-                <TextField label="Chave PIX" value={form.pix_key} onChange={set("pix_key")} />
-                <TextField
-                  label="Restrições alimentares"
-                  value={form.food_restrictions}
-                  onChange={set("food_restrictions")}
-                />
-              </FieldGrid>
-              <div className="space-y-2">
-                <Label>Observações</Label>
-                <Textarea value={form.notes} onChange={(e) => set("notes")(e.target.value)} />
-              </div>
-              <DialogFooter>
-                <Button
-                  disabled={!form.name || insert.isPending}
-                  onClick={() =>
-                    insert.mutate(form, {
-                      onSuccess: () => {
-                        setForm(emptyMember);
-                        setOpen(false);
-                      },
-                    })
-                  }
-                >
-                  Salvar integrante
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+            }
+          />
         }
-      >
+      />
+      <Section title={`Equipe (${members.length})`}>
         {members.length === 0 ? (
           <EmptyState
             icon={<Users className="size-5" />}
@@ -143,7 +109,7 @@ function TeamPage() {
           <ul className="divide-y divide-border">
             {members.map((m) => (
               <li key={m.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                <div>
+                <div className="min-w-0">
                   <p className="font-medium">{m.name}</p>
                   <p className="text-xs text-muted-foreground">
                     {[m.role, m.instrument, m.cpf, m.pix_key].filter(Boolean).join(" · ") ||
@@ -153,19 +119,125 @@ function TeamPage() {
                     <p className="text-xs text-warning">Alimentação: {m.food_restrictions}</p>
                   ) : null}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => remove.mutate(m.id)}
-                  aria-label="Remover"
-                >
-                  <Trash2 className="size-4" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <MemberFormDialog
+                    member={m}
+                    trigger={
+                      <Button variant="ghost" size="icon" aria-label={`Editar ${m.name}`}>
+                        <Pencil className="size-4" />
+                      </Button>
+                    }
+                  />
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" aria-label={`Remover ${m.name}`}>
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Remover "{m.name}"?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          A pessoa sai também das formações em que estava, junto com o rateio
+                          configurado. Essa ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          className={buttonVariants({ variant: "destructive" })}
+                          onClick={() => remove.mutate(m.id)}
+                        >
+                          Remover integrante
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </li>
             ))}
           </ul>
         )}
       </Section>
     </div>
+  );
+}
+
+/** Formulário único de integrante — cria um novo ou edita um existente. */
+function MemberFormDialog({
+  member,
+  trigger,
+}: {
+  member?: Tables<"team_members"> | undefined;
+  trigger: ReactNode;
+}) {
+  const isEdit = Boolean(member);
+  const insert = useInsert("team_members", "Integrante adicionado");
+  const update = useUpdate("team_members", "Integrante atualizado");
+
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState<FormValues>(member ? toFormValues(member) : empty);
+  const set = (k: keyof FormValues) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  useEffect(() => {
+    if (open) setForm(member ? toFormValues(member) : empty);
+  }, [open, member]);
+
+  function save() {
+    if (isEdit && member) {
+      update.mutate({ id: member.id, values: form }, { onSuccess: () => setOpen(false) });
+      return;
+    }
+    insert.mutate(form, {
+      onSuccess: () => {
+        setForm(empty);
+        setOpen(false);
+      },
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{isEdit ? "Editar integrante" : "Novo integrante"}</DialogTitle>
+        </DialogHeader>
+        <FieldGrid>
+          <TextField label="Nome completo" value={form.name} onChange={set("name")} />
+          <TextField
+            label="Função"
+            value={form.role}
+            onChange={set("role")}
+            placeholder="Baixista, técnico de som..."
+          />
+          <TextField label="Instrumento" value={form.instrument} onChange={set("instrument")} />
+          <TextField label="CPF" value={form.cpf} onChange={(v) => set("cpf")(maskCpfCnpj(v))} />
+          <TextField label="RG" value={form.rg} onChange={set("rg")} />
+          <TextField
+            label="PIS/PASEP"
+            value={form.pis_pasep}
+            onChange={(v) => set("pis_pasep")(maskPis(v))}
+          />
+          <TextField label="Telefone" value={form.phone} onChange={set("phone")} />
+          <TextField label="E-mail" value={form.email} onChange={set("email")} />
+          <TextField label="Chave PIX" value={form.pix_key} onChange={set("pix_key")} />
+          <TextField
+            label="Restrições alimentares"
+            value={form.food_restrictions}
+            onChange={set("food_restrictions")}
+          />
+        </FieldGrid>
+        <div className="space-y-2">
+          <Label>Observações</Label>
+          <Textarea value={form.notes} onChange={(e) => set("notes")(e.target.value)} />
+        </div>
+        <DialogFooter>
+          <Button disabled={!form.name || insert.isPending || update.isPending} onClick={save}>
+            {isEdit ? "Salvar alterações" : "Salvar integrante"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

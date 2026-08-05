@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Building2, Plus, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Building2, Plus, Trash2, Pencil } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,9 +10,21 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { PageHeader, Section, EmptyState, FieldGrid, TextField } from "@/components/ui-kit";
-import { useList, useInsert, useRemove } from "@/lib/queries";
+import { useList, useInsert, useUpdate, useRemove } from "@/lib/queries";
 import { maskCpfCnpj } from "@/lib/format";
+import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/contratantes")({
   head: () => ({
@@ -33,7 +45,7 @@ export const Route = createFileRoute("/_authenticated/contratantes")({
   component: ContractorsPage,
 });
 
-const emptyClient = {
+const empty = {
   name: "",
   legal_name: "",
   doc: "",
@@ -46,75 +58,43 @@ const emptyClient = {
   notes: "",
 };
 
+type FormValues = typeof empty;
+
+function toFormValues(c: Tables<"clients">): FormValues {
+  return {
+    name: c.name ?? "",
+    legal_name: c.legal_name ?? "",
+    doc: c.doc ?? "",
+    contact_name: c.contact_name ?? "",
+    phone: c.phone ?? "",
+    email: c.email ?? "",
+    address: c.address ?? "",
+    city: c.city ?? "",
+    state: c.state ?? "",
+    notes: c.notes ?? "",
+  };
+}
+
 function ContractorsPage() {
   const { data: clients = [] } = useList("clients", { order: { column: "name" } });
-  const insert = useInsert("clients", "Contratante adicionado");
   const remove = useRemove("clients", "Contratante removido");
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState(emptyClient);
-  const set = (k: keyof typeof emptyClient) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
         title="Contratantes"
         subtitle="Casas de show, prefeituras, produtores e escolas — reaproveitados em contratos e recibos."
-      />
-      <Section
-        title={`Contratantes (${clients.length})`}
         actions={
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
+          <ClientFormDialog
+            trigger={
               <Button size="sm">
                 <Plus className="mr-1 size-4" /> Adicionar
               </Button>
-            </DialogTrigger>
-            <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Novo contratante</DialogTitle>
-              </DialogHeader>
-              <FieldGrid>
-                <TextField label="Nome / Fantasia" value={form.name} onChange={set("name")} />
-                <TextField
-                  label="Razão social"
-                  value={form.legal_name}
-                  onChange={set("legal_name")}
-                />
-                <TextField
-                  label="CPF/CNPJ"
-                  value={form.doc}
-                  onChange={(v) => set("doc")(maskCpfCnpj(v))}
-                />
-                <TextField
-                  label="Responsável"
-                  value={form.contact_name}
-                  onChange={set("contact_name")}
-                />
-                <TextField label="Telefone" value={form.phone} onChange={set("phone")} />
-                <TextField label="E-mail" value={form.email} onChange={set("email")} />
-                <TextField label="Endereço" value={form.address} onChange={set("address")} />
-                <TextField label="Cidade" value={form.city} onChange={set("city")} />
-                <TextField label="UF" value={form.state} onChange={set("state")} />
-              </FieldGrid>
-              <DialogFooter>
-                <Button
-                  disabled={!form.name || insert.isPending}
-                  onClick={() =>
-                    insert.mutate(form, {
-                      onSuccess: () => {
-                        setForm(emptyClient);
-                        setOpen(false);
-                      },
-                    })
-                  }
-                >
-                  Salvar contratante
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+            }
+          />
         }
-      >
+      />
+      <Section title={`Contratantes (${clients.length})`}>
         {clients.length === 0 ? (
           <EmptyState
             icon={<Building2 className="size-5" />}
@@ -125,7 +105,7 @@ function ContractorsPage() {
           <ul className="divide-y divide-border">
             {clients.map((c) => (
               <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                <div>
+                <div className="min-w-0">
                   <p className="font-medium">{c.name}</p>
                   <p className="text-xs text-muted-foreground">
                     {[c.legal_name, c.doc, c.city && `${c.city}${c.state ? `/${c.state}` : ""}`]
@@ -133,19 +113,111 @@ function ContractorsPage() {
                       .join(" · ") || "sem detalhes"}
                   </p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => remove.mutate(c.id)}
-                  aria-label="Remover"
-                >
-                  <Trash2 className="size-4" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <ClientFormDialog
+                    client={c}
+                    trigger={
+                      <Button variant="ghost" size="icon" aria-label={`Editar ${c.name}`}>
+                        <Pencil className="size-4" />
+                      </Button>
+                    }
+                  />
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" aria-label={`Remover ${c.name}`}>
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Remover "{c.name}"?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Os shows e documentos ligados a este contratante ficam sem vínculo, mas
+                          não são apagados. Essa ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          className={buttonVariants({ variant: "destructive" })}
+                          onClick={() => remove.mutate(c.id)}
+                        >
+                          Remover contratante
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </li>
             ))}
           </ul>
         )}
       </Section>
     </div>
+  );
+}
+
+/** Formulário único de contratante — cria um novo ou edita um existente. */
+function ClientFormDialog({
+  client,
+  trigger,
+}: {
+  client?: Tables<"clients"> | undefined;
+  trigger: ReactNode;
+}) {
+  const isEdit = Boolean(client);
+  const insert = useInsert("clients", "Contratante adicionado");
+  const update = useUpdate("clients", "Contratante atualizado");
+
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState<FormValues>(client ? toFormValues(client) : empty);
+  const set = (k: keyof FormValues) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  useEffect(() => {
+    if (open) setForm(client ? toFormValues(client) : empty);
+  }, [open, client]);
+
+  function save() {
+    if (isEdit && client) {
+      update.mutate({ id: client.id, values: form }, { onSuccess: () => setOpen(false) });
+      return;
+    }
+    insert.mutate(form, {
+      onSuccess: () => {
+        setForm(empty);
+        setOpen(false);
+      },
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{isEdit ? "Editar contratante" : "Novo contratante"}</DialogTitle>
+        </DialogHeader>
+        <FieldGrid>
+          <TextField label="Nome / Fantasia" value={form.name} onChange={set("name")} />
+          <TextField label="Razão social" value={form.legal_name} onChange={set("legal_name")} />
+          <TextField
+            label="CPF/CNPJ"
+            value={form.doc}
+            onChange={(v) => set("doc")(maskCpfCnpj(v))}
+          />
+          <TextField label="Responsável" value={form.contact_name} onChange={set("contact_name")} />
+          <TextField label="Telefone" value={form.phone} onChange={set("phone")} />
+          <TextField label="E-mail" value={form.email} onChange={set("email")} />
+          <TextField label="Endereço" value={form.address} onChange={set("address")} />
+          <TextField label="Cidade" value={form.city} onChange={set("city")} />
+          <TextField label="UF" value={form.state} onChange={set("state")} />
+        </FieldGrid>
+        <DialogFooter>
+          <Button disabled={!form.name || insert.isPending || update.isPending} onClick={save}>
+            {isEdit ? "Salvar alterações" : "Salvar contratante"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

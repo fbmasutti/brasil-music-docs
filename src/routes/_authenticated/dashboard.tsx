@@ -262,7 +262,7 @@ function Dashboard() {
         />
       </div>
 
-      <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-6">
+      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <QuickCard
           to="/magic-paste"
           icon={<Wand2 className="size-5" />}
