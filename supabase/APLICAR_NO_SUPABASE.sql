@@ -158,22 +158,54 @@ CREATE INDEX IF NOT EXISTS technical_riders_formation_idx ON public.technical_ri
 -- ------------------------------------------------------- STORAGE (Brand Kit)
 -- As policies de storage.objects já existiam, mas os buckets nunca foram
 -- criados — por isso todo upload de foto/logo falhava.
--- artist-logos é público de propósito: essas imagens vão embutidas nos cards
--- de divulgação, que existem para ser publicados.
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES ('artist-logos', 'artist-logos', true, 5242880,
-        ARRAY['image/png','image/jpeg','image/webp','image/svg+xml'])
-ON CONFLICT (id) DO UPDATE
-  SET public = true,
-      file_size_limit = EXCLUDED.file_size_limit,
-      allowed_mime_types = EXCLUDED.allowed_mime_types;
+--
+-- Isto vai dentro de um bloco com tratamento de exceção DE PROPÓSITO: em
+-- alguns projetos o schema storage é restrito, e um erro aqui abortaria a
+-- transação inteira, desfazendo todas as tabelas criadas acima. Se falhar,
+-- o script segue e avisa — dá para criar os buckets pela UI (Storage > New
+-- bucket), que é o que realmente importa: 'artist-logos' PÚBLICO.
+DO $$
+BEGIN
+  INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+  VALUES ('artist-logos', 'artist-logos', true, 5242880,
+          ARRAY['image/png','image/jpeg','image/webp','image/svg+xml'])
+  ON CONFLICT (id) DO UPDATE
+    SET public = true,
+        file_size_limit = EXCLUDED.file_size_limit,
+        allowed_mime_types = EXCLUDED.allowed_mime_types;
 
--- Estes seguem privados: guardam contratos com CPF/CNPJ e material do usuário.
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('clippings-media', 'clippings-media', false),
-       ('generated-pdfs', 'generated-pdfs', false)
-ON CONFLICT (id) DO NOTHING;
+  -- Estes seguem privados: guardam contratos com CPF/CNPJ e material do usuário.
+  INSERT INTO storage.buckets (id, name, public)
+  VALUES ('clippings-media', 'clippings-media', false),
+         ('generated-pdfs', 'generated-pdfs', false)
+  ON CONFLICT (id) DO NOTHING;
+
+  RAISE NOTICE 'Buckets de storage criados/atualizados com sucesso.';
+EXCEPTION WHEN OTHERS THEN
+  RAISE WARNING 'Buckets NAO criados (%). Crie manualmente em Storage > New bucket: artist-logos com Public marcado.', SQLERRM;
+END $$;
 
 -- Recarrega o cache de schema do PostgREST para as tabelas novas aparecerem
 -- na API imediatamente, sem esperar o reload automático.
 NOTIFY pgrst, 'reload schema';
+
+-- =====================================================================
+-- VERIFICAÇÃO — o resultado desta consulta aparece na aba Results.
+-- Todas as linhas devem mostrar "OK". Se alguma mostrar "FALTANDO",
+-- me mande o print que eu diagnostico.
+-- =====================================================================
+SELECT 'tabela: ' || t AS item,
+       CASE WHEN to_regclass('public.' || t) IS NOT NULL THEN 'OK' ELSE 'FALTANDO' END AS status
+FROM unnest(ARRAY['formations','formation_members','brand_kits','gear_checklist_items',
+                  'event_expenses','gear_assets','maintenance_fund_entries']) AS t
+UNION ALL
+SELECT 'coluna: events.' || c,
+       CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                         WHERE table_schema='public' AND table_name='events' AND column_name=c)
+            THEN 'OK' ELSE 'FALTANDO' END
+FROM unnest(ARRAY['formation_id','full_address']) AS c
+UNION ALL
+SELECT 'bucket: ' || b,
+       CASE WHEN EXISTS (SELECT 1 FROM storage.buckets WHERE id=b) THEN 'OK' ELSE 'FALTANDO' END
+FROM unnest(ARRAY['artist-logos']) AS b
+ORDER BY 1;
