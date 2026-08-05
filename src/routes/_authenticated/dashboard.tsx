@@ -13,6 +13,7 @@ import {
   Circle,
   Megaphone,
   Wand2,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -118,6 +119,13 @@ function Dashboard() {
           title="Primeiros passos"
           description={`${gettingStartedDone}/${gettingStarted.length} concluídos`}
           className="mb-5"
+          actions={
+            <Button asChild size="sm">
+              <Link to="/comecar">
+                <Sparkles className="mr-1 size-4" /> Configurar em 4 passos
+              </Link>
+            </Button>
+          }
         >
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {gettingStarted.map((step) => (

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedComecarRouteImport } from './routes/_authenticated/comecar'
 import { Route as AuthenticatedContratantesRouteImport } from './routes/_authenticated/contratantes'
 import { Route as AuthenticatedContratoRouteImport } from './routes/_authenticated/contrato'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -42,6 +43,11 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedComecarRoute = AuthenticatedComecarRouteImport.update({
+  id: '/comecar',
+  path: '/comecar',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedContratantesRoute =
   AuthenticatedContratantesRouteImport.update({
@@ -131,6 +137,7 @@ const AuthenticatedEventosEventIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/comecar': typeof AuthenticatedComecarRoute
   '/contratantes': typeof AuthenticatedContratantesRoute
   '/contrato': typeof AuthenticatedContratoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -151,6 +158,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/comecar': typeof AuthenticatedComecarRoute
   '/contratantes': typeof AuthenticatedContratantesRoute
   '/contrato': typeof AuthenticatedContratoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/comecar': typeof AuthenticatedComecarRoute
   '/_authenticated/contratantes': typeof AuthenticatedContratantesRoute
   '/_authenticated/contrato': typeof AuthenticatedContratoRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/comecar'
     | '/contratantes'
     | '/contrato'
     | '/dashboard'
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/comecar'
     | '/contratantes'
     | '/contrato'
     | '/dashboard'
@@ -236,6 +247,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/comecar'
     | '/_authenticated/contratantes'
     | '/_authenticated/contrato'
     | '/_authenticated/dashboard'
@@ -282,6 +294,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/comecar': {
+      id: '/_authenticated/comecar'
+      path: '/comecar'
+      fullPath: '/comecar'
+      preLoaderRoute: typeof AuthenticatedComecarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/contratantes': {
       id: '/_authenticated/contratantes'
@@ -399,6 +418,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedComecarRoute: typeof AuthenticatedComecarRoute
   AuthenticatedContratantesRoute: typeof AuthenticatedContratantesRoute
   AuthenticatedContratoRoute: typeof AuthenticatedContratoRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -418,6 +438,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedComecarRoute: AuthenticatedComecarRoute,
   AuthenticatedContratantesRoute: AuthenticatedContratantesRoute,
   AuthenticatedContratoRoute: AuthenticatedContratoRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
