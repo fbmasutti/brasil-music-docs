@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   Users,
+  Building2,
   FileText,
   CalendarDays,
   Music4,
@@ -26,7 +27,8 @@ const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/perfil", label: "Dados do Artista / Proponente", icon: Settings },
   { to: "/marca", label: "Marca & Brand Kit", icon: Palette },
-  { to: "/equipe", label: "Equipe & Ficha Técnica", icon: Users },
+  { to: "/equipe", label: "Equipe", icon: Users },
+  { to: "/contratantes", label: "Contratantes", icon: Building2 },
   { to: "/formacoes", label: "Formações", icon: Layers },
   { to: "/eventos", label: "Shows & Agenda", icon: CalendarDays },
   { to: "/documentos", label: "Gerador Rápido", icon: FileText },
@@ -34,7 +36,6 @@ const NAV = [
   { to: "/riders", label: "Rider & Mapa de Palco", icon: Sliders },
   { to: "/portfolio", label: "Comprovação & Portfólio", icon: Images },
 ] as const;
-
 
 export function AppLayout() {
   const [open, setOpen] = useState(false);
@@ -92,7 +93,12 @@ export function AppLayout() {
           <aside className="relative flex w-72 flex-col border-r border-sidebar-border bg-sidebar py-5">
             <div className="flex items-center justify-between px-5">
               <Brand compact />
-              <Button variant="ghost" size="icon" onClick={() => setOpen(false)} aria-label="Fechar menu">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setOpen(false)}
+                aria-label="Fechar menu"
+              >
                 <X className="size-4" />
               </Button>
             </div>
@@ -118,13 +124,17 @@ export function AppLayout() {
               {profile?.stage_name || "StageKit"}
             </p>
             <p className="truncate text-xs text-muted-foreground">
-              {profile?.entity_type === "PJ" ? "Pessoa Jurídica (MEI/LTDA)" : "Pessoa Física / MEI"} ·{" "}
-              {profile?.city || "cidade não informada"}
+              {profile?.entity_type === "PJ" ? "Pessoa Jurídica (MEI/LTDA)" : "Pessoa Física / MEI"}{" "}
+              · {profile?.city || "cidade não informada"}
             </p>
           </div>
-          <Button asChild size="sm" className="hidden sm:inline-flex">
-            <Link to="/documentos">Gerar documento</Link>
-          </Button>
+          {pathname !== "/dashboard" ? (
+            <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+              <Link to="/dashboard">
+                <LayoutDashboard className="mr-1 size-4" /> Painel
+              </Link>
+            </Button>
+          ) : null}
         </header>
         <main className="flex-1 px-4 py-6 md:px-8 md:py-10">
           <Outlet />
@@ -148,7 +158,13 @@ function Brand({ compact }: { compact?: boolean | undefined }) {
   );
 }
 
-function UserBox({ profileName, onSignOut }: { profileName?: string | undefined; onSignOut: () => void }) {
+function UserBox({
+  profileName,
+  onSignOut,
+}: {
+  profileName?: string | undefined;
+  onSignOut: () => void;
+}) {
   return (
     <div className="mt-4 border-t border-sidebar-border px-3 pt-4">
       <div className="flex items-center gap-2 rounded-lg px-2 py-1.5">

@@ -12,11 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedContratantesRouteImport } from './routes/_authenticated/contratantes'
 import { Route as AuthenticatedContratoRouteImport } from './routes/_authenticated/contrato'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated/documentos'
 import { Route as AuthenticatedEquipeRouteImport } from './routes/_authenticated/equipe'
 import { Route as AuthenticatedFormacoesRouteImport } from './routes/_authenticated/formacoes'
+import { Route as AuthenticatedGeradorCardsRouteImport } from './routes/_authenticated/gerador-cards'
 import { Route as AuthenticatedMarcaRouteImport } from './routes/_authenticated/marca'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedPortfolioRouteImport } from './routes/_authenticated/portfolio'
@@ -39,6 +41,12 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedContratantesRoute =
+  AuthenticatedContratantesRouteImport.update({
+    id: '/contratantes',
+    path: '/contratantes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedContratoRoute = AuthenticatedContratoRouteImport.update({
   id: '/contrato',
   path: '/contrato',
@@ -64,6 +72,12 @@ const AuthenticatedFormacoesRoute = AuthenticatedFormacoesRouteImport.update({
   path: '/formacoes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedGeradorCardsRoute =
+  AuthenticatedGeradorCardsRouteImport.update({
+    id: '/gerador-cards',
+    path: '/gerador-cards',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMarcaRoute = AuthenticatedMarcaRouteImport.update({
   id: '/marca',
   path: '/marca',
@@ -105,11 +119,13 @@ const AuthenticatedEventosEventIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/contratantes': typeof AuthenticatedContratantesRoute
   '/contrato': typeof AuthenticatedContratoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
   '/equipe': typeof AuthenticatedEquipeRoute
   '/formacoes': typeof AuthenticatedFormacoesRoute
+  '/gerador-cards': typeof AuthenticatedGeradorCardsRoute
   '/marca': typeof AuthenticatedMarcaRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/portfolio': typeof AuthenticatedPortfolioRoute
@@ -121,11 +137,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/contratantes': typeof AuthenticatedContratantesRoute
   '/contrato': typeof AuthenticatedContratoRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
   '/equipe': typeof AuthenticatedEquipeRoute
   '/formacoes': typeof AuthenticatedFormacoesRoute
+  '/gerador-cards': typeof AuthenticatedGeradorCardsRoute
   '/marca': typeof AuthenticatedMarcaRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/portfolio': typeof AuthenticatedPortfolioRoute
@@ -139,11 +157,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/contratantes': typeof AuthenticatedContratantesRoute
   '/_authenticated/contrato': typeof AuthenticatedContratoRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/documentos': typeof AuthenticatedDocumentosRoute
   '/_authenticated/equipe': typeof AuthenticatedEquipeRoute
   '/_authenticated/formacoes': typeof AuthenticatedFormacoesRoute
+  '/_authenticated/gerador-cards': typeof AuthenticatedGeradorCardsRoute
   '/_authenticated/marca': typeof AuthenticatedMarcaRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/portfolio': typeof AuthenticatedPortfolioRoute
@@ -157,11 +177,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/contratantes'
     | '/contrato'
     | '/dashboard'
     | '/documentos'
     | '/equipe'
     | '/formacoes'
+    | '/gerador-cards'
     | '/marca'
     | '/perfil'
     | '/portfolio'
@@ -173,11 +195,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/contratantes'
     | '/contrato'
     | '/dashboard'
     | '/documentos'
     | '/equipe'
     | '/formacoes'
+    | '/gerador-cards'
     | '/marca'
     | '/perfil'
     | '/portfolio'
@@ -190,11 +214,13 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/contratantes'
     | '/_authenticated/contrato'
     | '/_authenticated/dashboard'
     | '/_authenticated/documentos'
     | '/_authenticated/equipe'
     | '/_authenticated/formacoes'
+    | '/_authenticated/gerador-cards'
     | '/_authenticated/marca'
     | '/_authenticated/perfil'
     | '/_authenticated/portfolio'
@@ -233,6 +259,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/contratantes': {
+      id: '/_authenticated/contratantes'
+      path: '/contratantes'
+      fullPath: '/contratantes'
+      preLoaderRoute: typeof AuthenticatedContratantesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/contrato': {
       id: '/_authenticated/contrato'
       path: '/contrato'
@@ -266,6 +299,13 @@ declare module '@tanstack/react-router' {
       path: '/formacoes'
       fullPath: '/formacoes'
       preLoaderRoute: typeof AuthenticatedFormacoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/gerador-cards': {
+      id: '/_authenticated/gerador-cards'
+      path: '/gerador-cards'
+      fullPath: '/gerador-cards'
+      preLoaderRoute: typeof AuthenticatedGeradorCardsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/marca': {
@@ -321,11 +361,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedContratantesRoute: typeof AuthenticatedContratantesRoute
   AuthenticatedContratoRoute: typeof AuthenticatedContratoRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRoute
   AuthenticatedEquipeRoute: typeof AuthenticatedEquipeRoute
   AuthenticatedFormacoesRoute: typeof AuthenticatedFormacoesRoute
+  AuthenticatedGeradorCardsRoute: typeof AuthenticatedGeradorCardsRoute
   AuthenticatedMarcaRoute: typeof AuthenticatedMarcaRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedPortfolioRoute: typeof AuthenticatedPortfolioRoute
@@ -336,11 +378,13 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedContratantesRoute: AuthenticatedContratantesRoute,
   AuthenticatedContratoRoute: AuthenticatedContratoRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDocumentosRoute: AuthenticatedDocumentosRoute,
   AuthenticatedEquipeRoute: AuthenticatedEquipeRoute,
   AuthenticatedFormacoesRoute: AuthenticatedFormacoesRoute,
+  AuthenticatedGeradorCardsRoute: AuthenticatedGeradorCardsRoute,
   AuthenticatedMarcaRoute: AuthenticatedMarcaRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedPortfolioRoute: AuthenticatedPortfolioRoute,
