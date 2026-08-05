@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Layers, Plus, Trash2, UserPlus, Luggage } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -19,6 +19,17 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { PageHeader, Section, EmptyState, FieldGrid, TextField } from "@/components/ui-kit";
 import { useList, useInsert, useRemove, useUpdate } from "@/lib/queries";
 import { money } from "@/lib/format";
@@ -53,6 +64,7 @@ function FormationsPage() {
   const { data: gearItems = [] } = useList("gear_checklist_items", {
     order: { column: "position" },
   });
+  const { data: allRiders = [] } = useList("technical_riders");
 
   const insertFormation = useInsert("formations", "Formação criada");
   const removeFormation = useRemove("formations", "Formação removida");
@@ -149,6 +161,7 @@ function FormationsPage() {
             {formations.map((f) => {
               const roster = members.filter((m) => m.formation_id === f.id);
               const gear = gearItems.filter((g) => g.formation_id === f.id);
+              const riders = allRiders.filter((r) => r.formation_id === f.id);
               return (
                 <li key={f.id} className="rounded-lg border border-border p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
@@ -161,14 +174,40 @@ function FormationsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {f.is_default ? <Badge variant="outline">Padrão</Badge> : null}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeFormation.mutate(f.id)}
-                        aria-label="Remover formação"
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" aria-label="Remover formação">
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remover "{f.name}"?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {roster.length > 0
+                                ? `${roster.length} integrante(s) do roster e `
+                                : ""}
+                              {gear.length > 0
+                                ? `${gear.length} item(ns) da mala de gig `
+                                : "a mala de gig "}
+                              serão apagados junto com a formação.
+                              {riders.length > 0
+                                ? ` ${riders.length} rider(s) vinculado(s) não serão apagados, só ficam sem formação.`
+                                : ""}{" "}
+                              Essa ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              className={buttonVariants({ variant: "destructive" })}
+                              onClick={() => removeFormation.mutate(f.id)}
+                            >
+                              Remover formação
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
 
