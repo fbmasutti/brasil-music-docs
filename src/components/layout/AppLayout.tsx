@@ -30,31 +30,52 @@ import { useProfile } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 
 type NavItem = { to: string; label: string; icon: LucideIcon };
+type NavGroup = { key: string; label: string; items: NavItem[]; defaultOpen: boolean };
 
-// Modo Diário: o que se usa no dia a dia de show. Fica sempre visível.
-const NAV_DAILY: NavItem[] = [
+// Nível 1: o que se usa no dia a dia de show. Sempre visível.
+const NAV_TOP: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/magic-paste", label: "Importar do WhatsApp", icon: Wand2 },
   { to: "/eventos", label: "Agenda de Shows", icon: CalendarDays },
   { to: "/financeiro", label: "Financeiro & Cachês", icon: Wallet },
-  { to: "/gerador-cards", label: "Gerador de Cards", icon: Megaphone },
 ];
 
-// Ferramentas Avançadas: cadastros e burocracia — configurados de vez em
-// quando, não todo dia. Ficam recolhidos por padrão.
-const NAV_PRO: NavItem[] = [
-  { to: "/formacoes", label: "Formações & Presets", icon: Layers },
-  { to: "/documentos", label: "Contratos & Recibos", icon: FileText },
-  { to: "/equipe", label: "Equipe", icon: Users },
-  { to: "/contratantes", label: "Contratantes", icon: Building2 },
-  { to: "/marca", label: "Marca & Brand Kit", icon: Palette },
-  { to: "/riders", label: "Rider & Mapa de Palco", icon: Sliders },
-  { to: "/repertorio", label: "ECAD & Direitos Autorais", icon: Music4 },
-  { to: "/portfolio", label: "Comprovação & Portfólio", icon: Images },
-  { to: "/perfil", label: "Dados do Artista / Proponente", icon: Settings },
+// Nível 2: agrupado por intenção, para o menu não virar uma lista de 13 itens.
+const NAV_GROUPS: NavGroup[] = [
+  {
+    key: "docs",
+    label: "Documentos",
+    defaultOpen: true,
+    items: [
+      { to: "/documentos", label: "Contratos & Recibos", icon: FileText },
+      { to: "/riders", label: "Rider & Mapa de Palco", icon: Sliders },
+      { to: "/repertorio", label: "ECAD & Direitos Autorais", icon: Music4 },
+    ],
+  },
+  {
+    key: "divulgacao",
+    label: "Divulgação",
+    defaultOpen: false,
+    items: [
+      { to: "/gerador-cards", label: "Gerador de Posts", icon: Megaphone },
+      { to: "/marca", label: "Marca & Brand Kit", icon: Palette },
+      { to: "/portfolio", label: "Comprovação & Portfólio", icon: Images },
+    ],
+  },
+  {
+    key: "cadastros",
+    label: "Cadastros",
+    defaultOpen: false,
+    items: [
+      { to: "/formacoes", label: "Formações", icon: Layers },
+      { to: "/equipe", label: "Equipe", icon: Users },
+      { to: "/contratantes", label: "Contratantes", icon: Building2 },
+      { to: "/perfil", label: "Dados do Artista", icon: Settings },
+    ],
+  },
 ];
 
-const PRO_NAV_STORAGE_KEY = "stagekit:nav-pro-open";
+const NAV_STORAGE_PREFIX = "stagekit:nav-group:";
 
 export function AppLayout() {
   const [open, setOpen] = useState(false);
@@ -63,19 +84,6 @@ export function AppLayout() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const isProActive = NAV_PRO.some(
-    (item) => pathname === item.to || pathname.startsWith(`${item.to}/`),
-  );
-  const [proOpen, setProOpen] = useState(() => localStorage.getItem(PRO_NAV_STORAGE_KEY) === "1");
-
-  useEffect(() => {
-    if (isProActive) setProOpen(true);
-  }, [isProActive]);
-
-  useEffect(() => {
-    localStorage.setItem(PRO_NAV_STORAGE_KEY, proOpen ? "1" : "0");
-  }, [proOpen]);
-
   async function handleSignOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
@@ -83,8 +91,12 @@ export function AppLayout() {
     navigate({ to: "/auth", replace: true });
   }
 
+  function isItemActive(to: string) {
+    return pathname === to || pathname.startsWith(`${to}/`);
+  }
+
   function renderNavItem(item: NavItem) {
-    const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
+    const active = isItemActive(item.to);
     return (
       <Link
         key={item.to}
@@ -105,17 +117,15 @@ export function AppLayout() {
 
   const nav = (
     <nav className="flex flex-1 flex-col gap-1 px-3">
-      {NAV_DAILY.map(renderNavItem)}
-
-      <Collapsible open={proOpen} onOpenChange={setProOpen} className="mt-3">
-        <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50 transition-colors hover:text-sidebar-foreground/80">
-          <span>Ferramentas Avançadas</span>
-          <ChevronDown className={cn("size-3.5 transition-transform", proOpen && "rotate-180")} />
-        </CollapsibleTrigger>
-        <CollapsibleContent className="flex flex-col gap-1 pt-1">
-          {NAV_PRO.map(renderNavItem)}
-        </CollapsibleContent>
-      </Collapsible>
+      {NAV_TOP.map(renderNavItem)}
+      {NAV_GROUPS.map((group) => (
+        <NavGroupBlock
+          key={group.key}
+          group={group}
+          hasActive={group.items.some((item) => isItemActive(item.to))}
+          renderItem={renderNavItem}
+        />
+      ))}
     </nav>
   );
 
@@ -134,7 +144,7 @@ export function AppLayout() {
             onClick={() => setOpen(false)}
             aria-hidden
           />
-          <aside className="relative flex w-72 flex-col border-r border-sidebar-border bg-sidebar py-5">
+          <aside className="relative flex w-72 flex-col overflow-y-auto border-r border-sidebar-border bg-sidebar py-5">
             <div className="flex items-center justify-between px-5">
               <Brand compact />
               <Button
@@ -185,6 +195,44 @@ export function AppLayout() {
         </main>
       </div>
     </div>
+  );
+}
+
+function NavGroupBlock({
+  group,
+  hasActive,
+  renderItem,
+}: {
+  group: NavGroup;
+  hasActive: boolean;
+  renderItem: (item: NavItem) => React.ReactNode;
+}) {
+  const storageKey = `${NAV_STORAGE_PREFIX}${group.key}`;
+  const [open, setOpen] = useState(() => {
+    const stored = typeof localStorage === "undefined" ? null : localStorage.getItem(storageKey);
+    if (stored === "1") return true;
+    if (stored === "0") return false;
+    return group.defaultOpen;
+  });
+
+  useEffect(() => {
+    if (hasActive) setOpen(true);
+  }, [hasActive]);
+
+  useEffect(() => {
+    localStorage.setItem(storageKey, open ? "1" : "0");
+  }, [open, storageKey]);
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen} className="mt-3">
+      <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50 transition-colors hover:text-sidebar-foreground/80">
+        <span>{group.label}</span>
+        <ChevronDown className={cn("size-3.5 transition-transform", open && "rotate-180")} />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="flex flex-col gap-1 pt-1">
+        {group.items.map(renderItem)}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
