@@ -8,6 +8,14 @@ const PATTERNS: { test: RegExp; message: string }[] = [
       "O banco ainda não tem a estrutura desta área — falta aplicar o schema (supabase/APLICAR_NO_SUPABASE.sql) no Supabase.",
   },
   {
+    // Bucket ausente também é setup pendente, não erro do usuário: o script
+    // de schema cria as tabelas mas pode não conseguir tocar no schema
+    // storage, dependendo da permissão do projeto.
+    test: /bucket not found|nosuchbucket/i,
+    message:
+      'Falta criar o bucket "artist-logos" (público) no storage — sem ele não é possível guardar fotos e logos.',
+  },
+  {
     test: /jwt expired|invalid refresh token|refresh_token_not_found|not authenticated|no autenticado/i,
     message: "Sua sessão expirou. Atualize a página e entre novamente.",
   },
