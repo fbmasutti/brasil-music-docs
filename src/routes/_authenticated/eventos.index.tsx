@@ -29,6 +29,7 @@ import { PageHeader, Section, EmptyState, FieldGrid, TextField } from "@/compone
 import { useList, useInsert, useRemove } from "@/lib/queries";
 import { dateBR, money, EVENT_STATUS } from "@/lib/format";
 import { buildGoogleCalendarUrl, downloadICS } from "@/lib/calendar-link";
+import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/eventos/")({
   head: () => ({
@@ -36,7 +37,8 @@ export const Route = createFileRoute("/_authenticated/eventos/")({
       { title: "Agenda de shows e eventos — StageKit" },
       {
         name: "description",
-        content: "Controle de shows com cachê, sinal, vencimentos, status de negociação e checklist de produção.",
+        content:
+          "Controle de shows com cachê, sinal, vencimentos, status de negociação e checklist de produção.",
       },
       { property: "og:title", content: "Agenda de shows e eventos — StageKit" },
       { property: "og:description", content: "Cachês, sinais e checklists de cada apresentação." },
@@ -76,16 +78,29 @@ const DEFAULT_CHECKLIST: { label: string; phase: string }[] = [
 ];
 
 function EventsPage() {
-  const { data: events = [] } = useList("events", { order: { column: "event_date", ascending: false } });
+  const { data: events = [] } = useList("events", {
+    order: { column: "event_date", ascending: false },
+  });
   const { data: clients = [] } = useList("clients", { order: { column: "name" } });
   const { data: formations = [] } = useList("formations", { order: { column: "name" } });
-  const { data: gearItems = [] } = useList("gear_checklist_items", { order: { column: "position" } });
+  const { data: gearItems = [] } = useList("gear_checklist_items", {
+    order: { column: "position" },
+  });
   const insertEvent = useInsert("events", "Evento criado");
   const insertTask = useInsert("event_checklists", "");
   const remove = useRemove("events", "Evento removido");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(empty);
   const set = (k: keyof typeof empty) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  const today = new Date().toISOString().slice(0, 10);
+  const future = events
+    .filter((e) => (e.event_date ?? "") >= today)
+    .sort((a, b) => (a.event_date ?? "").localeCompare(b.event_date ?? ""));
+  const noDate = events.filter((e) => !e.event_date);
+  const past = events
+    .filter((e) => e.event_date && e.event_date < today)
+    .sort((a, b) => (b.event_date ?? "").localeCompare(a.event_date ?? ""));
 
   function save() {
     const formationGear = gearItems.filter((g) => g.formation_id === form.formation_id);
@@ -219,16 +234,51 @@ function EventsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <TextField label="Data" value={form.event_date} onChange={set("event_date")} type="date" />
+                <TextField
+                  label="Data"
+                  value={form.event_date}
+                  onChange={set("event_date")}
+                  type="date"
+                />
                 <TextField label="Local / Casa" value={form.venue} onChange={set("venue")} />
-                <TextField label="Passagem de som" value={form.soundcheck_time} onChange={set("soundcheck_time")} type="time" />
-                <TextField label="Início do show" value={form.start_time} onChange={set("start_time")} type="time" />
+                <TextField
+                  label="Passagem de som"
+                  value={form.soundcheck_time}
+                  onChange={set("soundcheck_time")}
+                  type="time"
+                />
+                <TextField
+                  label="Início do show"
+                  value={form.start_time}
+                  onChange={set("start_time")}
+                  type="time"
+                />
                 <TextField label="Cidade" value={form.city} onChange={set("city")} />
                 <TextField label="UF" value={form.state} onChange={set("state")} />
-                <TextField label="Cachê total (R$)" value={form.fee_total} onChange={set("fee_total")} type="number" />
-                <TextField label="Sinal (R$)" value={form.fee_deposit} onChange={set("fee_deposit")} type="number" />
-                <TextField label="Vencimento do sinal" value={form.deposit_due_date} onChange={set("deposit_due_date")} type="date" />
-                <TextField label="Vencimento do saldo" value={form.balance_due_date} onChange={set("balance_due_date")} type="date" />
+                <TextField
+                  label="Cachê total (R$)"
+                  value={form.fee_total}
+                  onChange={set("fee_total")}
+                  type="number"
+                />
+                <TextField
+                  label="Sinal (R$)"
+                  value={form.fee_deposit}
+                  onChange={set("fee_deposit")}
+                  type="number"
+                />
+                <TextField
+                  label="Vencimento do sinal"
+                  value={form.deposit_due_date}
+                  onChange={set("deposit_due_date")}
+                  type="date"
+                />
+                <TextField
+                  label="Vencimento do saldo"
+                  value={form.balance_due_date}
+                  onChange={set("balance_due_date")}
+                  type="date"
+                />
               </FieldGrid>
               <DialogFooter>
                 <Button disabled={!form.title || insertEvent.isPending} onClick={save}>
@@ -240,70 +290,109 @@ function EventsPage() {
         }
       />
 
-      <Section title={`Agenda (${events.length})`}>
-        {events.length === 0 ? (
+      {events.length === 0 ? (
+        <Section title="Agenda (0)">
           <EmptyState
             icon={<CalendarDays className="size-5" />}
             title="Nenhum evento cadastrado"
             description="Crie o primeiro evento para gerar contrato, rider e checklist de produção."
           />
-        ) : (
-          <ul className="divide-y divide-border">
-            {events.map((e) => {
-              const status = EVENT_STATUS[e.status] ?? { label: e.status, tone: "" };
-              const client = clients.find((c) => c.id === e.client_id);
-              const googleCalendarUrl = buildGoogleCalendarUrl(e);
-              return (
-                <li key={e.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                  <div className="min-w-0">
-                    <Link
-                      to="/eventos/$eventId"
-                      params={{ eventId: e.id }}
-                      className="font-medium hover:text-primary"
-                    >
-                      {e.title}
-                    </Link>
-                    <p className="text-xs text-muted-foreground">
-                      {dateBR(e.event_date)} ·{" "}
-                      {[e.venue, e.city && `${e.city}${e.state ? `/${e.state}` : ""}`].filter(Boolean).join(", ") ||
-                        "local a definir"}
-                      {client ? ` · ${client.name}` : ""}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold">{money(Number(e.fee_total))}</span>
-                    <Badge variant="outline" className={status.tone}>
-                      {status.label}
-                    </Badge>
-                    {googleCalendarUrl ? (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" aria-label="Adicionar à agenda">
-                            <CalendarPlus className="size-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
-                            <a href={googleCalendarUrl} target="_blank" rel="noopener noreferrer">
-                              Google Calendar
-                            </a>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => downloadICS(e)}>
-                            Baixar .ics (Apple/Outlook)
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    ) : null}
-                    <Button variant="ghost" size="icon" onClick={() => remove.mutate(e.id)} aria-label="Remover">
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </Section>
+        </Section>
+      ) : (
+        <div className="space-y-5">
+          {future.length ? (
+            <Section title={`Próximos shows (${future.length})`}>
+              <EventList events={future} clients={clients} onRemove={(id) => remove.mutate(id)} />
+            </Section>
+          ) : null}
+          {noDate.length ? (
+            <Section
+              title={`Sem data definida (${noDate.length})`}
+              description="Shows em negociação, ainda sem data fechada."
+            >
+              <EventList events={noDate} clients={clients} onRemove={(id) => remove.mutate(id)} />
+            </Section>
+          ) : null}
+          {past.length ? (
+            <Section title={`Já realizados (${past.length})`}>
+              <EventList events={past} clients={clients} onRemove={(id) => remove.mutate(id)} />
+            </Section>
+          ) : null}
+        </div>
+      )}
     </div>
+  );
+}
+
+function EventList({
+  events,
+  clients,
+  onRemove,
+}: {
+  events: Tables<"events">[];
+  clients: Tables<"clients">[];
+  onRemove: (id: string) => void;
+}) {
+  return (
+    <ul className="divide-y divide-border">
+      {events.map((e) => {
+        const status = EVENT_STATUS[e.status] ?? { label: e.status, tone: "" };
+        const client = clients.find((c) => c.id === e.client_id);
+        const googleCalendarUrl = buildGoogleCalendarUrl(e);
+        return (
+          <li key={e.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+            <div className="min-w-0">
+              <Link
+                to="/eventos/$eventId"
+                params={{ eventId: e.id }}
+                className="font-medium hover:text-primary"
+              >
+                {e.title}
+              </Link>
+              <p className="text-xs text-muted-foreground">
+                {e.event_date ? dateBR(e.event_date) : "Data a definir"} ·{" "}
+                {[e.venue, e.city && `${e.city}${e.state ? `/${e.state}` : ""}`]
+                  .filter(Boolean)
+                  .join(", ") || "local a definir"}
+                {client ? ` · ${client.name}` : ""}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold">{money(Number(e.fee_total))}</span>
+              <Badge variant="outline" className={status.tone}>
+                {status.label}
+              </Badge>
+              {googleCalendarUrl ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" aria-label="Adicionar à agenda">
+                      <CalendarPlus className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <a href={googleCalendarUrl} target="_blank" rel="noopener noreferrer">
+                        Google Calendar
+                      </a>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => downloadICS(e)}>
+                      Baixar .ics (Apple/Outlook)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : null}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onRemove(e.id)}
+                aria-label="Remover"
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

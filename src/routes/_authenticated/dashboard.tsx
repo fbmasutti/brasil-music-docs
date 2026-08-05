@@ -50,7 +50,11 @@ function Dashboard() {
   const { data: checklists = [] } = useList("event_checklists");
 
   const today = new Date().toISOString().slice(0, 10);
-  const upcoming = events.filter((e) => (e.event_date ?? "") >= today && e.status !== "CANCELADO");
+  // Eventos sem data ainda contam como "próximos" (ex.: show em negociação,
+  // data não fechada) — só ficam no fim da lista, não somem da agenda.
+  const upcoming = events
+    .filter((e) => e.status !== "CANCELADO" && (!e.event_date || e.event_date >= today))
+    .sort((a, b) => (a.event_date ?? "9999-99-99").localeCompare(b.event_date ?? "9999-99-99"));
   const confirmed = upcoming.filter((e) => e.status === "CONFIRMADO");
   const receivable = upcoming.reduce(
     (sum, e) => sum + (Number(e.fee_total) - Number(e.fee_deposit)),
@@ -133,7 +137,7 @@ function Dashboard() {
                         {e.title}
                       </Link>
                       <p className="text-xs text-muted-foreground">
-                        {dateBR(e.event_date)} ·{" "}
+                        {e.event_date ? dateBR(e.event_date) : "Data a definir"} ·{" "}
                         {[e.venue, e.city].filter(Boolean).join(", ") || "local a definir"}
                       </p>
                     </div>
