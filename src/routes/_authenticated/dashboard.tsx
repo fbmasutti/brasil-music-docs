@@ -51,16 +51,17 @@ function Dashboard() {
   });
   const { data: songs = [] } = useList("songs");
   const { data: team = [] } = useList("team_members");
-  const { data: formations = [] } = useList("formations");
+  const { data: brandKits = [] } = useList("brand_kits");
   const { data: checklists = [] } = useList("event_checklists");
 
+  // Apenas o que é permanente do artista — nada de "cadastre um show" ou
+  // "cadastre equipe": o toolkit já funciona sem isso.
   const gettingStarted = [
-    { label: "Complete seu perfil (CPF/CNPJ)", done: Boolean(profile?.cpf_cnpj), to: "/perfil" },
-    { label: "Cadastre sua equipe", done: team.length > 0, to: "/equipe" },
-    { label: "Crie uma formação", done: formations.length > 0, to: "/formacoes" },
-    { label: "Cadastre um show", done: events.length > 0, to: "/eventos" },
+    { label: "Nome artístico e CPF/CNPJ", done: Boolean(profile?.cpf_cnpj), to: "/perfil" },
+    { label: "Identidade visual (Brand Kit)", done: brandKits.length > 0, to: "/marca" },
   ];
   const gettingStartedDone = gettingStarted.filter((s) => s.done).length;
+
 
   const today = new Date().toISOString().slice(0, 10);
   // Eventos sem data ainda contam como "próximos" (ex.: show em negociação,
