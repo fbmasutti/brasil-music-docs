@@ -19,6 +19,7 @@ import {
   Palette,
   Megaphone,
   Wand2,
+  Wallet,
   ChevronDown,
   type LucideIcon,
 } from "lucide-react";
@@ -35,6 +36,7 @@ const NAV_DAILY: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/magic-paste", label: "Colar do WhatsApp", icon: Wand2 },
   { to: "/eventos", label: "Shows & Agenda", icon: CalendarDays },
+  { to: "/financeiro", label: "Cachês & Financeiro", icon: Wallet },
   { to: "/documentos", label: "Gerador Rápido", icon: FileText },
   { to: "/gerador-cards", label: "Gerador de Posts", icon: Megaphone },
 ];

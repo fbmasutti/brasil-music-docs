@@ -17,6 +17,7 @@ import { Route as AuthenticatedContratoRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated/documentos'
 import { Route as AuthenticatedEquipeRouteImport } from './routes/_authenticated/equipe'
+import { Route as AuthenticatedFinanceiroRouteImport } from './routes/_authenticated/financeiro'
 import { Route as AuthenticatedFormacoesRouteImport } from './routes/_authenticated/formacoes'
 import { Route as AuthenticatedGeradorCardsRouteImport } from './routes/_authenticated/gerador-cards'
 import { Route as AuthenticatedMagicPasteRouteImport } from './routes/_authenticated/magic-paste'
@@ -66,6 +67,11 @@ const AuthenticatedDocumentosRoute = AuthenticatedDocumentosRouteImport.update({
 const AuthenticatedEquipeRoute = AuthenticatedEquipeRouteImport.update({
   id: '/equipe',
   path: '/equipe',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFinanceiroRoute = AuthenticatedFinanceiroRouteImport.update({
+  id: '/financeiro',
+  path: '/financeiro',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedFormacoesRoute = AuthenticatedFormacoesRouteImport.update({
@@ -130,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
   '/equipe': typeof AuthenticatedEquipeRoute
+  '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/formacoes': typeof AuthenticatedFormacoesRoute
   '/gerador-cards': typeof AuthenticatedGeradorCardsRoute
   '/magic-paste': typeof AuthenticatedMagicPasteRoute
@@ -149,6 +156,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
   '/equipe': typeof AuthenticatedEquipeRoute
+  '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/formacoes': typeof AuthenticatedFormacoesRoute
   '/gerador-cards': typeof AuthenticatedGeradorCardsRoute
   '/magic-paste': typeof AuthenticatedMagicPasteRoute
@@ -170,6 +178,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/documentos': typeof AuthenticatedDocumentosRoute
   '/_authenticated/equipe': typeof AuthenticatedEquipeRoute
+  '/_authenticated/financeiro': typeof AuthenticatedFinanceiroRoute
   '/_authenticated/formacoes': typeof AuthenticatedFormacoesRoute
   '/_authenticated/gerador-cards': typeof AuthenticatedGeradorCardsRoute
   '/_authenticated/magic-paste': typeof AuthenticatedMagicPasteRoute
@@ -191,6 +200,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/documentos'
     | '/equipe'
+    | '/financeiro'
     | '/formacoes'
     | '/gerador-cards'
     | '/magic-paste'
@@ -210,6 +220,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/documentos'
     | '/equipe'
+    | '/financeiro'
     | '/formacoes'
     | '/gerador-cards'
     | '/magic-paste'
@@ -230,6 +241,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/documentos'
     | '/_authenticated/equipe'
+    | '/_authenticated/financeiro'
     | '/_authenticated/formacoes'
     | '/_authenticated/gerador-cards'
     | '/_authenticated/magic-paste'
@@ -304,6 +316,13 @@ declare module '@tanstack/react-router' {
       path: '/equipe'
       fullPath: '/equipe'
       preLoaderRoute: typeof AuthenticatedEquipeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/financeiro': {
+      id: '/_authenticated/financeiro'
+      path: '/financeiro'
+      fullPath: '/financeiro'
+      preLoaderRoute: typeof AuthenticatedFinanceiroRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/formacoes': {
@@ -385,6 +404,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRoute
   AuthenticatedEquipeRoute: typeof AuthenticatedEquipeRoute
+  AuthenticatedFinanceiroRoute: typeof AuthenticatedFinanceiroRoute
   AuthenticatedFormacoesRoute: typeof AuthenticatedFormacoesRoute
   AuthenticatedGeradorCardsRoute: typeof AuthenticatedGeradorCardsRoute
   AuthenticatedMagicPasteRoute: typeof AuthenticatedMagicPasteRoute
@@ -403,6 +423,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDocumentosRoute: AuthenticatedDocumentosRoute,
   AuthenticatedEquipeRoute: AuthenticatedEquipeRoute,
+  AuthenticatedFinanceiroRoute: AuthenticatedFinanceiroRoute,
   AuthenticatedFormacoesRoute: AuthenticatedFormacoesRoute,
   AuthenticatedGeradorCardsRoute: AuthenticatedGeradorCardsRoute,
   AuthenticatedMagicPasteRoute: AuthenticatedMagicPasteRoute,

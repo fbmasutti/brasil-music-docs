@@ -9,6 +9,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PageHeader, Section, StatCard } from "@/components/ui-kit";
 import { useList, useUpdate } from "@/lib/queries";
 import { dateBR, money, EVENT_STATUS } from "@/lib/format";
@@ -20,10 +27,14 @@ export const Route = createFileRoute("/_authenticated/eventos/$eventId")({
       { title: "Dossiê do evento — StageKit" },
       {
         name: "description",
-        content: "Checklist de pré-produção, palco e pós-show, cachês e documentos vinculados ao evento.",
+        content:
+          "Checklist de pré-produção, palco e pós-show, cachês e documentos vinculados ao evento.",
       },
       { property: "og:title", content: "Dossiê do evento — StageKit" },
-      { property: "og:description", content: "Tudo o que precisa estar pronto antes, durante e depois do show." },
+      {
+        property: "og:description",
+        content: "Tudo o que precisa estar pronto antes, durante e depois do show.",
+      },
     ],
   }),
   component: EventDetail,
@@ -87,9 +98,23 @@ function EventDetail() {
         subtitle={`${dateBR(event.event_date)} · ${[event.venue, event.city].filter(Boolean).join(", ") || "local a definir"}${client ? ` · ${client.name}` : ""}${formation ? ` · ${formation.name}` : ""}`}
         actions={
           <>
-            <Badge variant="outline" className={status.tone}>
-              {status.label}
-            </Badge>
+            <Select
+              value={event.status}
+              onValueChange={(value) =>
+                updateEvent.mutate({ id: event.id, values: { status: value } })
+              }
+            >
+              <SelectTrigger className={`h-8 w-auto gap-1.5 border ${status.tone}`}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(EVENT_STATUS).map(([value, meta]) => (
+                  <SelectItem key={value} value={value}>
+                    {meta.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {googleCalendarUrl ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -128,13 +153,17 @@ function EventDetail() {
         <StatCard
           label="Sinal"
           value={money(Number(event.fee_deposit))}
-          hint={event.deposit_due_date ? `vence ${dateBR(event.deposit_due_date)}` : "sem vencimento"}
+          hint={
+            event.deposit_due_date ? `vence ${dateBR(event.deposit_due_date)}` : "sem vencimento"
+          }
           tone="cyan"
         />
         <StatCard
           label="Saldo"
           value={money(Number(event.fee_total) - Number(event.fee_deposit))}
-          hint={event.balance_due_date ? `vence ${dateBR(event.balance_due_date)}` : "sem vencimento"}
+          hint={
+            event.balance_due_date ? `vence ${dateBR(event.balance_due_date)}` : "sem vencimento"
+          }
           tone="amber"
         />
         <StatCard label="Checklist" value={`${done}/${tasks.length}`} tone="muted" />
@@ -156,7 +185,11 @@ function EventDetail() {
                           updateTask.mutate({ id: task.id, values: { done: Boolean(checked) } })
                         }
                       />
-                      <span className={task.done ? "text-sm text-muted-foreground line-through" : "text-sm"}>
+                      <span
+                        className={
+                          task.done ? "text-sm text-muted-foreground line-through" : "text-sm"
+                        }
+                      >
                         {task.label}
                       </span>
                     </li>
@@ -172,7 +205,9 @@ function EventDetail() {
             <button
               type="button"
               className="flex items-center gap-2 text-sm"
-              onClick={() => updateEvent.mutate({ id: event.id, values: { ecad_sent: !event.ecad_sent } })}
+              onClick={() =>
+                updateEvent.mutate({ id: event.id, values: { ecad_sent: !event.ecad_sent } })
+              }
             >
               {event.ecad_sent ? (
                 <CheckCircle2 className="size-4 text-success" />
@@ -185,7 +220,9 @@ function EventDetail() {
 
           <Section title={`Documentos (${docs.length})`}>
             {docs.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhum documento vinculado a este evento.</p>
+              <p className="text-sm text-muted-foreground">
+                Nenhum documento vinculado a este evento.
+              </p>
             ) : (
               <ul className="space-y-2 text-sm">
                 {docs.map((d) => (
@@ -206,7 +243,9 @@ function EventDetail() {
                 {riders.map((r) => (
                   <li key={r.id} className="truncate">
                     {r.name}
-                    {!r.event_id ? <span className="text-muted-foreground"> · padrão da formação</span> : null}
+                    {!r.event_id ? (
+                      <span className="text-muted-foreground"> · padrão da formação</span>
+                    ) : null}
                   </li>
                 ))}
               </ul>
