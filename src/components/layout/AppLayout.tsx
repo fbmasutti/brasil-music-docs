@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -17,25 +17,40 @@ import {
   Radio,
   Layers,
   Palette,
+  Megaphone,
+  ChevronDown,
+  type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 
-const NAV = [
+type NavItem = { to: string; label: string; icon: LucideIcon };
+
+// Modo Diário: o que se usa no dia a dia de show. Fica sempre visível.
+const NAV_DAILY: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/perfil", label: "Dados do Artista / Proponente", icon: Settings },
-  { to: "/marca", label: "Marca & Brand Kit", icon: Palette },
-  { to: "/equipe", label: "Equipe", icon: Users },
-  { to: "/contratantes", label: "Contratantes", icon: Building2 },
-  { to: "/formacoes", label: "Formações", icon: Layers },
   { to: "/eventos", label: "Shows & Agenda", icon: CalendarDays },
   { to: "/documentos", label: "Gerador Rápido", icon: FileText },
-  { to: "/repertorio", label: "Minhas Músicas & ECAD", icon: Music4 },
+  { to: "/gerador-cards", label: "Gerador de Posts", icon: Megaphone },
+];
+
+// Ferramentas Avançadas: cadastros e burocracia — configurados de vez em
+// quando, não todo dia. Ficam recolhidos por padrão.
+const NAV_PRO: NavItem[] = [
+  { to: "/formacoes", label: "Formações", icon: Layers },
+  { to: "/equipe", label: "Equipe", icon: Users },
+  { to: "/contratantes", label: "Contratantes", icon: Building2 },
+  { to: "/marca", label: "Marca & Brand Kit", icon: Palette },
   { to: "/riders", label: "Rider & Mapa de Palco", icon: Sliders },
+  { to: "/repertorio", label: "Minhas Músicas & ECAD", icon: Music4 },
   { to: "/portfolio", label: "Comprovação & Portfólio", icon: Images },
-] as const;
+  { to: "/perfil", label: "Dados do Artista / Proponente", icon: Settings },
+];
+
+const PRO_NAV_STORAGE_KEY = "stagekit:nav-pro-open";
 
 export function AppLayout() {
   const [open, setOpen] = useState(false);
@@ -44,6 +59,19 @@ export function AppLayout() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  const isProActive = NAV_PRO.some(
+    (item) => pathname === item.to || pathname.startsWith(`${item.to}/`),
+  );
+  const [proOpen, setProOpen] = useState(() => localStorage.getItem(PRO_NAV_STORAGE_KEY) === "1");
+
+  useEffect(() => {
+    if (isProActive) setProOpen(true);
+  }, [isProActive]);
+
+  useEffect(() => {
+    localStorage.setItem(PRO_NAV_STORAGE_KEY, proOpen ? "1" : "0");
+  }, [proOpen]);
+
   async function handleSignOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
@@ -51,27 +79,39 @@ export function AppLayout() {
     navigate({ to: "/auth", replace: true });
   }
 
+  function renderNavItem(item: NavItem) {
+    const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
+    return (
+      <Link
+        key={item.to}
+        to={item.to}
+        onClick={() => setOpen(false)}
+        className={cn(
+          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+          active
+            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+        )}
+      >
+        <item.icon className={cn("size-4 shrink-0", active && "text-primary")} />
+        <span className="truncate">{item.label}</span>
+      </Link>
+    );
+  }
+
   const nav = (
     <nav className="flex flex-1 flex-col gap-1 px-3">
-      {NAV.map((item) => {
-        const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
-        return (
-          <Link
-            key={item.to}
-            to={item.to}
-            onClick={() => setOpen(false)}
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-              active
-                ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
-            )}
-          >
-            <item.icon className={cn("size-4 shrink-0", active && "text-primary")} />
-            <span className="truncate">{item.label}</span>
-          </Link>
-        );
-      })}
+      {NAV_DAILY.map(renderNavItem)}
+
+      <Collapsible open={proOpen} onOpenChange={setProOpen} className="mt-3">
+        <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50 transition-colors hover:text-sidebar-foreground/80">
+          <span>Ferramentas Avançadas</span>
+          <ChevronDown className={cn("size-3.5 transition-transform", proOpen && "rotate-180")} />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="flex flex-col gap-1 pt-1">
+          {NAV_PRO.map(renderNavItem)}
+        </CollapsibleContent>
+      </Collapsible>
     </nav>
   );
 
