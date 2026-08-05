@@ -1,8 +1,11 @@
 const PATTERNS: { test: RegExp; message: string }[] = [
   {
-    test: /schema cache|relation .* does not exist|undefined_table/i,
+    // Não sugerir "tente mais tarde": tabela/coluna faltando é migration
+    // pendente, e isso nunca se resolve sozinho com o tempo. A mensagem
+    // precisa apontar para a ação real.
+    test: /schema cache|relation .* does not exist|column .* does not exist|undefined_table|undefined_column/i,
     message:
-      "Essa área do app ainda está sendo configurada no servidor. Tente de novo em alguns minutos.",
+      "O banco ainda não tem a estrutura desta área — falta aplicar o schema (supabase/APLICAR_NO_SUPABASE.sql) no Supabase.",
   },
   {
     test: /jwt expired|invalid refresh token|refresh_token_not_found|not authenticated|no autenticado/i,
