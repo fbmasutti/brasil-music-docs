@@ -84,12 +84,22 @@ function toISODate(year: number, month: number, day: number): string | null {
   return `${pad(year, 4)}-${pad(month)}-${pad(day)}`;
 }
 
-/** Sem ano explícito, assume o próximo ocorrência dessa data (hoje ou futuro). */
+const YEAR_ROLLOVER_THRESHOLD_DAYS = 60;
+
+/**
+ * Sem ano explícito, assume o ano atual — a não ser que a data já tenha
+ * ficado bem para trás (mais de 60 dias), aí assume a próxima ocorrência.
+ * Só "poucos dias no passado" não deve pular pro ano que vem: alguém
+ * pode estar colando uma conversa de alguns dias atrás, ou só testando
+ * uma data qualquer sem se preocupar com o calendário exato.
+ */
 function inferYear(month: number, day: number): number {
   const now = new Date();
-  const candidate = new Date(now.getFullYear(), month - 1, day);
+  const year = now.getFullYear();
+  const candidate = new Date(year, month - 1, day);
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  return candidate < today ? now.getFullYear() + 1 : now.getFullYear();
+  const daysPast = (today.getTime() - candidate.getTime()) / 86_400_000;
+  return daysPast > YEAR_ROLLOVER_THRESHOLD_DAYS ? year + 1 : year;
 }
 
 function parseDate(text: string): string | null {
