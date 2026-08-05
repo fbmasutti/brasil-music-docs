@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { friendlyErrorMessage } from "@/lib/friendly-error";
 
 // Generic table helpers: the generated Supabase types cannot express a
 // table-name generic, so use a loose client inside these helpers only.
@@ -119,7 +120,7 @@ export function useInsert<T extends TableName>(table: T, successMessage = "Salvo
       invalidate(qc, table);
       toast.success(successMessage);
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error) => toast.error(friendlyErrorMessage(error)),
   });
 }
 
@@ -127,12 +128,7 @@ export function useUpdate<T extends TableName>(table: T, successMessage = "Atual
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, values }: { id: string; values: TablesUpdate<T> }) => {
-      const { data, error } = await db
-        .from(table)
-        .update(values)
-        .eq("id", id)
-        .select("*")
-        .single();
+      const { data, error } = await db.from(table).update(values).eq("id", id).select("*").single();
       if (error) throw error;
       return data as unknown as Tables<T>;
     },
@@ -140,7 +136,7 @@ export function useUpdate<T extends TableName>(table: T, successMessage = "Atual
       invalidate(qc, table);
       if (successMessage) toast.success(successMessage);
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error) => toast.error(friendlyErrorMessage(error)),
   });
 }
 
@@ -156,7 +152,7 @@ export function useRemove<T extends TableName>(table: T, successMessage = "Remov
       invalidate(qc, table);
       toast.success(successMessage);
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error) => toast.error(friendlyErrorMessage(error)),
   });
 }
 

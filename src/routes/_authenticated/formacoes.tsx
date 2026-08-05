@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Layers, Plus, Trash2, UserPlus, Luggage } from "lucide-react";
+import { Layers, Plus, Trash2, UserPlus, Luggage, AlertTriangle } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -57,7 +57,11 @@ const emptyFormation = { name: "", base_fee: "", is_default: false };
 const emptyMemberForm = { team_member_id: "", split_percent: "" };
 
 function FormationsPage() {
-  const { data: formations = [] } = useList("formations", { order: { column: "name" } });
+  const {
+    data: formations = [],
+    isError: formationsError,
+    isLoading: formationsLoading,
+  } = useList("formations", { order: { column: "name" } });
   const { data: members = [] } = useList("formation_members");
   const { data: teamMembers = [] } = useList("team_members", { order: { column: "name" } });
   const { data: brandKits = [] } = useList("brand_kits", { order: { column: "name" } });
@@ -150,7 +154,13 @@ function FormationsPage() {
       />
 
       <Section title={`Formações (${formations.length})`}>
-        {formations.length === 0 ? (
+        {formationsError ? (
+          <EmptyState
+            icon={<AlertTriangle className="size-5 text-destructive" />}
+            title="Não foi possível carregar as formações"
+            description="Isso não é uma lista vazia — houve uma falha ao buscar seus dados. Atualize a página; se persistir, avise o suporte."
+          />
+        ) : formationsLoading ? null : formations.length === 0 ? (
           <EmptyState
             icon={<Layers className="size-5" />}
             title="Nenhuma formação cadastrada"
