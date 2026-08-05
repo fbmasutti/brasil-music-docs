@@ -501,8 +501,32 @@ function FinanceiroPage() {
 
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Guardar na reserva
+            </p>
+            <div className="mb-4 flex flex-wrap items-end gap-2">
+              <TextField
+                label="Valor (R$)"
+                value={quickFund}
+                onChange={setQuickFund}
+                type="number"
+              />
+              <Button
+                size="sm"
+                disabled={!Number(quickFund) || insertFund.isPending}
+                onClick={() =>
+                  insertFund.mutate(
+                    { amount: Number(quickFund), reason: "Reserva manual" },
+                    { onSuccess: () => setQuickFund("") },
+                  )
+                }
+              >
+                <PiggyBank className="mr-1 size-4" /> Guardar
+              </Button>
+            </div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Últimos lançamentos no fundo
             </p>
+
             {fundEntries.length === 0 ? (
               <p className="text-sm text-muted-foreground">Nenhum lançamento ainda.</p>
             ) : (
