@@ -46,6 +46,9 @@ const FORMATS = {
 
 type FormatKey = keyof typeof FORMATS;
 
+// Select do Radix não aceita string vazia como valor de item.
+const NO_KIT = "__none__";
+
 function paletteOf(kit: Tables<"brand_kits"> | undefined): BrandPalette {
   const raw = kit?.palette;
   if (raw && typeof raw === "object" && !Array.isArray(raw) && "bg" in raw && "accent" in raw) {
@@ -86,6 +89,9 @@ function CardGeneratorPage() {
   const [showPhoto, setShowPhoto] = useState(true);
   const [copy, setCopy] = useState(defaultCopy(undefined, ""));
   const [exporting, setExporting] = useState(false);
+  // null = herdar da formação do show; string = escolha explícita do usuário
+  // ("" significa "sem identidade", usando o visual padrão do StageKit).
+  const [manualKitId, setManualKitId] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -99,16 +105,35 @@ function CardGeneratorPage() {
 
   const event = upcoming.find((e) => e.id === eventId);
   const formation = formations.find((f) => f.id === event?.formation_id);
-  const brandKit = brandKits.find((k) => k.id === formation?.brand_kit_id);
+
+  // Exigir show -> formação -> brand kit para usar uma foto é fricção demais:
+  // quem acabou de subir a imagem espera vê-la. Então herda da formação
+  // quando existir, cai no único brand kit cadastrado quando houver só um, e
+  // em qualquer caso deixa trocar na mão.
+  const inheritedKitId =
+    formation?.brand_kit_id ?? (brandKits.length === 1 ? brandKits[0]!.id : "");
+  const effectiveKitId = manualKitId ?? inheritedKitId;
+  const brandKit = brandKits.find((k) => k.id === effectiveKitId);
   const preset = BRAND_PRESETS.find((p) => p.id === brandKit?.preset);
   const palette = paletteOf(brandKit);
   const stageName = profile?.stage_name || "StageKit";
 
-  // Trocar de show repõe os textos a partir do novo evento — o ajuste fino
-  // vale para o card que está sendo montado, não vira estado permanente.
+  // Trocar de show repõe os textos e volta a identidade para a herdada — o
+  // ajuste fino vale para o card em montagem, não vira estado permanente.
+  // Depende do id (não do objeto) para que um refetch da lista não descarte
+  // o que o usuário acabou de ajustar.
+  const currentEventId = event?.id;
   useEffect(() => {
-    if (event) setCopy(defaultCopy(event, stageName));
-  }, [event, stageName]);
+    if (!currentEventId) return;
+    setCopy(
+      defaultCopy(
+        events.find((e) => e.id === currentEventId),
+        stageName,
+      ),
+    );
+    setManualKitId(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentEventId, stageName]);
 
   const dims = FORMATS[format];
   const isFeed = format === "FEED";
@@ -209,22 +234,45 @@ function CardGeneratorPage() {
               </div>
             </div>
 
-            <div className="mt-4 space-y-2 text-xs text-muted-foreground">
-              {!formation ? (
-                <p>Esse show não tem formação vinculada — usando visual padrão do StageKit.</p>
-              ) : !brandKit ? (
-                <p>
-                  A formação "{formation.name}" não tem brand kit vinculado.{" "}
-                  <Link to="/formacoes" className="text-primary hover:underline">
-                    Vincular agora
-                  </Link>
-                  .
-                </p>
-              ) : (
-                <p>
-                  Usando o brand kit "{brandKit.name}" ({preset?.label ?? brandKit.preset}).
-                </p>
-              )}
+            <div className="mt-4 space-y-2">
+              <Label>Identidade visual</Label>
+              <Select
+                value={effectiveKitId || NO_KIT}
+                onValueChange={(v) => setManualKitId(v === NO_KIT ? "" : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_KIT}>Sem identidade (padrão StageKit)</SelectItem>
+                  {brandKits.map((k) => (
+                    <SelectItem key={k.id} value={k.id}>
+                      {k.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {brandKits.length === 0 ? (
+                  <>
+                    Nenhum brand kit cadastrado.{" "}
+                    <Link to="/marca" className="text-primary hover:underline">
+                      Criar um agora
+                    </Link>{" "}
+                    para usar sua foto e logo no card.
+                  </>
+                ) : brandKit ? (
+                  <>
+                    {preset?.label ?? brandKit.preset}
+                    {formation?.brand_kit_id === brandKit.id
+                      ? ` · herdado da formação "${formation.name}"`
+                      : ""}
+                    {!brandKit.photo_url ? " · este kit não tem foto" : ""}
+                  </>
+                ) : (
+                  "O card usa só as cores padrão — escolha um brand kit para incluir foto e logo."
+                )}
+              </p>
             </div>
           </Section>
 
