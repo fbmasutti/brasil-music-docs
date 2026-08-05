@@ -1,162 +1,46 @@
-# StageMate Pro
+# StageKit — Guia do Usuário Iniciante
 
-Act as a Principal Full-Stack Engineer and UX Designer. Build a SaaS application named "StageDocs" (or "HubMusico") tailored for independent musicians, bands, music educators, and managers in Brazil. The app simplifies, automates, and organizes all legal, technical, and bureaucratic documentation required for live shows, public funding grants (editais), music education, and copyright management.
-
-
+O **StageKit** é uma plataforma completa para descomplicar a gestão operacional, técnica, jurídica e financeira de artistas, bandas e produtores executivos.
 
 ---
 
+## 📌 Visão Geral do Dashboard
 
+O **Dashboard** é a central de comando da sua operação artística. Nele, você encontra:
 
-### 1. DESIGN SYSTEM & UI/UX DIRECTION
-
-- **Vibe:** Professional, modern, artist-friendly, high-contrast, clean.
-
-- **Color Palette:** Dark Mode default (Deep Slate/Zinc `#09090B`, Accent Neon Violet `#8B5CF6` or Electric Cyan `#06B6D4`).
-
-- **Typography:** Sans-serif, highly legible (Inter or Plus Jakarta Sans).
-
-- **Navigation:** Left sidebar (collapsible) with access to Overview Dashboard, Document Generator, Clipping Vault, Show/Project Tracker, and Settings.
-
-
+* **Ferramentas do Dia a Dia:** Acesso direto aos recursos essenciais ([Gerar contrato](https://stage-kit.lovable.app/contrato), [Rider pronto](https://stage-kit.lovable.app/riders), [Gerador de posts](https://stage-kit.lovable.app/gerador-cards), [Importar do WhatsApp](https://stage-kit.lovable.app/magic-paste), [Recibos](https://stage-kit.lovable.app/documentos) e [Roteiro ECAD](https://stage-kit.lovable.app/repertorio)). Todas funcionam de forma independente, sem a necessidade de cadastrar um show antes.
+* **Próximos Compromissos:** Lista consolidada de shows e apresentações com datas, locais, cachês e status de negociação.
+* **Métricas Operacionais:** Indicadores em tempo real de shows confirmados, saldos a receber, documentos gerados e alertas de conformidade.
+* **Cadastros de Base:** Links rápidos para gerenciar [Equipe](https://stage-kit.lovable.app/equipe), [Repertório](https://stage-kit.lovable.app/repertorio), [Formações](https://stage-kit.lovable.app/formacoes), [Portfólio](https://stage-kit.lovable.app/portfolio), [Marca](https://stage-kit.lovable.app/marca) e [Contratantes](https://stage-kit.lovable.app/contratantes).
 
 ---
 
+## 🚀 Workflow Passo a Passo para Iniciantes
 
+### 1. Cadastro do Evento
 
-### 2. CORE MODULES & DATA STRUCTURE
+* **Via WhatsApp:** Acesse a aba [Importar do WhatsApp](https://stage-kit.lovable.app/magic-paste), cole o texto da negociação recebida do contratante e deixe o sistema extrair data, local e cachê automaticamente.
+* **Manual:** Acesse a [Agenda de Shows](https://stage-kit.lovable.app/eventos) e clique no botão `Novo evento`.
 
+### 2. Formalização do Contrato
 
+1. Acesse [Contratos & Recibos](https://stage-kit.lovable.app/documentos) ou clique no atalho *Gerar contrato de show*.
+2. Complete as informações em 3 passos simples.
+3. Exporte o documento em PDF ou envie o link diretamente para o contratante via WhatsApp.
 
-#### A. Central Profile & Entity Vault ("Single Source of Truth")
+### 3. Emissão Técnica (Rider e Mapa de Palco)
 
-- **Artist/Band Profile:** Stage Name, Legal Name, CPF/CNPJ (MEI/EIRELI/LTDA), Inscrição Municipal/Estadual, Address, Bank Details (PIX keys).
+1. Vá para a tela [Rider & Mapa de Palco](https://stage-kit.lovable.app/riders).
+2. Selecione um **modelo pré-configurado** conforme a estrutura do show (*Voz + Violão*, *Trio Acústico*, *Samba/Pagode*, *Banda Completa*, entre outros) ou inicie um rider em branco.
+3. Faça os ajustes necessários de canais e posicionamento e baixe o PDF para a equipe técnica.
 
-- **MEI & Fiscal Info:** Support for musical CNAEs (e.g., 9001-9/02 - Atividades de músicos, 9001-9/01, 8592-9/03 - Ensino de música).
+### 4. Divulgação em Redes Sociais
 
-- **Team & Crew Roster:** List of fixed band members, side-musicians, roadies, audio/light engineers (Name, Role, CPF, PIS/PASEP, RG, Chave PIX, Food Restrictions).
+1. Acesse o [Gerador de Posts](https://stage-kit.lovable.app/gerador-cards).
+2. Selecione o show cadastrado e escolha o formato desejado (**Stories 9:16** ou **Feed 1:1**).
+3. Personalize o texto ou imagem de fundo conforme necessário e clique em **Exportar Imagem (PNG)**.
 
-- **ECAD & Rights Profile:** Association registration (UBC, ABRAMUS, AMAR, etc.), CAE/IPI Number, ECAD Client Number.
+### 5. Fechamento Financeiro e Documental
 
-
-
-#### B. Dynamic Document Generator (Form to PDF)
-
-Create interactive forms that auto-fill using the Central Profile and generate clean, exportable, and print-ready PDFs for:
-
-1. **Performance Contracts (Show/Eventos):**
-
-   - Private Event / Venue Performance Contract.
-
-   - Clauses for: Cachê breakdown, payment dates (Sinal + Remanescente), W.O. / Weather cancellations, Overtime rules, Soundcheck limits, and ECAD/Tax payment responsibility.
-
-2. **Technical & Logistical Riders:**
-
-   - **Stage Map (Mapa de Palco):** Visual grid or dynamic drag-and-drop input to position instruments, amps, and power drops.
-
-   - **Input List / Channel List:** Table (Channel, Instrument, Mic/DI, Stand Type, Phantom Power +48V).
-
-   - **Rider Técnico & Camarim:** Sound/Lighting requirements, backline list, hospitality/catering list, rooming list.
-
-3. **Public Grants & Editais (Fomento Público - Lei Rouanet, LPG, PNAB, ProAC):**
-
-   - **Carta de Anuência / Exclusividade:** Formal declaration for producers/managers representing artists for specific projects/dates (com firma reconhecida / assinatura digital).
-
-   - **Termos de Representação e Cessão de Imagem/Voz:** Releases for videographers, side-musicians, and guests.
-
-   - **Declaração de Não Vínculo Empregatício / Regularidade:** Standard templates for grant submissions.
-
-4. **Copyright & Fonográfico:**
-
-   - **Split Sheet:** Agreement on composition/production percentages among co-writers.
-
-   - **Ficha Técnica de Fonograma (ISRC/ISWC Prep):** Song metadata (Title, Genre, Writers, Performers, Percentages, Producer, Studio) ready to submit to ECAD associations.
-
-5. **Education & Services (Aulas e Mentorias):**
-
-   - Student Service Contract (Aulas Particulares / Mentorias).
-
-   - Recibo de Pagamento de Autônomo (RPA) & Simple Invoicing helper.
-
-
-
-#### C. ECAD & Setlist Manager
-
-- **Setlist Creator:** Build show setlists selecting songs from a master catalog.
-
-- **Roteiro de Execução ECAD:** Auto-generate the official ECAD setlist document containing Song Name, Composers, Editora, and Duration for show registration.
-
-
-
-#### D. Clipping & Portfólio Vault (Comprovação para Editais)
-
-- Organizable repository of past activities categorized by Year/Event.
-
-- Features:
-
-  - Upload & Link attachments (Flyers, Posters, Press Clippings, Ticket Stubs, Video Links).
-
-  - One-click export into a styled "Portfolio PDF" required by cultural grants.
-
-
-
-#### E. Project & Show Checklist Center
-
-- Interactive task lists with progress bars and due date reminders:
-
-  - **Pre-Show Checklist:** Contract signed, Deposit received, Rider sent, Technical contact confirmed, Hotel booked.
-
-  - **Post-Show Checklist:** Invoice issued, Remaining payment received, ECAD Setlist sent.
-
-  - **Edital Submission Checklist:** CND Federal, CND Estadual, CND Municipal, CNDT (Trabalhista), FGTS, Portfolio PDF, Budget sheet attached.
-
-
-
----
-
-
-
-### 3. TECHNICAL & INTEGRATION SPECIFICATIONS
-
-- **PDF Engine:** Client-side PDF generation (e.g., `@react-pdf/renderer` or `jsPDF` + `html2canvas`) with clean typography and custom branding options.
-
-- **Signatures:** Integration placeholder / UI hooks for Digital Signatures (Gov.br / Clicksign / ZapSign).
-
-- **State Management:** Persistent Local Storage / Supabase integration for user data and saved document drafts.
-
-- **Search & Filters:** Instant search across generated documents, clippings, and team members.
-
-
-
----
-
-
-
-### 4. USER FLOW / FIRST TIME ONBOARDING
-
-1. **Onboarding Wizard:** Collects essential artist details (Solo Artist vs. Band, MEI status, ECAD affiliation).
-
-2. **Dashboard Overview:** Displays Quick Actions ("New Show Contract", "Create Rider", "Build Setlist for ECAD", "Export Edital Portfolio"), Upcoming Deadlines, and Document History.
-
-This project was built with [Lovable](https://lovable.dev).
-
-**Live app**: https://brasil-music-docs.lovable.app
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/becac8cc-67fa-4df4-b10a-bcabd61ab264).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
-```
+1. Acompanhe os saldos e pagamentos em [Financeiro & Cachês](https://stage-kit.lovable.app/financeiro).
+2. Após o show, emita os recibos ou RPAs em [Contratos & Recibos](https://stage-kit.lovable.app/documentos) e gere o relatório de setlist para o [ECAD & Direitos Autorais](https://stage-kit.lovable.app/repertorio).
