@@ -92,6 +92,7 @@ function FinanceiroPage() {
   const [expenseForm, setExpenseForm] = useState({ category: "OUTRO", amount: "", notes: "" });
   const [gearForm, setGearForm] = useState({ name: "", category: "", value: "" });
   const [reservaPercent, setReservaPercent] = useState("5");
+  const [quickFund, setQuickFund] = useState("");
 
   // Cachês a receber / pagos
   const withFee = events.filter((e) => e.status !== "CANCELADO" && Number(e.fee_total) > 0);
