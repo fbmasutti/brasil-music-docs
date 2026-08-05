@@ -214,7 +214,17 @@ function parseContactName(text: string): string | null {
   return m?.[1]?.trim() ?? null;
 }
 
-export function parseWhatsAppText(text: string): ParsedEvent {
+// Exportação do WhatsApp prefixa cada linha com "[HH:MM, DD/MM/AAAA] Nome:".
+// Sem remover isso, a data do carimbo da mensagem (quase sempre "hoje")
+// é confundida com a data do show sendo combinado dentro do texto.
+const WHATSAPP_HEADER = /\[\d{1,2}:\d{2}(?::\d{2})?,\s*\d{1,2}\/\d{1,2}\/\d{2,4}\]\s*[^:\n]+:\s*/g;
+
+function stripWhatsAppMetadata(text: string): string {
+  return text.replace(WHATSAPP_HEADER, " ");
+}
+
+export function parseWhatsAppText(rawText: string): ParsedEvent {
+  const text = stripWhatsAppMetadata(rawText);
   const { city, state } = parseCityState(text);
   const { total, deposit } = parseMoney(text);
   return {
