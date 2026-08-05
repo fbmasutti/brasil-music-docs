@@ -14,6 +14,7 @@ import {
   Megaphone,
   Wand2,
   Sparkles,
+  Receipt,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -51,16 +52,17 @@ function Dashboard() {
   });
   const { data: songs = [] } = useList("songs");
   const { data: team = [] } = useList("team_members");
-  const { data: formations = [] } = useList("formations");
+  const { data: brandKits = [] } = useList("brand_kits");
   const { data: checklists = [] } = useList("event_checklists");
 
+  // Apenas o que é permanente do artista — nada de "cadastre um show" ou
+  // "cadastre equipe": o toolkit já funciona sem isso.
   const gettingStarted = [
-    { label: "Complete seu perfil (CPF/CNPJ)", done: Boolean(profile?.cpf_cnpj), to: "/perfil" },
-    { label: "Cadastre sua equipe", done: team.length > 0, to: "/equipe" },
-    { label: "Crie uma formação", done: formations.length > 0, to: "/formacoes" },
-    { label: "Cadastre um show", done: events.length > 0, to: "/eventos" },
+    { label: "Nome artístico e CPF/CNPJ", done: Boolean(profile?.cpf_cnpj), to: "/perfil" },
+    { label: "Identidade visual (Brand Kit)", done: brandKits.length > 0, to: "/marca" },
   ];
   const gettingStartedDone = gettingStarted.filter((s) => s.done).length;
+
 
   const today = new Date().toISOString().slice(0, 10);
   // Eventos sem data ainda contam como "próximos" (ex.: show em negociação,
@@ -113,6 +115,53 @@ function Dashboard() {
           </>
         }
       />
+
+      <Section
+        title="Ferramentas do dia a dia"
+        description="Tudo aqui funciona agora, sem depender de contratante ou show cadastrado."
+        className="mb-5"
+      >
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ToolCard
+            to="/contrato"
+            icon={<FileText className="size-5" />}
+            title="Gerar contrato de show"
+            hint="3 passos · PDF + WhatsApp"
+          />
+          <ToolCard
+            to="/riders"
+            icon={<Sliders className="size-5" />}
+            title="Rider & mapa de palco"
+            hint="Formato pronto em 1 clique"
+          />
+          <ToolCard
+            to="/gerador-cards"
+            icon={<Megaphone className="size-5" />}
+            title="Gerador de posts"
+            hint="Card de divulgação"
+          />
+          <ToolCard
+            to="/magic-paste"
+            icon={<Wand2 className="size-5" />}
+            title="Importar do WhatsApp"
+            hint="Extrai os dados do show"
+          />
+          <ToolCard
+            to="/documentos"
+            icon={<Receipt className="size-5" />}
+            title="Recibo, RPA & anuência"
+            hint="Kit de documentos"
+          />
+          <ToolCard
+            to="/repertorio"
+            icon={<Music4 className="size-5" />}
+            title="Roteiro ECAD"
+            hint="Setlist e direitos autorais"
+          />
+        </div>
+      </Section>
+
+
 
       {gettingStartedDone < gettingStarted.length ? (
         <Section
@@ -262,71 +311,58 @@ function Dashboard() {
         />
       </div>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <QuickCard
-          to="/magic-paste"
-          icon={<Wand2 className="size-5" />}
-          label="Importar do WhatsApp"
-          value="Extrair dados do show"
-        />
-        <QuickCard
-          to="/gerador-cards"
-          icon={<Megaphone className="size-5" />}
-          label="Gerador de Cards"
-          value="Card de divulgação"
-        />
-        <QuickCard
-          to="/equipe"
-          icon={<Users className="size-5" />}
-          label="Elenco"
-          value={`${team.length} integrantes`}
-        />
-        <QuickCard
+      <div className="mt-5 flex flex-wrap gap-2">
+        <MiniLink to="/equipe" icon={<Users className="size-3.5" />} label={`Equipe · ${team.length}`} />
+        <MiniLink
           to="/repertorio"
-          icon={<Music4 className="size-5" />}
-          label="Repertório"
-          value={`${songs.length} obras`}
+          icon={<Music4 className="size-3.5" />}
+          label={`Repertório · ${songs.length}`}
         />
-        <QuickCard
-          to="/riders"
-          icon={<Sliders className="size-5" />}
-          label="Riders técnicos"
-          value="Montar rider"
-        />
-        <QuickCard
-          to="/portfolio"
-          icon={<Images className="size-5" />}
-          label="Portfólio"
-          value="Clipping & releases"
-        />
+        <MiniLink to="/formacoes" icon={<Sliders className="size-3.5" />} label="Formações" />
+        <MiniLink to="/portfolio" icon={<Images className="size-3.5" />} label="Portfólio" />
+        <MiniLink to="/marca" icon={<Megaphone className="size-3.5" />} label="Marca" />
+        <MiniLink to="/contratantes" icon={<FileText className="size-3.5" />} label="Contratantes" />
       </div>
     </div>
   );
 }
 
-function QuickCard({
+function ToolCard({
   to,
   icon,
-  label,
-  value,
+  title,
+  hint,
 }: {
   to: string;
   icon: React.ReactNode;
-  label: string;
-  value: string;
+  title: string;
+  hint: string;
 }) {
   return (
     <Link
       to={to}
-      className="panel flex items-center gap-3 p-4 transition-colors hover:border-primary/40"
+      className="panel flex items-center gap-3 p-4 transition-colors hover:border-primary/50 hover:bg-primary/5"
     >
-      <span className="flex size-10 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
         {icon}
       </span>
-      <span>
-        <span className="block text-sm font-semibold">{label}</span>
-        <span className="block text-xs text-muted-foreground">{value}</span>
+      <span className="min-w-0">
+        <span className="block truncate text-sm font-semibold">{title}</span>
+        <span className="block truncate text-xs text-muted-foreground">{hint}</span>
       </span>
     </Link>
   );
 }
+
+function MiniLink({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+    >
+      {icon}
+      {label}
+    </Link>
+  );
+}
+

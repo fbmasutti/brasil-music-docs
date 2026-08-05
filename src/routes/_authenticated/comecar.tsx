@@ -1,20 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Check,
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  Users,
-  Layers,
-  CalendarDays,
   UserCircle,
+  Palette,
   Wand2,
-  Trash2,
+  Upload,
+  Loader2,
+  FileText,
+  Sliders,
+  Megaphone,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PageHeader, Section, FieldGrid, TextField } from "@/components/ui-kit";
-import { useList, useProfile, useInsert, useUpdate, useRemove } from "@/lib/queries";
+import { useList, useProfile, useInsert, useUpdate, useSession } from "@/lib/queries";
+import { uploadBrandAsset, UploadError } from "@/lib/storage";
+import { BRAND_PRESETS, presetPalette } from "@/lib/brand-presets";
 import { maskCpfCnpj } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -25,12 +30,12 @@ export const Route = createFileRoute("/_authenticated/comecar")({
       {
         name: "description",
         content:
-          "Configuração inicial do StageKit em poucos passos: perfil, formação, equipe e primeiro show.",
+          "Configuração inicial do StageKit em dois passos: dados básicos do artista e identidade visual.",
       },
       { property: "og:title", content: "Começar — StageKit" },
       {
         property: "og:description",
-        content: "Deixe o StageKit pronto para usar em poucos minutos.",
+        content: "Deixe o StageKit pronto para usar em menos de dois minutos.",
       },
     ],
   }),
@@ -38,10 +43,8 @@ export const Route = createFileRoute("/_authenticated/comecar")({
 });
 
 const STEPS = [
-  { key: "perfil", label: "Seu projeto", icon: UserCircle, optional: false },
-  { key: "formacao", label: "Formação", icon: Layers, optional: true },
-  { key: "equipe", label: "Equipe", icon: Users, optional: true },
-  { key: "show", label: "Primeiro show", icon: CalendarDays, optional: true },
+  { key: "perfil", label: "Quem você é", icon: UserCircle, optional: false },
+  { key: "marca", label: "Identidade visual", icon: Palette, optional: true },
 ] as const;
 
 function WizardPage() {
@@ -54,8 +57,8 @@ function WizardPage() {
   return (
     <div className="mx-auto max-w-2xl">
       <PageHeader
-        title="Vamos deixar o StageKit pronto"
-        subtitle="Só o essencial agora — tudo isso pode ser ajustado depois nas telas normais."
+        title="Só o básico e você já está usando"
+        subtitle="Dois passos com as informações permanentes do seu projeto. Contratantes, shows e equipe entram depois, quando precisar."
       />
 
       {/* Trilha de passos */}
@@ -87,9 +90,7 @@ function WizardPage() {
         description={current.optional ? "Opcional — dá para pular e fazer depois." : undefined}
       >
         {current.key === "perfil" ? <StepPerfil /> : null}
-        {current.key === "formacao" ? <StepFormacao /> : null}
-        {current.key === "equipe" ? <StepEquipe /> : null}
-        {current.key === "show" ? <StepShow /> : null}
+        {current.key === "marca" ? <StepMarca /> : null}
 
         <div className="mt-6 flex items-center justify-between gap-2 border-t border-border pt-4">
           <Button
@@ -128,11 +129,17 @@ function WizardPage() {
   );
 }
 
-/** Passo 1 — dados mínimos do artista, salvos direto no perfil que já existe. */
+/** Passo 1 — dados mínimos e permanentes do artista, salvos no perfil que já existe. */
 function StepPerfil() {
   const { data: profile } = useProfile();
   const update = useUpdate("profiles", "");
-  const [form, setForm] = useState({ stage_name: "", cpf_cnpj: "", city: "", state: "" });
+  const [form, setForm] = useState({
+    stage_name: "",
+    cpf_cnpj: "",
+    city: "",
+    state: "",
+    phone: "",
+  });
   const set = (k: keyof typeof form) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   useEffect(() => {
@@ -142,6 +149,7 @@ function StepPerfil() {
       cpf_cnpj: profile.cpf_cnpj ?? "",
       city: profile.city ?? "",
       state: profile.state ?? "",
+      phone: profile.phone ?? "",
     });
   }, [profile?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -153,8 +161,9 @@ function StepPerfil() {
   return (
     <div onBlur={persist}>
       <p className="mb-4 text-sm text-muted-foreground">
-        O CPF/CNPJ é o que permite gerar contratos válidos. O resto entra nos documentos e nos
-        cards.
+        Só o nome artístico é obrigatório. O CPF/CNPJ é o que deixa os contratos válidos — se ainda
+        não tiver em mãos, preencha depois em Dados do Artista; os documentos omitem o que falta sem
+        deixar buraco no texto.
       </p>
       <FieldGrid>
         <TextField
@@ -163,187 +172,133 @@ function StepPerfil() {
           onChange={set("stage_name")}
         />
         <TextField
-          label="CPF ou CNPJ"
+          label="CPF ou CNPJ (opcional)"
           value={form.cpf_cnpj}
           onChange={(v) => set("cpf_cnpj")(maskCpfCnpj(v))}
         />
         <TextField label="Cidade" value={form.city} onChange={set("city")} />
         <TextField label="UF" value={form.state} onChange={set("state")} />
+        <TextField label="WhatsApp" value={form.phone} onChange={set("phone")} />
       </FieldGrid>
     </div>
   );
 }
 
-/** Passo 2 — uma formação já destrava herança de cachê, rider e mala de gig. */
-function StepFormacao() {
-  const { data: formations = [] } = useList("formations", { order: { column: "name" } });
-  const insert = useInsert("formations", "Formação criada");
-  const remove = useRemove("formations", "Formação removida");
-  const [form, setForm] = useState({ name: "", base_fee: "" });
+/** Passo 2 — identidade visual: preset de cores já pré-selecionado + logo/foto opcionais. */
+function StepMarca() {
+  const { data: session } = useSession();
+  const { data: profile } = useProfile();
+  const { data: kits = [] } = useList("brand_kits", { order: { column: "created_at" } });
+  const insert = useInsert("brand_kits", "Identidade visual salva");
+  const update = useUpdate("brand_kits", "Identidade visual atualizada");
+  const kit = kits[0];
+
+  const [preset, setPreset] = useState(BRAND_PRESETS[0]!.id);
+  const [logoUrl, setLogoUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!kit) return;
+    setPreset(kit.preset ?? BRAND_PRESETS[0]!.id);
+    setLogoUrl(kit.logo_url ?? "");
+  }, [kit?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function persist(values: { preset?: string; logo_url?: string }) {
+    const nextPreset = values.preset ?? preset;
+    const payload = {
+      name: kit?.name || profile?.stage_name || "Meu Brand Kit",
+      preset: nextPreset,
+      palette: presetPalette(nextPreset),
+      logo_url: values.logo_url ?? logoUrl ?? null,
+    };
+    if (kit) update.mutate({ id: kit.id, values: payload });
+    else insert.mutate(payload);
+  }
+
+  async function handleFile(file: File) {
+    if (!session) return;
+    setUploading(true);
+    try {
+      const url = await uploadBrandAsset(file, session.id, "logo");
+      setLogoUrl(url);
+      persist({ logo_url: url });
+    } catch (error) {
+      toast.error(
+        error instanceof UploadError ? error.message : "Não foi possível enviar a imagem.",
+      );
+    } finally {
+      setUploading(false);
+    }
+  }
 
   return (
     <div>
       <p className="mb-4 text-sm text-muted-foreground">
-        Uma formação é um jeito de se apresentar — "Voz e Violão", "Trio", "Banda Completa". Ao
-        escolher a formação num show, o cachê base, o rider e a mala de gig entram sozinhos.
+        Isso define a cara dos seus posts de divulgação e o cabeçalho dos PDFs. Já deixamos um estilo
+        escolhido — trocar leva um clique.
       </p>
 
-      {formations.length ? (
-        <ul className="mb-4 space-y-1.5">
-          {formations.map((f) => (
-            <li key={f.id} className="flex items-center justify-between gap-2 text-sm">
-              <span className="flex items-center gap-2">
-                <Check className="size-4 text-success" />
-                {f.name}
+      <div className="grid gap-3 sm:grid-cols-3">
+        {BRAND_PRESETS.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => {
+              setPreset(p.id);
+              persist({ preset: p.id });
+            }}
+            className={cn(
+              "rounded-lg border p-3 text-left transition",
+              preset === p.id
+                ? "border-primary bg-primary/5"
+                : "border-border hover:border-primary/40",
+            )}
+          >
+            <span className="flex items-center justify-between gap-2">
+              <span className="flex gap-1">
+                {[p.palette.bg, p.palette.card, p.palette.accent, p.palette.text].map((c) => (
+                  <span
+                    key={c}
+                    className="size-4 rounded-full border border-border"
+                    style={{ background: c }}
+                  />
+                ))}
               </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => remove.mutate(f.id)}
-                aria-label={`Remover ${f.name}`}
-              >
-                <Trash2 className="size-3.5" />
-              </Button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-
-      <FieldGrid>
-        <TextField
-          label="Nome da formação"
-          value={form.name}
-          onChange={(v) => setForm((f) => ({ ...f, name: v }))}
-          placeholder="Voz e Violão"
-        />
-        <TextField
-          label="Cachê base (R$)"
-          value={form.base_fee}
-          onChange={(v) => setForm((f) => ({ ...f, base_fee: v }))}
-          type="number"
-        />
-      </FieldGrid>
-      <Button
-        size="sm"
-        className="mt-3"
-        disabled={!form.name || insert.isPending}
-        onClick={() =>
-          insert.mutate(
-            { name: form.name, base_fee: Number(form.base_fee || 0) },
-            { onSuccess: () => setForm({ name: "", base_fee: "" }) },
-          )
-        }
-      >
-        Adicionar formação
-      </Button>
-    </div>
-  );
-}
-
-/** Passo 3 — só o suficiente para o rateio de cachê funcionar depois. */
-function StepEquipe() {
-  const { data: members = [] } = useList("team_members", { order: { column: "name" } });
-  const insert = useInsert("team_members", "Integrante adicionado");
-  const remove = useRemove("team_members", "Integrante removido");
-  const [form, setForm] = useState({ name: "", role: "", pix_key: "" });
-
-  return (
-    <div>
-      <p className="mb-4 text-sm text-muted-foreground">
-        Quem toca com você. A chave PIX aqui é o que permite copiar e pagar o rateio direto do
-        financeiro depois do show. Se você toca sozinho, pule.
-      </p>
-
-      {members.length ? (
-        <ul className="mb-4 space-y-1.5">
-          {members.map((m) => (
-            <li key={m.id} className="flex items-center justify-between gap-2 text-sm">
-              <span className="flex items-center gap-2">
-                <Check className="size-4 text-success" />
-                {m.name}
-                {m.role ? <span className="text-muted-foreground">· {m.role}</span> : null}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => remove.mutate(m.id)}
-                aria-label={`Remover ${m.name}`}
-              >
-                <Trash2 className="size-3.5" />
-              </Button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-
-      <FieldGrid>
-        <TextField
-          label="Nome"
-          value={form.name}
-          onChange={(v) => setForm((f) => ({ ...f, name: v }))}
-        />
-        <TextField
-          label="Função"
-          value={form.role}
-          onChange={(v) => setForm((f) => ({ ...f, role: v }))}
-          placeholder="Baixista, técnico de som..."
-        />
-        <TextField
-          label="Chave PIX"
-          value={form.pix_key}
-          onChange={(v) => setForm((f) => ({ ...f, pix_key: v }))}
-        />
-      </FieldGrid>
-      <Button
-        size="sm"
-        className="mt-3"
-        disabled={!form.name || insert.isPending}
-        onClick={() =>
-          insert.mutate(form, { onSuccess: () => setForm({ name: "", role: "", pix_key: "" }) })
-        }
-      >
-        Adicionar integrante
-      </Button>
-    </div>
-  );
-}
-
-/** Passo 4 — não duplica o formulário de evento: manda para os fluxos reais. */
-function StepShow() {
-  const { data: events = [] } = useList("events");
-
-  return (
-    <div>
-      <p className="mb-4 text-sm text-muted-foreground">
-        {events.length
-          ? `Você já tem ${events.length} show(s) cadastrado(s). Pode concluir por aqui.`
-          : "Última parte: cadastre seu primeiro show. Dá para digitar na mão ou colar a conversa do WhatsApp e deixar o StageKit preencher."}
-      </p>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Link
-          to="/magic-paste"
-          className="panel flex items-start gap-3 p-4 transition hover:border-primary/50"
-        >
-          <Wand2 className="mt-0.5 size-5 shrink-0 text-primary" />
-          <span>
-            <span className="block text-sm font-semibold">Importar do WhatsApp</span>
-            <span className="mt-1 block text-xs text-muted-foreground">
-              Cole a conversa do fechamento e confira os dados antes de salvar.
+              {preset === p.id ? <Check className="size-3.5 text-primary" /> : null}
             </span>
-          </span>
-        </Link>
-        <Link
-          to="/eventos"
-          className="panel flex items-start gap-3 p-4 transition hover:border-primary/50"
-        >
-          <CalendarDays className="mt-0.5 size-5 shrink-0 text-primary" />
-          <span>
-            <span className="block text-sm font-semibold">Cadastrar na mão</span>
-            <span className="mt-1 block text-xs text-muted-foreground">
-              Formulário completo, com cachê, sinal e vencimentos.
-            </span>
-          </span>
-        </Link>
+            <span className="mt-2 block text-sm font-semibold">{p.label}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-5 flex flex-wrap items-center gap-3">
+        {logoUrl ? (
+          <img
+            src={logoUrl}
+            alt="Logo do artista"
+            className="size-16 rounded-lg border border-border object-contain"
+          />
+        ) : null}
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) void handleFile(file);
+            e.target.value = "";
+          }}
+        />
+        <Button variant="outline" size="sm" disabled={uploading} onClick={() => fileRef.current?.click()}>
+          {uploading ? (
+            <Loader2 className="mr-1 size-4 animate-spin" />
+          ) : (
+            <Upload className="mr-1 size-4" />
+          )}
+          {logoUrl ? "Trocar logo / foto" : "Enviar logo ou foto (opcional)"}
+        </Button>
       </div>
     </div>
   );
@@ -361,33 +316,67 @@ function WizardDone() {
     }
   }, [profile?.id, profile?.onboarded]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const tools = [
+    {
+      to: "/contrato",
+      icon: FileText,
+      title: "Gerar contrato de show",
+      hint: "Três perguntas e o PDF sai pronto para enviar.",
+    },
+    {
+      to: "/riders",
+      icon: Sliders,
+      title: "Rider & mapa de palco",
+      hint: "Escolha um formato pronto e baixe o PDF.",
+    },
+    {
+      to: "/gerador-cards",
+      icon: Megaphone,
+      title: "Gerador de posts",
+      hint: "Card de divulgação com a sua identidade visual.",
+    },
+    {
+      to: "/magic-paste",
+      icon: Wand2,
+      title: "Importar do WhatsApp",
+      hint: "Cole a conversa do fechamento e confira os dados.",
+    },
+  ];
+
   return (
-    <div className="mx-auto max-w-xl text-center">
-      <span className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary/15 text-primary">
-        <Sparkles className="size-7" />
-      </span>
-      <h1 className="text-2xl font-extrabold tracking-tight">Tudo pronto</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        O básico está configurado. Daqui em diante, o caminho mais curto costuma ser importar a
-        conversa do show e deixar o resto sair dela: contrato, card de divulgação e checklist.
-      </p>
-      <div className="mt-6 flex flex-wrap justify-center gap-2">
-        <Button onClick={() => navigate({ to: "/dashboard" })}>Ir para o painel</Button>
-        <Button variant="outline" onClick={() => navigate({ to: "/magic-paste" })}>
-          <Wand2 className="mr-1 size-4" /> Importar do WhatsApp
+    <div className="mx-auto max-w-2xl">
+      <div className="text-center">
+        <span className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+          <Sparkles className="size-7" />
+        </span>
+        <h1 className="text-2xl font-extrabold tracking-tight">Tudo liberado</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Todo o toolkit já funciona — não precisa cadastrar contratante nem show antes. Escolha por
+          onde começar:
+        </p>
+      </div>
+
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        {tools.map((t) => (
+          <Link
+            key={t.to}
+            to={t.to}
+            className="panel flex items-start gap-3 p-4 transition hover:border-primary/50"
+          >
+            <t.icon className="mt-0.5 size-5 shrink-0 text-primary" />
+            <span>
+              <span className="block text-sm font-semibold">{t.title}</span>
+              <span className="mt-1 block text-xs text-muted-foreground">{t.hint}</span>
+            </span>
+          </Link>
+        ))}
+      </div>
+
+      <div className="mt-6 text-center">
+        <Button variant="outline" onClick={() => navigate({ to: "/dashboard" })}>
+          Ir para o painel
         </Button>
       </div>
-      <p className="mt-6 text-xs text-muted-foreground">
-        Faltou algo?{" "}
-        <Link to="/marca" className="text-primary hover:underline">
-          Marca &amp; Brand Kit
-        </Link>{" "}
-        e{" "}
-        <Link to="/contratantes" className="text-primary hover:underline">
-          Contratantes
-        </Link>{" "}
-        podem ser preenchidos a qualquer momento.
-      </p>
     </div>
   );
 }
