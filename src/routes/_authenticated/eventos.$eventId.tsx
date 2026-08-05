@@ -1,5 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, CalendarPlus, CheckCircle2, Circle, FileText, Sliders } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarPlus,
+  CheckCircle2,
+  Circle,
+  FileText,
+  Pencil,
+  Sliders,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHeader, Section, StatCard } from "@/components/ui-kit";
+import { EventFormDialog } from "@/components/EventFormDialog";
 import { useList, useUpdate } from "@/lib/queries";
 import { dateBR, money, EVENT_STATUS } from "@/lib/format";
 import { buildGoogleCalendarUrl, downloadICS } from "@/lib/calendar-link";
@@ -115,6 +124,14 @@ function EventDetail() {
                 ))}
               </SelectContent>
             </Select>
+            <EventFormDialog
+              event={event}
+              trigger={
+                <Button size="sm" variant="outline">
+                  <Pencil className="mr-1 size-4" /> Editar
+                </Button>
+              }
+            />
             {googleCalendarUrl ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

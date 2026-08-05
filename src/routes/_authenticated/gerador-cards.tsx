@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toPng } from "html-to-image";
 import { toast } from "sonner";
-import { Download, Loader2, CalendarDays } from "lucide-react";
+import { Download, Loader2, CalendarDays, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -11,10 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PageHeader, Section, EmptyState } from "@/components/ui-kit";
+import { PageHeader, Section, EmptyState, TextField } from "@/components/ui-kit";
 import { useList, useProfile } from "@/lib/queries";
 import { dateBR } from "@/lib/format";
 import { BRAND_PRESETS, presetPalette, type BrandPalette } from "@/lib/brand-presets";
+import { cn } from "@/lib/utils";
 import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/gerador-cards")({
@@ -27,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/gerador-cards")({
       {
         name: "description",
         content:
-          "Card de divulgação pronto pro Stories, com a foto, logo e paleta da formação do show.",
+          "Card de divulgação em Stories e Feed, com a foto, logo e paleta da formação do show.",
       },
       { property: "og:title", content: "Gerador de Cards — StageKit" },
       { property: "og:description", content: "Divulgue seu próximo show em segundos." },
@@ -36,12 +39,32 @@ export const Route = createFileRoute("/_authenticated/gerador-cards")({
   component: CardGeneratorPage,
 });
 
+const FORMATS = {
+  STORIES: { label: "Stories 9:16", width: 360, height: 640 },
+  FEED: { label: "Feed 1:1", width: 460, height: 460 },
+} as const;
+
+type FormatKey = keyof typeof FORMATS;
+
 function paletteOf(kit: Tables<"brand_kits"> | undefined): BrandPalette {
   const raw = kit?.palette;
   if (raw && typeof raw === "object" && !Array.isArray(raw) && "bg" in raw && "accent" in raw) {
     return raw as unknown as BrandPalette;
   }
   return presetPalette(kit?.preset ?? "neon_night");
+}
+
+/** Textos que o card mostra, derivados do evento mas livres para ajuste fino. */
+function defaultCopy(event: Tables<"events"> | undefined, stageName: string) {
+  return {
+    kicker: stageName,
+    headline: event?.title ?? "",
+    dateLine: event?.event_date
+      ? `${dateBR(event.event_date)}${event.start_time ? ` · ${event.start_time}` : ""}`
+      : "Data a definir",
+    locationLine: [event?.venue, event?.city].filter(Boolean).join(", ") || "Local a definir",
+    footnote: "",
+  };
 }
 
 function CardGeneratorPage() {
@@ -54,13 +77,14 @@ function CardGeneratorPage() {
   const { event: eventIdParam } = Route.useSearch();
 
   const today = new Date().toISOString().slice(0, 10);
-  // Eventos sem data entram também (ex.: acabou de vir do Magic Paste sem
-  // data fechada ainda) — mostram "Data a definir" no card.
   const upcoming = events.filter(
     (e) => e.status !== "CANCELADO" && (!e.event_date || e.event_date >= today),
   );
 
   const [eventId, setEventId] = useState("");
+  const [format, setFormat] = useState<FormatKey>("STORIES");
+  const [showPhoto, setShowPhoto] = useState(true);
+  const [copy, setCopy] = useState(defaultCopy(undefined, ""));
   const [exporting, setExporting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -78,15 +102,31 @@ function CardGeneratorPage() {
   const brandKit = brandKits.find((k) => k.id === formation?.brand_kit_id);
   const preset = BRAND_PRESETS.find((p) => p.id === brandKit?.preset);
   const palette = paletteOf(brandKit);
+  const stageName = profile?.stage_name || "StageKit";
+
+  // Trocar de show repõe os textos a partir do novo evento — o ajuste fino
+  // vale para o card que está sendo montado, não vira estado permanente.
+  useEffect(() => {
+    if (event) setCopy(defaultCopy(event, stageName));
+  }, [event, stageName]);
+
+  const dims = FORMATS[format];
+  const isFeed = format === "FEED";
 
   async function exportPng() {
     if (!cardRef.current || !event) return;
     setExporting(true);
     try {
-      const dataUrl = await toPng(cardRef.current, { pixelRatio: 2, cacheBust: true });
+      const dataUrl = await toPng(cardRef.current, {
+        pixelRatio: 3,
+        cacheBust: true,
+        width: dims.width,
+        height: dims.height,
+      });
       const a = document.createElement("a");
       a.href = dataUrl;
-      a.download = `${event.title.replace(/[^\w-]+/g, "_") || "divulgacao"}.png`;
+      const slug = (copy.headline || event.title || "divulgacao").replace(/[^\w-]+/g, "_");
+      a.download = `${slug}-${format.toLowerCase()}.png`;
       a.click();
     } catch {
       toast.error("Não foi possível gerar a imagem. Tente novamente.");
@@ -98,7 +138,7 @@ function CardGeneratorPage() {
   if (upcoming.length === 0) {
     return (
       <div className="mx-auto max-w-3xl">
-        <PageHeader title="Gerador de Cards" subtitle="Card de divulgação pronto pro Stories." />
+        <PageHeader title="Gerador de Cards" subtitle="Card de divulgação para Stories e Feed." />
         <EmptyState
           icon={<CalendarDays className="size-5" />}
           title="Nenhum show futuro cadastrado"
@@ -113,11 +153,13 @@ function CardGeneratorPage() {
     );
   }
 
+  const setCopyField = (k: keyof typeof copy) => (v: string) => setCopy((c) => ({ ...c, [k]: v }));
+
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-6xl">
       <PageHeader
         title="Gerador de Cards"
-        subtitle="Card de divulgação (Stories) com a identidade visual da formação do show."
+        subtitle="Card de divulgação com a identidade visual da formação — ajuste os textos antes de exportar."
         actions={
           <Button onClick={exportPng} disabled={!event || exporting} size="sm">
             {exporting ? (
@@ -130,55 +172,129 @@ function CardGeneratorPage() {
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
-        <Section title="Show">
-          <Select value={eventId} onValueChange={setEventId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecionar show" />
-            </SelectTrigger>
-            <SelectContent>
-              {upcoming.map((e) => (
-                <SelectItem key={e.id} value={e.id}>
-                  {e.title} — {e.event_date ? dateBR(e.event_date) : "data a definir"}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
+        <div className="space-y-5">
+          <Section title="Show">
+            <Select value={eventId} onValueChange={setEventId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecionar show" />
+              </SelectTrigger>
+              <SelectContent>
+                {upcoming.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>
+                    {e.title} — {e.event_date ? dateBR(e.event_date) : "data a definir"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <div className="mt-4 space-y-2 text-xs text-muted-foreground">
-            {!formation ? (
-              <p>Esse show não tem formação vinculada — usando visual padrão do StageKit.</p>
-            ) : !brandKit ? (
-              <p>
-                A formação "{formation.name}" não tem brand kit vinculado.{" "}
-                <Link to="/formacoes" className="text-primary hover:underline">
-                  Vincular agora
-                </Link>
-                .
-              </p>
-            ) : (
-              <p>
-                Usando o brand kit "{brandKit.name}" ({preset?.label ?? brandKit.preset}).
-              </p>
-            )}
-          </div>
-        </Section>
+            <div className="mt-4 space-y-2">
+              <Label>Formato</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {(Object.keys(FORMATS) as FormatKey[]).map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setFormat(key)}
+                    className={cn(
+                      "rounded-lg border px-3 py-2 text-xs font-medium transition",
+                      format === key
+                        ? "border-primary bg-primary/10 text-foreground"
+                        : "border-border text-muted-foreground hover:border-primary/60",
+                    )}
+                  >
+                    {FORMATS[key].label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-2 text-xs text-muted-foreground">
+              {!formation ? (
+                <p>Esse show não tem formação vinculada — usando visual padrão do StageKit.</p>
+              ) : !brandKit ? (
+                <p>
+                  A formação "{formation.name}" não tem brand kit vinculado.{" "}
+                  <Link to="/formacoes" className="text-primary hover:underline">
+                    Vincular agora
+                  </Link>
+                  .
+                </p>
+              ) : (
+                <p>
+                  Usando o brand kit "{brandKit.name}" ({preset?.label ?? brandKit.preset}).
+                </p>
+              )}
+            </div>
+          </Section>
+
+          <Section
+            title="Ajuste fino"
+            description="Os textos vêm do show; edite livremente para este card."
+            actions={
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCopy(defaultCopy(event, stageName))}
+              >
+                <RotateCcw className="mr-1 size-3.5" /> Restaurar
+              </Button>
+            }
+          >
+            <div className="space-y-4">
+              <TextField
+                label="Chamada (topo)"
+                value={copy.kicker}
+                onChange={setCopyField("kicker")}
+              />
+              <TextField label="Título" value={copy.headline} onChange={setCopyField("headline")} />
+              <TextField
+                label="Data e hora"
+                value={copy.dateLine}
+                onChange={setCopyField("dateLine")}
+              />
+              <TextField
+                label="Local"
+                value={copy.locationLine}
+                onChange={setCopyField("locationLine")}
+              />
+              <TextField
+                label="Rodapé (opcional)"
+                value={copy.footnote}
+                onChange={setCopyField("footnote")}
+                placeholder="Ingressos na bio, classificação, etc."
+              />
+              {brandKit?.photo_url ? (
+                <label className="flex items-center justify-between gap-2 text-sm">
+                  Usar foto de fundo
+                  <Switch checked={showPhoto} onCheckedChange={setShowPhoto} />
+                </label>
+              ) : null}
+            </div>
+          </Section>
+        </div>
 
         <div className="flex items-start justify-center">
           <div
             ref={cardRef}
-            className="relative flex h-[640px] w-[360px] shrink-0 flex-col justify-end overflow-hidden rounded-2xl"
-            style={{ background: palette.bg, color: palette.text }}
+            className="relative flex shrink-0 flex-col justify-end overflow-hidden rounded-2xl"
+            style={{
+              width: dims.width,
+              height: dims.height,
+              background: palette.bg,
+              color: palette.text,
+            }}
           >
-            {brandKit?.photo_url ? (
+            {showPhoto && brandKit?.photo_url ? (
               <img
                 src={brandKit.photo_url}
                 alt=""
+                crossOrigin="anonymous"
                 className="absolute inset-0 h-full w-full object-cover"
               />
             ) : null}
             <div
-              className="relative flex flex-col gap-2 p-7"
+              className={cn("relative flex flex-col gap-2", isFeed ? "p-6" : "p-7")}
               style={{
                 background: `linear-gradient(to top, ${palette.bg}f2 20%, ${palette.bg}00 75%)`,
               }}
@@ -187,23 +303,26 @@ function CardGeneratorPage() {
                 <img
                   src={brandKit.logo_url}
                   alt="Logo"
+                  crossOrigin="anonymous"
                   className="mb-3 h-10 max-w-[140px] object-contain"
                 />
               ) : null}
-              <p
-                className="text-xs font-bold uppercase tracking-widest"
-                style={{ color: palette.accent }}
-              >
-                {profile?.stage_name || "StageKit"}
-              </p>
-              <p className="text-3xl font-extrabold leading-tight">{event?.title}</p>
-              <p className="text-sm opacity-90">
-                {event?.event_date ? dateBR(event.event_date) : "Data a definir"}
-                {event?.start_time ? ` · ${event.start_time}` : ""}
-              </p>
-              <p className="text-sm opacity-90">
-                {[event?.venue, event?.city].filter(Boolean).join(", ") || "Local a definir"}
-              </p>
+              {copy.kicker ? (
+                <p
+                  className="text-xs font-bold uppercase tracking-widest"
+                  style={{ color: palette.accent }}
+                >
+                  {copy.kicker}
+                </p>
+              ) : null}
+              {copy.headline ? (
+                <p className={cn("font-extrabold leading-tight", isFeed ? "text-2xl" : "text-3xl")}>
+                  {copy.headline}
+                </p>
+              ) : null}
+              {copy.dateLine ? <p className="text-sm opacity-90">{copy.dateLine}</p> : null}
+              {copy.locationLine ? <p className="text-sm opacity-90">{copy.locationLine}</p> : null}
+              {copy.footnote ? <p className="mt-1 text-xs opacity-75">{copy.footnote}</p> : null}
             </div>
           </div>
         </div>
