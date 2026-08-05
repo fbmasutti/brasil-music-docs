@@ -17,6 +17,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated/documentos'
 import { Route as AuthenticatedEquipeRouteImport } from './routes/_authenticated/equipe'
 import { Route as AuthenticatedFormacoesRouteImport } from './routes/_authenticated/formacoes'
+import { Route as AuthenticatedMarcaRouteImport } from './routes/_authenticated/marca'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedPortfolioRouteImport } from './routes/_authenticated/portfolio'
 import { Route as AuthenticatedRepertorioRouteImport } from './routes/_authenticated/repertorio'
@@ -63,6 +64,11 @@ const AuthenticatedFormacoesRoute = AuthenticatedFormacoesRouteImport.update({
   path: '/formacoes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMarcaRoute = AuthenticatedMarcaRouteImport.update({
+  id: '/marca',
+  path: '/marca',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
@@ -104,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/documentos': typeof AuthenticatedDocumentosRoute
   '/equipe': typeof AuthenticatedEquipeRoute
   '/formacoes': typeof AuthenticatedFormacoesRoute
+  '/marca': typeof AuthenticatedMarcaRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/portfolio': typeof AuthenticatedPortfolioRoute
   '/repertorio': typeof AuthenticatedRepertorioRoute
@@ -119,6 +126,7 @@ export interface FileRoutesByTo {
   '/documentos': typeof AuthenticatedDocumentosRoute
   '/equipe': typeof AuthenticatedEquipeRoute
   '/formacoes': typeof AuthenticatedFormacoesRoute
+  '/marca': typeof AuthenticatedMarcaRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/portfolio': typeof AuthenticatedPortfolioRoute
   '/repertorio': typeof AuthenticatedRepertorioRoute
@@ -136,6 +144,7 @@ export interface FileRoutesById {
   '/_authenticated/documentos': typeof AuthenticatedDocumentosRoute
   '/_authenticated/equipe': typeof AuthenticatedEquipeRoute
   '/_authenticated/formacoes': typeof AuthenticatedFormacoesRoute
+  '/_authenticated/marca': typeof AuthenticatedMarcaRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/portfolio': typeof AuthenticatedPortfolioRoute
   '/_authenticated/repertorio': typeof AuthenticatedRepertorioRoute
@@ -153,6 +162,7 @@ export interface FileRouteTypes {
     | '/documentos'
     | '/equipe'
     | '/formacoes'
+    | '/marca'
     | '/perfil'
     | '/portfolio'
     | '/repertorio'
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/documentos'
     | '/equipe'
     | '/formacoes'
+    | '/marca'
     | '/perfil'
     | '/portfolio'
     | '/repertorio'
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/_authenticated/documentos'
     | '/_authenticated/equipe'
     | '/_authenticated/formacoes'
+    | '/_authenticated/marca'
     | '/_authenticated/perfil'
     | '/_authenticated/portfolio'
     | '/_authenticated/repertorio'
@@ -256,6 +268,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFormacoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/marca': {
+      id: '/_authenticated/marca'
+      path: '/marca'
+      fullPath: '/marca'
+      preLoaderRoute: typeof AuthenticatedMarcaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/perfil': {
       id: '/_authenticated/perfil'
       path: '/perfil'
@@ -307,6 +326,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRoute
   AuthenticatedEquipeRoute: typeof AuthenticatedEquipeRoute
   AuthenticatedFormacoesRoute: typeof AuthenticatedFormacoesRoute
+  AuthenticatedMarcaRoute: typeof AuthenticatedMarcaRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedPortfolioRoute: typeof AuthenticatedPortfolioRoute
   AuthenticatedRepertorioRoute: typeof AuthenticatedRepertorioRoute
@@ -321,6 +341,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDocumentosRoute: AuthenticatedDocumentosRoute,
   AuthenticatedEquipeRoute: AuthenticatedEquipeRoute,
   AuthenticatedFormacoesRoute: AuthenticatedFormacoesRoute,
+  AuthenticatedMarcaRoute: AuthenticatedMarcaRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedPortfolioRoute: AuthenticatedPortfolioRoute,
   AuthenticatedRepertorioRoute: AuthenticatedRepertorioRoute,

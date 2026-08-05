@@ -20,7 +20,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { PageHeader, Section, EmptyState, FieldGrid, TextField } from "@/components/ui-kit";
-import { useList, useInsert, useRemove } from "@/lib/queries";
+import { useList, useInsert, useRemove, useUpdate } from "@/lib/queries";
 import { money } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/formacoes")({
@@ -49,12 +49,14 @@ function FormationsPage() {
   const { data: formations = [] } = useList("formations", { order: { column: "name" } });
   const { data: members = [] } = useList("formation_members");
   const { data: teamMembers = [] } = useList("team_members", { order: { column: "name" } });
+  const { data: brandKits = [] } = useList("brand_kits", { order: { column: "name" } });
   const { data: gearItems = [] } = useList("gear_checklist_items", {
     order: { column: "position" },
   });
 
   const insertFormation = useInsert("formations", "Formação criada");
   const removeFormation = useRemove("formations", "Formação removida");
+  const updateFormation = useUpdate("formations", "Brand kit vinculado");
   const insertMember = useInsert("formation_members", "Integrante vinculado");
   const removeMember = useRemove("formation_members", "Integrante removido");
   const insertGear = useInsert("gear_checklist_items", "Item adicionado");
@@ -168,6 +170,29 @@ function FormationsPage() {
                         <Trash2 className="size-4" />
                       </Button>
                     </div>
+                  </div>
+
+                  <div className="mt-3 max-w-xs space-y-1.5">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Brand kit
+                    </p>
+                    <Select
+                      value={f.brand_kit_id ?? ""}
+                      onValueChange={(v) =>
+                        updateFormation.mutate({ id: f.id, values: { brand_kit_id: v } })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Nenhum" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {brandKits.map((k) => (
+                          <SelectItem key={k.id} value={k.id}>
+                            {k.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">

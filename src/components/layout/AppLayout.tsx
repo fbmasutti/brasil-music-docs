@@ -15,6 +15,7 @@ import {
   X,
   Radio,
   Layers,
+  Palette,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/perfil", label: "Dados do Artista / Proponente", icon: Settings },
+  { to: "/marca", label: "Marca & Brand Kit", icon: Palette },
   { to: "/equipe", label: "Equipe & Ficha Técnica", icon: Users },
   { to: "/formacoes", label: "Formações", icon: Layers },
   { to: "/eventos", label: "Shows & Agenda", icon: CalendarDays },
