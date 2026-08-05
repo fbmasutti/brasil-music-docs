@@ -25,6 +25,12 @@ export async function uploadBrandAsset(file: File, userId: string, kind: "photo"
     contentType: file.type,
   });
   if (error) throw new UploadError(error.message);
-  const { data } = supabase.storage.from(BRAND_BUCKET).getPublicUrl(path);
-  return data.publicUrl;
+  // O bucket é privado (buckets públicos estão bloqueados pela política do
+  // workspace), então usamos uma URL assinada de longa duração.
+  const TEN_YEARS = 60 * 60 * 24 * 365 * 10;
+  const { data, error: signError } = await supabase.storage
+    .from(BRAND_BUCKET)
+    .createSignedUrl(path, TEN_YEARS);
+  if (signError || !data) throw new UploadError(signError?.message ?? "Falha ao gerar URL da imagem.");
+  return data.signedUrl;
 }
