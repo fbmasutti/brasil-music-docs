@@ -29,6 +29,7 @@ import { PageHeader, Section, EmptyState, FieldGrid, TextField } from "@/compone
 import { useList, useInsert, useRemove } from "@/lib/queries";
 import { dateBR, money, EVENT_STATUS } from "@/lib/format";
 import { buildGoogleCalendarUrl, downloadICS } from "@/lib/calendar-link";
+import { DEFAULT_CHECKLIST } from "@/lib/event-defaults";
 import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/eventos/")({
@@ -64,18 +65,6 @@ const empty = {
   deposit_due_date: "",
   balance_due_date: "",
 };
-
-const DEFAULT_CHECKLIST: { label: string; phase: string }[] = [
-  { label: "Contrato assinado pelas duas partes", phase: "PRE" },
-  { label: "Sinal recebido", phase: "PRE" },
-  { label: "Rider técnico enviado ao produtor", phase: "PRE" },
-  { label: "Rooming list e transporte confirmados", phase: "PRE" },
-  { label: "Passagem de som realizada", phase: "PALCO" },
-  { label: "Setlist impressa no palco", phase: "PALCO" },
-  { label: "Saldo do cachê recebido", phase: "POS" },
-  { label: "Relatório de ECAD/execução enviado", phase: "POS" },
-  { label: "Registro de clipping e fotos arquivado", phase: "POS" },
-];
 
 function EventsPage() {
   const { data: events = [] } = useList("events", {

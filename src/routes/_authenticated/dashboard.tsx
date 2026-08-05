@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   Circle,
   Megaphone,
+  Wand2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -247,7 +248,13 @@ function Dashboard() {
         />
       </div>
 
-      <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-5">
+      <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-6">
+        <QuickCard
+          to="/magic-paste"
+          icon={<Wand2 className="size-5" />}
+          label="Colar do WhatsApp"
+          value="Extrair dados do show"
+        />
         <QuickCard
           to="/gerador-cards"
           icon={<Megaphone className="size-5" />}

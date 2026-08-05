@@ -18,6 +18,9 @@ import { BRAND_PRESETS, presetPalette, type BrandPalette } from "@/lib/brand-pre
 import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/gerador-cards")({
+  validateSearch: (search: Record<string, unknown>): { event?: string | undefined } => ({
+    event: typeof search["event"] === "string" ? search["event"] : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Gerador de Posts — StageKit" },
@@ -48,17 +51,27 @@ function CardGeneratorPage() {
   });
   const { data: formations = [] } = useList("formations");
   const { data: brandKits = [] } = useList("brand_kits");
+  const { event: eventIdParam } = Route.useSearch();
 
   const today = new Date().toISOString().slice(0, 10);
-  const upcoming = events.filter((e) => (e.event_date ?? "") >= today && e.status !== "CANCELADO");
+  // Eventos sem data entram também (ex.: acabou de vir do Magic Paste sem
+  // data fechada ainda) — mostram "Data a definir" no card.
+  const upcoming = events.filter(
+    (e) => e.status !== "CANCELADO" && (!e.event_date || e.event_date >= today),
+  );
 
   const [eventId, setEventId] = useState("");
   const [exporting, setExporting] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!eventId && upcoming.length) setEventId(upcoming[0]!.id);
-  }, [upcoming, eventId]);
+    if (eventId) return;
+    if (eventIdParam && upcoming.some((e) => e.id === eventIdParam)) {
+      setEventId(eventIdParam);
+    } else if (upcoming.length) {
+      setEventId(upcoming[0]!.id);
+    }
+  }, [upcoming, eventId, eventIdParam]);
 
   const event = upcoming.find((e) => e.id === eventId);
   const formation = formations.find((f) => f.id === event?.formation_id);
@@ -126,7 +139,7 @@ function CardGeneratorPage() {
             <SelectContent>
               {upcoming.map((e) => (
                 <SelectItem key={e.id} value={e.id}>
-                  {e.title} — {dateBR(e.event_date)}
+                  {e.title} — {e.event_date ? dateBR(e.event_date) : "data a definir"}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -185,7 +198,7 @@ function CardGeneratorPage() {
               </p>
               <p className="text-3xl font-extrabold leading-tight">{event?.title}</p>
               <p className="text-sm opacity-90">
-                {dateBR(event?.event_date)}
+                {event?.event_date ? dateBR(event.event_date) : "Data a definir"}
                 {event?.start_time ? ` · ${event.start_time}` : ""}
               </p>
               <p className="text-sm opacity-90">

@@ -18,6 +18,7 @@ import {
   Layers,
   Palette,
   Megaphone,
+  Wand2,
   ChevronDown,
   type LucideIcon,
 } from "lucide-react";
@@ -32,6 +33,7 @@ type NavItem = { to: string; label: string; icon: LucideIcon };
 // Modo Diário: o que se usa no dia a dia de show. Fica sempre visível.
 const NAV_DAILY: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/magic-paste", label: "Colar do WhatsApp", icon: Wand2 },
   { to: "/eventos", label: "Shows & Agenda", icon: CalendarDays },
   { to: "/documentos", label: "Gerador Rápido", icon: FileText },
   { to: "/gerador-cards", label: "Gerador de Posts", icon: Megaphone },
