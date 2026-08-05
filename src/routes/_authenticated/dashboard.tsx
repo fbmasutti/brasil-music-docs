@@ -10,6 +10,7 @@ import {
   Sliders,
   Images,
   CheckCircle2,
+  Circle,
   Megaphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader, StatCard, Section, EmptyState } from "@/components/ui-kit";
 import { useList, useProfile } from "@/lib/queries";
 import { dateBR, money, EVENT_STATUS } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -47,7 +49,16 @@ function Dashboard() {
   });
   const { data: songs = [] } = useList("songs");
   const { data: team = [] } = useList("team_members");
+  const { data: formations = [] } = useList("formations");
   const { data: checklists = [] } = useList("event_checklists");
+
+  const gettingStarted = [
+    { label: "Complete seu perfil (CPF/CNPJ)", done: Boolean(profile?.cpf_cnpj), to: "/perfil" },
+    { label: "Cadastre sua equipe", done: team.length > 0, to: "/equipe" },
+    { label: "Crie uma formação", done: formations.length > 0, to: "/formacoes" },
+    { label: "Cadastre um show", done: events.length > 0, to: "/eventos" },
+  ];
+  const gettingStartedDone = gettingStarted.filter((s) => s.done).length;
 
   const today = new Date().toISOString().slice(0, 10);
   // Eventos sem data ainda contam como "próximos" (ex.: show em negociação,
@@ -100,6 +111,37 @@ function Dashboard() {
           </>
         }
       />
+
+      {gettingStartedDone < gettingStarted.length ? (
+        <Section
+          title="Primeiros passos"
+          description={`${gettingStartedDone}/${gettingStarted.length} concluídos`}
+          className="mb-5"
+        >
+          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {gettingStarted.map((step) => (
+              <li key={step.label}>
+                <Link
+                  to={step.to}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg border p-3 text-sm transition",
+                    step.done
+                      ? "border-success/30 bg-success/5 text-muted-foreground"
+                      : "border-border hover:border-primary/40",
+                  )}
+                >
+                  {step.done ? (
+                    <CheckCircle2 className="size-4 shrink-0 text-success" />
+                  ) : (
+                    <Circle className="size-4 shrink-0 text-muted-foreground" />
+                  )}
+                  <span className={step.done ? "line-through" : ""}>{step.label}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      ) : null}
 
       <div className="grid gap-5 lg:grid-cols-3">
         <Section
