@@ -1,11 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, CheckCircle2, Circle, FileText, Sliders } from "lucide-react";
+import { ArrowLeft, CalendarPlus, CheckCircle2, Circle, FileText, Sliders } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PageHeader, Section, StatCard } from "@/components/ui-kit";
 import { useList, useUpdate } from "@/lib/queries";
 import { dateBR, money, EVENT_STATUS } from "@/lib/format";
+import { buildGoogleCalendarUrl, downloadICS } from "@/lib/calendar-link";
 
 export const Route = createFileRoute("/_authenticated/eventos/$eventId")({
   head: () => ({
@@ -57,6 +64,7 @@ function EventDetail() {
   const client = clients.find((c) => c.id === event.client_id);
   const done = tasks.filter((t) => t.done).length;
   const status = EVENT_STATUS[event.status] ?? { label: event.status, tone: "" };
+  const googleCalendarUrl = buildGoogleCalendarUrl(event);
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -74,6 +82,25 @@ function EventDetail() {
             <Badge variant="outline" className={status.tone}>
               {status.label}
             </Badge>
+            {googleCalendarUrl ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="outline">
+                    <CalendarPlus className="mr-1 size-4" /> Adicionar à agenda
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <a href={googleCalendarUrl} target="_blank" rel="noopener noreferrer">
+                      Google Calendar
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => downloadICS(event)}>
+                    Baixar .ics (Apple/Outlook)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
             <Button asChild size="sm" variant="outline">
               <Link to="/documentos">
                 <FileText className="mr-1 size-4" /> Gerar contrato

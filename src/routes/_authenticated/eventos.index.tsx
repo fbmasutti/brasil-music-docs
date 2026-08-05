@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CalendarDays, Plus, Trash2 } from "lucide-react";
+import { CalendarDays, CalendarPlus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -19,9 +19,16 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PageHeader, Section, EmptyState, FieldGrid, TextField } from "@/components/ui-kit";
 import { useList, useInsert, useRemove } from "@/lib/queries";
 import { dateBR, money, EVENT_STATUS } from "@/lib/format";
+import { buildGoogleCalendarUrl, downloadICS } from "@/lib/calendar-link";
 
 export const Route = createFileRoute("/_authenticated/eventos/")({
   head: () => ({
@@ -208,6 +215,7 @@ function EventsPage() {
             {events.map((e) => {
               const status = EVENT_STATUS[e.status] ?? { label: e.status, tone: "" };
               const client = clients.find((c) => c.id === e.client_id);
+              const googleCalendarUrl = buildGoogleCalendarUrl(e);
               return (
                 <li key={e.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                   <div className="min-w-0">
@@ -230,6 +238,25 @@ function EventsPage() {
                     <Badge variant="outline" className={status.tone}>
                       {status.label}
                     </Badge>
+                    {googleCalendarUrl ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" aria-label="Adicionar à agenda">
+                            <CalendarPlus className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <a href={googleCalendarUrl} target="_blank" rel="noopener noreferrer">
+                              Google Calendar
+                            </a>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => downloadICS(e)}>
+                            Baixar .ics (Apple/Outlook)
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : null}
                     <Button variant="ghost" size="icon" onClick={() => remove.mutate(e.id)} aria-label="Remover">
                       <Trash2 className="size-4" />
                     </Button>
