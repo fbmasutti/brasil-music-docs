@@ -1,4 +1,4 @@
-import { Mic, Piano, Speaker, Music2, Trash2, Plus } from "lucide-react";
+import { Music2, Trash2, Plus } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -16,37 +16,49 @@ export type StageKind =
   | "voz"
   | "guitarra"
   | "violao"
+  | "cavaco"
   | "baixo"
   | "bateria"
+  | "conga"
+  | "pandeiro"
+  | "tantan"
   | "teclado"
   | "monitor"
   | "cubo_guitarra"
   | "cubo_baixo"
-  | "pandeiro"
-  | "tantan"
   | "sax"
   | "trombone"
   | "trompete"
+  | "violino"
+  | "di_box"
+  | "ponto_energia"
+  | "praticavel"
   | "outro";
 
-/** Ícone próprio em public/stage-icons (SVG desenhado), com fallback lucide para os
- * elementos que ainda não têm arte dedicada (voz, teclado, monitor, outro). */
+/** Ícone próprio em public/stage-icons (SVG desenhado), com fallback lucide para o
+ * único elemento que ainda não tem arte dedicada ("outro", propositalmente genérico). */
 export const STAGE_KINDS: { kind: StageKind; label: string; iconSrc?: string; icon?: ReactNode }[] =
   [
-    { kind: "voz", label: "Voz", icon: <Mic className="size-4" /> },
+    { kind: "voz", label: "Voz", iconSrc: "/stage-icons/microfone.svg" },
     { kind: "guitarra", label: "Guitarra", iconSrc: "/stage-icons/guitarra.svg" },
     { kind: "violao", label: "Violão", iconSrc: "/stage-icons/violao.svg" },
+    { kind: "cavaco", label: "Cavaco / Banjo", iconSrc: "/stage-icons/cavaco.svg" },
     { kind: "baixo", label: "Baixo", iconSrc: "/stage-icons/baixo.svg" },
+    { kind: "violino", label: "Violino", iconSrc: "/stage-icons/violino.svg" },
     { kind: "bateria", label: "Bateria / Percussão", iconSrc: "/stage-icons/bateria.svg" },
-    { kind: "teclado", label: "Teclado", icon: <Piano className="size-4" /> },
-    { kind: "monitor", label: "Monitor / Retorno", icon: <Speaker className="size-4" /> },
-    { kind: "cubo_guitarra", label: "Cubo de guitarra", iconSrc: "/stage-icons/cubo-guitarra.svg" },
-    { kind: "cubo_baixo", label: "Cubo de baixo", iconSrc: "/stage-icons/cubo-baixo.svg" },
+    { kind: "conga", label: "Conga", iconSrc: "/stage-icons/conga.svg" },
     { kind: "pandeiro", label: "Pandeiro", iconSrc: "/stage-icons/pandeiro.svg" },
     { kind: "tantan", label: "Tantã", iconSrc: "/stage-icons/tantan.svg" },
+    { kind: "teclado", label: "Teclado", iconSrc: "/stage-icons/teclado.svg" },
+    { kind: "monitor", label: "Monitor / Retorno", iconSrc: "/stage-icons/monitor.svg" },
+    { kind: "cubo_guitarra", label: "Cubo de guitarra", iconSrc: "/stage-icons/cubo-guitarra.svg" },
+    { kind: "cubo_baixo", label: "Cubo de baixo", iconSrc: "/stage-icons/cubo-baixo.svg" },
     { kind: "sax", label: "Sax", iconSrc: "/stage-icons/sax.svg" },
     { kind: "trombone", label: "Trombone", iconSrc: "/stage-icons/trombone.svg" },
     { kind: "trompete", label: "Trompete", iconSrc: "/stage-icons/trompete.svg" },
+    { kind: "di_box", label: "DI box", iconSrc: "/stage-icons/di-box.svg" },
+    { kind: "ponto_energia", label: "Ponto de energia", iconSrc: "/stage-icons/ponto-energia.svg" },
+    { kind: "praticavel", label: "Praticável", iconSrc: "/stage-icons/praticavel.svg" },
     { kind: "outro", label: "Outro", icon: <Music2 className="size-4" /> },
   ];
 
