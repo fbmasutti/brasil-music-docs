@@ -1,5 +1,4 @@
 import { defineTool } from "@lovable.dev/mcp-js";
-import { z } from "zod";
 import { supabaseForUser } from "../supabase";
 
 export default defineTool({
@@ -20,13 +19,10 @@ export default defineTool({
       )
       .maybeSingle();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
-    if (!data)
-      return { content: [{ type: "text", text: "No profile found for this user yet." }] };
+    if (!data) return { content: [{ type: "text", text: "No profile found for this user yet." }] };
     return {
       content: [{ type: "text", text: JSON.stringify(data) }],
       structuredContent: { profile: data as unknown as Record<string, unknown> },
     };
   },
 });
-
-export const _unused = z;
