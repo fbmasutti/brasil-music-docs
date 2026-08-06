@@ -6,6 +6,7 @@ import {
   MessageCircle,
   Copy,
   Plus,
+  Pencil,
   Trash2,
   PiggyBank,
   Guitar,
@@ -31,7 +32,7 @@ import {
   TextField,
   ConfirmDelete,
 } from "@/components/ui-kit";
-import { useList, useInsert, useRemove } from "@/lib/queries";
+import { useList, useInsert, useUpdate, useRemove } from "@/lib/queries";
 import { dateBR, money, cacheStatus, CACHE_STATUS } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/financeiro")({
@@ -86,13 +87,18 @@ function FinanceiroPage() {
   });
 
   const insertExpense = useInsert("event_expenses", "Custo lançado");
+  const updateExpense = useUpdate("event_expenses", "Custo atualizado");
   const removeExpense = useRemove("event_expenses", "Custo removido");
   const insertGear = useInsert("gear_assets", "Instrumento cadastrado");
+  const updateGear = useUpdate("gear_assets", "Instrumento atualizado");
   const removeGear = useRemove("gear_assets", "Instrumento removido");
   const insertFund = useInsert("maintenance_fund_entries", "Registrado no fundo de manutenção");
 
   const [expenseForm, setExpenseForm] = useState({ category: "OUTRO", amount: "", notes: "" });
+  // id do lançamento em edição; null = formulário está criando um novo
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [gearForm, setGearForm] = useState({ name: "", category: "", value: "" });
+  const [editingGearId, setEditingGearId] = useState<string | null>(null);
   const [reservaPercent, setReservaPercent] = useState("5");
   const [quickFund, setQuickFund] = useState("");
 
@@ -296,17 +302,34 @@ function FinanceiroPage() {
                         {money(Number(exp.amount))}
                         {exp.notes ? ` · ${exp.notes}` : ""}
                       </span>
-                      <ConfirmDelete
-                        title="Remover este custo?"
-                        description={`${EXPENSE_CATEGORIES[exp.category] ?? exp.category} de ${money(Number(exp.amount))} sai do cálculo de lucro real deste show.`}
-                        confirmLabel="Remover custo"
-                        onConfirm={() => removeExpense.mutate(exp.id)}
-                        trigger={
-                          <Button variant="ghost" size="icon" aria-label="Remover custo">
-                            <Trash2 className="size-3.5" />
-                          </Button>
-                        }
-                      />
+                      <div className="flex shrink-0 items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Editar custo"
+                          onClick={() => {
+                            setEditingExpenseId(exp.id);
+                            setExpenseForm({
+                              category: exp.category ?? "OUTRO",
+                              amount: String(exp.amount ?? ""),
+                              notes: exp.notes ?? "",
+                            });
+                          }}
+                        >
+                          <Pencil className="size-3.5" />
+                        </Button>
+                        <ConfirmDelete
+                          title="Remover este custo?"
+                          description={`${EXPENSE_CATEGORIES[exp.category] ?? exp.category} de ${money(Number(exp.amount))} sai do cálculo de lucro real deste show.`}
+                          confirmLabel="Remover custo"
+                          onConfirm={() => removeExpense.mutate(exp.id)}
+                          trigger={
+                            <Button variant="ghost" size="icon" aria-label="Remover custo">
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          }
+                        />
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -343,23 +366,39 @@ function FinanceiroPage() {
                   <Button
                     size="sm"
                     disabled={!expenseForm.amount}
-                    onClick={() =>
-                      insertExpense.mutate(
-                        {
-                          event_id: eventId,
-                          category: expenseForm.category,
-                          amount: Number(expenseForm.amount || 0),
-                          notes: expenseForm.notes || null,
+                    onClick={() => {
+                      const values = {
+                        category: expenseForm.category,
+                        amount: Number(expenseForm.amount || 0),
+                        notes: expenseForm.notes || null,
+                      };
+                      const done = {
+                        onSuccess: () => {
+                          setExpenseForm({ category: "OUTRO", amount: "", notes: "" });
+                          setEditingExpenseId(null);
                         },
-                        {
-                          onSuccess: () =>
-                            setExpenseForm({ category: "OUTRO", amount: "", notes: "" }),
-                        },
-                      )
-                    }
+                      };
+                      if (editingExpenseId) {
+                        updateExpense.mutate({ id: editingExpenseId, values }, done);
+                      } else {
+                        insertExpense.mutate({ event_id: eventId, ...values }, done);
+                      }
+                    }}
                   >
-                    <Plus className="mr-1 size-4" /> Lançar
+                    <Plus className="mr-1 size-4" /> {editingExpenseId ? "Salvar" : "Lançar"}
                   </Button>
+                  {editingExpenseId ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setEditingExpenseId(null);
+                        setExpenseForm({ category: "OUTRO", amount: "", notes: "" });
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                  ) : null}
                 </div>
               </div>
 
@@ -454,17 +493,34 @@ function FinanceiroPage() {
                       {g.name}
                       {g.category ? ` · ${g.category}` : ""} · {money(Number(g.value))}
                     </span>
-                    <ConfirmDelete
-                      title={`Remover "${g.name}"?`}
-                      description="O instrumento sai da sua lista de equipamentos. Os lançamentos já feitos na reserva não são afetados."
-                      confirmLabel="Remover instrumento"
-                      onConfirm={() => removeGear.mutate(g.id)}
-                      trigger={
-                        <Button variant="ghost" size="icon" aria-label={`Remover ${g.name}`}>
-                          <Trash2 className="size-3.5" />
-                        </Button>
-                      }
-                    />
+                    <div className="flex shrink-0 items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Editar ${g.name}`}
+                        onClick={() => {
+                          setEditingGearId(g.id);
+                          setGearForm({
+                            name: g.name ?? "",
+                            category: g.category ?? "",
+                            value: String(g.value ?? ""),
+                          });
+                        }}
+                      >
+                        <Pencil className="size-3.5" />
+                      </Button>
+                      <ConfirmDelete
+                        title={`Remover "${g.name}"?`}
+                        description="O instrumento sai da sua lista de equipamentos. Os lançamentos já feitos na reserva não são afetados."
+                        confirmLabel="Remover instrumento"
+                        onConfirm={() => removeGear.mutate(g.id)}
+                        trigger={
+                          <Button variant="ghost" size="icon" aria-label={`Remover ${g.name}`}>
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        }
+                      />
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -493,18 +549,26 @@ function FinanceiroPage() {
               size="sm"
               className="mt-3"
               disabled={!gearForm.name}
-              onClick={() =>
-                insertGear.mutate(
-                  {
-                    name: gearForm.name,
-                    category: gearForm.category || null,
-                    value: Number(gearForm.value || 0),
+              onClick={() => {
+                const values = {
+                  name: gearForm.name,
+                  category: gearForm.category || null,
+                  value: Number(gearForm.value || 0),
+                };
+                const done = {
+                  onSuccess: () => {
+                    setGearForm({ name: "", category: "", value: "" });
+                    setEditingGearId(null);
                   },
-                  { onSuccess: () => setGearForm({ name: "", category: "", value: "" }) },
-                )
-              }
+                };
+                if (editingGearId) {
+                  updateGear.mutate({ id: editingGearId, values }, done);
+                } else {
+                  insertGear.mutate(values, done);
+                }
+              }}
             >
-              <Plus className="mr-1 size-4" /> Cadastrar
+              <Plus className="mr-1 size-4" /> {editingGearId ? "Salvar" : "Cadastrar"}
             </Button>
           </div>
 
