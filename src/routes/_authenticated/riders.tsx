@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Sliders, Plus, Download, Trash2, Wand2, Pencil, ChevronDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,16 @@ import {
 } from "@/components/ui-kit";
 import { useList, useInsert, useUpdate, useRemove, useProfile } from "@/lib/queries";
 import { downloadPdf, type PdfBlock } from "@/lib/pdf";
-import { StagePlot, StageItemLabels, parseStagePlot, type StageItem } from "@/components/StagePlot";
+import {
+  StagePlot,
+  StageItemLabels,
+  StagePlotPrintable,
+  parseStagePlot,
+  PRINT_PLOT_WIDTH,
+  PRINT_PLOT_HEIGHT,
+  type StageItem,
+} from "@/components/StagePlot";
+import { toPng } from "html-to-image";
 import { RIDER_PRESETS, presetToStageItems } from "@/lib/rider-presets";
 
 export const Route = createFileRoute("/_authenticated/riders")({
@@ -81,6 +90,10 @@ function RidersPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [form, setForm] = useState(empty);
+  // Rider aguardando exportação: enquanto está setado, o mapa é renderizado
+  // fora da tela para ser capturado como imagem e entrar no PDF.
+  const [pendingExport, setPendingExport] = useState<RiderRow | null>(null);
+  const printRef = useRef<HTMLDivElement>(null);
   const [stage, setStage] = useState<StageItem[]>([]);
   const set = (k: keyof typeof empty) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -99,6 +112,34 @@ function RidersPage() {
       hospitality: preset.hospitality,
     });
   }
+
+  useEffect(() => {
+    if (!pendingExport) return;
+    const rider = pendingExport;
+    const node = printRef.current;
+    let cancelled = false;
+    (async () => {
+      let dataUrl: string | null = null;
+      try {
+        if (node) {
+          // Espera um frame: no primeiro commit o nó existe no DOM mas ainda
+          // pode não ter fontes/estilos aplicados, e a captura sairia torta.
+          await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+          dataUrl = await toPng(node, { pixelRatio: 2, cacheBust: true, backgroundColor: "#fff" });
+        }
+      } catch {
+        // Sem o desenho o PDF ainda sai, com a tabela de posições como reserva.
+        dataUrl = null;
+      }
+      if (cancelled) return;
+      exportRider(rider, dataUrl);
+      setPendingExport(null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingExport]);
 
   function startEdit(rider: RiderRow) {
     setEditingId(rider.id);
@@ -150,7 +191,7 @@ function RidersPage() {
     else insert.mutate(values, { onSuccess: closeForm });
   }
 
-  function exportRider(rider: RiderRow) {
+  function exportRider(rider: RiderRow, plotImage: string | null) {
     const channels = Array.isArray(rider.channel_list) ? (rider.channel_list as string[]) : [];
     const plot = parseStagePlot(rider.stage_plot);
     downloadPdf(
@@ -173,14 +214,28 @@ function RidersPage() {
           ...(plot.length
             ? ([
                 { type: "heading", text: "Mapa de palco" },
-                {
-                  type: "table",
-                  head: ["Posição", "Elemento"],
-                  rows: plot.map((item) => [
-                    `Linha ${item.row + 1}, coluna ${item.col + 1}`,
-                    item.label,
-                  ]),
-                },
+                // Desenho de verdade. Antes isto era uma tabela de texto
+                // ("Bateria — linha 1, coluna 2"), que não comunica posição
+                // para quem monta o palco.
+                ...(plotImage
+                  ? ([
+                      {
+                        type: "image",
+                        dataUrl: plotImage,
+                        aspect: PRINT_PLOT_WIDTH / PRINT_PLOT_HEIGHT,
+                        caption: "Visão de quem está na plateia olhando para o palco.",
+                      },
+                    ] as PdfBlock[])
+                  : ([
+                      {
+                        type: "table",
+                        head: ["Posição", "Elemento"],
+                        rows: plot.map((item) => [
+                          `Linha ${item.row + 1}, coluna ${item.col + 1}`,
+                          item.label,
+                        ]),
+                      },
+                    ] as PdfBlock[])),
               ] as PdfBlock[])
             : []),
           ...(rider.sound_requirements
@@ -370,7 +425,7 @@ function RidersPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => exportRider(r)}>
+                    <Button variant="outline" size="sm" onClick={() => setPendingExport(r)}>
                       <Download className="mr-1 size-4" /> PDF
                     </Button>
                     <Button
@@ -399,6 +454,16 @@ function RidersPage() {
           </ul>
         )}
       </Section>
+
+      {/* Fora da tela, mas dentro do documento — o html-to-image precisa de um
+          nó realmente renderizado para capturar. Só existe durante a exportação. */}
+      {pendingExport ? (
+        <div aria-hidden style={{ position: "fixed", left: -9999, top: 0, pointerEvents: "none" }}>
+          <div ref={printRef}>
+            <StagePlotPrintable items={parseStagePlot(pendingExport.stage_plot)} />
+          </div>
+        </div>
+      ) : null}
     </PageContainer>
   );
 }

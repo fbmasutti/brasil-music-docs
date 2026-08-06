@@ -778,6 +778,8 @@ export type Database = {
           isrc: string | null
           iswc: string | null
           notes: string | null
+          origin: string
+          original_authors: string | null
           performers: string | null
           producer: string | null
           publisher: string | null
@@ -793,6 +795,8 @@ export type Database = {
           isrc?: string | null
           iswc?: string | null
           notes?: string | null
+          origin?: string
+          original_authors?: string | null
           performers?: string | null
           producer?: string | null
           publisher?: string | null
@@ -808,6 +812,8 @@ export type Database = {
           isrc?: string | null
           iswc?: string | null
           notes?: string | null
+          origin?: string
+          original_authors?: string | null
           performers?: string | null
           producer?: string | null
           publisher?: string | null

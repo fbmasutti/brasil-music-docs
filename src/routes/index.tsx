@@ -43,8 +43,8 @@ const FEATURES = [
   },
   {
     icon: Music4,
-    title: "ECAD & Direitos Autorais",
-    text: "Cadastro de obras com ISRC, ISWC, split de autoria e setlists prontas para relatório de execução pública.",
+    title: "Repertório & ECAD",
+    text: "Cadastre covers e obras próprias e gere relatórios de execução pública e fichas de registro para o ECAD automaticamente.",
   },
   {
     icon: Images,

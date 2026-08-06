@@ -145,6 +145,108 @@ export function StagePlot({
   );
 }
 
+/**
+ * Versão estática do mapa para embutir no PDF: sem arrastar, sem lixeira e
+ * com cores claras, já que o PDF é impresso em papel branco. Mantém a mesma
+ * grade e os mesmos ícones da tela, então trocar os ícones melhora os dois.
+ */
+export const PRINT_PLOT_WIDTH = 640;
+export const PRINT_PLOT_HEIGHT = 400;
+
+export function StagePlotPrintable({ items }: { items: StageItem[] }) {
+  return (
+    <div
+      style={{
+        width: PRINT_PLOT_WIDTH,
+        height: PRINT_PLOT_HEIGHT,
+        background: "#ffffff",
+        color: "#18181b",
+        padding: 16,
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+        fontFamily: "Inter, system-ui, sans-serif",
+      }}
+    >
+      <p
+        style={{
+          textAlign: "center",
+          fontSize: 11,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          color: "#71717a",
+          margin: 0,
+        }}
+      >
+        Fundo do palco
+      </p>
+      <div
+        style={{
+          flex: 1,
+          display: "grid",
+          gridTemplateColumns: `repeat(${COLS}, 1fr)`,
+          gridTemplateRows: `repeat(${ROWS}, 1fr)`,
+          gap: 8,
+        }}
+      >
+        {Array.from({ length: ROWS * COLS }).map((_, index) => {
+          const col = index % COLS;
+          const row = Math.floor(index / COLS);
+          const cell = items.filter((i) => i.col === col && i.row === row);
+          return (
+            <div
+              key={`${col}-${row}`}
+              style={{
+                border: "1px dashed #d4d4d8",
+                borderRadius: 6,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 4,
+                padding: 4,
+              }}
+            >
+              {cell.map((item) => (
+                <div
+                  key={item.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                    background: "#ede9fe",
+                    color: "#5b21b6",
+                    borderRadius: 4,
+                    padding: "3px 6px",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    maxWidth: "100%",
+                  }}
+                >
+                  {iconFor(item.kind)}
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{item.label}</span>
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+      <p
+        style={{
+          textAlign: "center",
+          fontSize: 11,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          color: "#71717a",
+          margin: 0,
+        }}
+      >
+        Plateia
+      </p>
+    </div>
+  );
+}
+
 /** Renomear rótulo de um elemento (usado no assistente). */
 export function StageItemLabels({
   items,

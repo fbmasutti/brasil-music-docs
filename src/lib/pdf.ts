@@ -6,6 +6,9 @@ export type PdfBlock =
   | { type: "clause"; title: string; text: string }
   | { type: "kv"; rows: [string, string][] }
   | { type: "table"; head: string[]; rows: string[][]; widths?: number[] }
+  // Imagem em data URL (PNG). Usado para embutir o mapa de palco desenhado,
+  // que como tabela de texto não comunica posição para o técnico de som.
+  | { type: "image"; dataUrl: string; aspect: number; caption?: string }
   | { type: "space"; size?: number }
   | { type: "note"; text: string }
   | { type: "signatures"; names: string[] };
@@ -75,7 +78,8 @@ export function buildPdf(spec: PdfDoc): jsPDF {
   const blocks = spec.blocks.filter((b) => {
     if (b.type === "kv") return b.rows.some(([, v]) => Boolean(v && String(v).trim()));
     if (b.type === "table") return b.rows.length > 0;
-    if (b.type === "para" || b.type === "heading" || b.type === "note") return Boolean(b.text?.trim());
+    if (b.type === "para" || b.type === "heading" || b.type === "note")
+      return Boolean(b.text?.trim());
     if (b.type === "clause") return Boolean(b.text?.trim() || b.title?.trim());
     if (b.type === "signatures") return b.names.some((n) => Boolean(n && n.trim()));
     return true;
@@ -83,7 +87,6 @@ export function buildPdf(spec: PdfDoc): jsPDF {
 
   for (const block of blocks) {
     switch (block.type) {
-
       case "heading": {
         ensure(14);
         doc.setFont("helvetica", "bold");
@@ -179,6 +182,34 @@ export function buildPdf(spec: PdfDoc): jsPDF {
           y += rowHeight;
         });
         y += 5;
+        break;
+      }
+      case "image": {
+        // Cabe na largura do conteúdo; se a altura resultante não couber na
+        // página atual, quebra antes de desenhar para não cortar o mapa.
+        const imgW = CONTENT;
+        const imgH = imgW / (block.aspect || 1);
+        ensure(imgH + (block.caption ? 8 : 4));
+        try {
+          doc.addImage(block.dataUrl, "PNG", M, y - 2, imgW, imgH);
+          y += imgH + 2;
+        } catch {
+          // Se a captura falhar, o documento segue sem o desenho em vez de
+          // quebrar a geração inteira.
+          doc.setFont("helvetica", "italic");
+          doc.setFontSize(9);
+          doc.setTextColor(120, 120, 130);
+          doc.text("(mapa de palco indisponível)", M, y);
+          y += 6;
+        }
+        if (block.caption) {
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8.5);
+          doc.setTextColor(110, 110, 120);
+          doc.text(block.caption, M, y + 3);
+          y += 8;
+        }
+        y += 3;
         break;
       }
       case "note": {

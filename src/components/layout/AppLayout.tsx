@@ -49,7 +49,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: "/documentos", label: "Contratos & Recibos", icon: FileText },
       { to: "/riders", label: "Rider & Mapa de Palco", icon: Sliders },
-      { to: "/repertorio", label: "ECAD & Direitos Autorais", icon: Music4 },
+      { to: "/repertorio", label: "Repertório", icon: Music4 },
     ],
   },
   {
