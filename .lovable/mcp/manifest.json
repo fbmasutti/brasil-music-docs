@@ -1,0 +1,235 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.1",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://zxlnhsjysmltxhyriouq.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "stagekit",
+      "version": "0.1.0",
+      "title": "StageKit"
+    },
+    "tools": [
+      {
+        "name": "get_artist_profile",
+        "title": "Get artist profile",
+        "description": "Read the signed-in artist's StageKit profile: stage name, entity type, city, document and ECAD registration data.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_events",
+        "title": "List shows",
+        "description": "List the artist's shows (gigs) with date, venue, city, status and fees. Optionally only upcoming shows.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "upcoming_only": {
+              "type": "boolean",
+              "description": "Only shows dated today or later."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Max rows to return (default 20, max 100)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_event",
+        "title": "Create show",
+        "description": "Create a new show (gig) in the artist's agenda. Dates use YYYY-MM-DD and times use HH:MM.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "Show title, e.g. 'Bar do Zé - Sábado'."
+            },
+            "event_date": {
+              "type": "string",
+              "description": "Show date as YYYY-MM-DD."
+            },
+            "start_time": {
+              "type": "string",
+              "description": "Start time as HH:MM."
+            },
+            "soundcheck_time": {
+              "type": "string",
+              "description": "Soundcheck time as HH:MM."
+            },
+            "venue": {
+              "type": "string"
+            },
+            "city": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "description": "Two-letter Brazilian state code, e.g. SP."
+            },
+            "event_type": {
+              "type": "string",
+              "description": "Type of gig, e.g. show, casamento, aula."
+            },
+            "fee_total": {
+              "type": "number",
+              "description": "Total fee in BRL."
+            },
+            "fee_deposit": {
+              "type": "number",
+              "description": "Deposit (sinal) in BRL."
+            },
+            "client_id": {
+              "type": "string",
+              "description": "Existing contractor id from list_clients."
+            },
+            "notes": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "title"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_clients",
+        "title": "List contractors",
+        "description": "List the artist's contractors (contratantes): bars, venues, producers, with contact and document data.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "search": {
+              "type": "string",
+              "description": "Filter by name (case-insensitive contains)."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Max rows to return (default 25, max 100)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_client",
+        "title": "Create contractor",
+        "description": "Create a new contractor (contratante) so it can be used in shows, contracts and receipts.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Display name of the venue, bar or producer."
+            },
+            "legal_name": {
+              "type": "string",
+              "description": "Razão social."
+            },
+            "doc": {
+              "type": "string",
+              "description": "CPF or CNPJ."
+            },
+            "contact_name": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            },
+            "phone": {
+              "type": "string"
+            },
+            "city": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string"
+            },
+            "address": {
+              "type": "string"
+            },
+            "notes": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_songs",
+        "title": "List repertoire",
+        "description": "List the artist's songs used for ECAD / copyright reporting, including ISRC, ISWC and duration.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "search": {
+              "type": "string",
+              "description": "Filter by title (case-insensitive contains)."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Max rows to return (default 50, max 200)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
