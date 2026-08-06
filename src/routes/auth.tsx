@@ -12,8 +12,15 @@ import { lovable } from "@/integrations/lovable/index";
 export const Route = createFileRoute("/auth")({
   // A landing manda ?modo=criar em "Começar agora" e ?modo=entrar em "Entrar",
   // para os dois CTAs não caírem na mesma aba.
-  validateSearch: (search: Record<string, unknown>): { modo?: "entrar" | "criar" | undefined } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { modo?: "entrar" | "criar" | undefined; next?: string | undefined } => ({
     modo: search["modo"] === "criar" ? "criar" : search["modo"] === "entrar" ? "entrar" : undefined,
+    // usado pelo fluxo de consentimento OAuth (integrações de agentes) para voltar
+    // à tela de autorização depois do login
+    next: typeof search["next"] === "string" && search["next"].startsWith("/") && !search["next"].startsWith("//")
+      ? search["next"]
+      : undefined,
   }),
   head: () => ({
     meta: [
@@ -35,7 +42,16 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const { modo } = Route.useSearch();
+  const { modo, next } = Route.useSearch();
+
+  // destino pós-login: rota interna preservada (?next=) ou o painel
+  function goAfterAuth() {
+    if (next) {
+      window.location.href = next;
+      return;
+    }
+    navigate({ to: "/dashboard", replace: true });
+  }
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -44,9 +60,10 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: "/dashboard", replace: true });
+      if (data.user) goAfterAuth();
     });
-  }, [navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate, next]);
 
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
@@ -57,7 +74,7 @@ function AuthPage() {
       toast.error(error.message);
       return;
     }
-    navigate({ to: "/dashboard", replace: true });
+    goAfterAuth();
   }
 
   async function signUp(e: React.FormEvent) {
@@ -67,7 +84,7 @@ function AuthPage() {
       email,
       password,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: next ? `${window.location.origin}${next}` : window.location.origin,
         data: { full_name: name },
       },
     });
@@ -80,12 +97,12 @@ function AuthPage() {
       setSent(true);
       return;
     }
-    navigate({ to: "/dashboard", replace: true });
+    goAfterAuth();
   }
 
   async function google() {
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: next ? `${window.location.origin}${next}` : window.location.origin,
     });
     if (result.error) {
       toast.error(result.error.message);
@@ -94,7 +111,7 @@ function AuthPage() {
     if (result.redirected) {
       return;
     }
-    navigate({ to: "/dashboard", replace: true });
+    goAfterAuth();
   }
 
   return (
