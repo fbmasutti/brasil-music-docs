@@ -20,6 +20,8 @@ export default defineMcp({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",
   }),
+  // Cast: tools omit the optional `outputSchema`, which the SDK's type requires
+  // to be present under exactOptionalPropertyTypes.
   tools: [
     getArtistProfileTool,
     listEventsTool,
@@ -27,5 +29,5 @@ export default defineMcp({
     listClientsTool,
     createClientTool,
     listSongsTool,
-  ],
+  ] as unknown as Parameters<typeof defineMcp>[0]["tools"],
 });
