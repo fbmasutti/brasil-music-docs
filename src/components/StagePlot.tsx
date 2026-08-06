@@ -23,9 +23,12 @@ export type StageKind =
   | "pandeiro"
   | "tantan"
   | "teclado"
+  | "sintetizador"
   | "monitor"
+  | "subwoofer"
   | "cubo_guitarra"
   | "cubo_baixo"
+  | "cabeca_amplificador"
   | "sax"
   | "trombone"
   | "trompete"
@@ -33,6 +36,9 @@ export type StageKind =
   | "di_box"
   | "ponto_energia"
   | "praticavel"
+  | "toca_discos"
+  | "mpc"
+  | "mesa_som"
   | "outro";
 
 /** Ícone próprio em public/stage-icons (SVG desenhado), com fallback lucide para o
@@ -50,15 +56,29 @@ export const STAGE_KINDS: { kind: StageKind; label: string; iconSrc?: string; ic
     { kind: "pandeiro", label: "Pandeiro", iconSrc: "/stage-icons/pandeiro.svg" },
     { kind: "tantan", label: "Tantã", iconSrc: "/stage-icons/tantan.svg" },
     { kind: "teclado", label: "Teclado", iconSrc: "/stage-icons/teclado.svg" },
+    {
+      kind: "sintetizador",
+      label: "Sintetizador / MIDI",
+      iconSrc: "/stage-icons/sintetizador.svg",
+    },
     { kind: "monitor", label: "Monitor / Retorno", iconSrc: "/stage-icons/monitor.svg" },
+    { kind: "subwoofer", label: "Subwoofer", iconSrc: "/stage-icons/subwoofer.svg" },
     { kind: "cubo_guitarra", label: "Cubo de guitarra", iconSrc: "/stage-icons/cubo-guitarra.svg" },
     { kind: "cubo_baixo", label: "Cubo de baixo", iconSrc: "/stage-icons/cubo-baixo.svg" },
+    {
+      kind: "cabeca_amplificador",
+      label: "Cabeça de amplificador",
+      iconSrc: "/stage-icons/cabeca-amplificador.svg",
+    },
     { kind: "sax", label: "Sax", iconSrc: "/stage-icons/sax.svg" },
     { kind: "trombone", label: "Trombone", iconSrc: "/stage-icons/trombone.svg" },
     { kind: "trompete", label: "Trompete", iconSrc: "/stage-icons/trompete.svg" },
     { kind: "di_box", label: "DI box", iconSrc: "/stage-icons/di-box.svg" },
     { kind: "ponto_energia", label: "Ponto de energia", iconSrc: "/stage-icons/ponto-energia.svg" },
     { kind: "praticavel", label: "Praticável", iconSrc: "/stage-icons/praticavel.svg" },
+    { kind: "toca_discos", label: "Toca-discos", iconSrc: "/stage-icons/toca-discos.svg" },
+    { kind: "mpc", label: "MPC / Sampler", iconSrc: "/stage-icons/mpc.svg" },
+    { kind: "mesa_som", label: "Mesa de som", iconSrc: "/stage-icons/mesa-som.svg" },
     { kind: "outro", label: "Outro", icon: <Music2 className="size-4" /> },
   ];
 
