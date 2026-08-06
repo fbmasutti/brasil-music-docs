@@ -1,8 +1,21 @@
 import type { ReactNode } from "react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -102,6 +115,137 @@ export function EmptyState({
       {description ? <p className="max-w-sm text-sm text-muted-foreground">{description}</p> : null}
       {action}
     </div>
+  );
+}
+
+/** Largura padrão de página. "narrow" só para fluxos guiados de coluna única. */
+export function PageContainer({
+  children,
+  width = "default",
+  className,
+}: {
+  children: ReactNode;
+  width?: "default" | "narrow" | undefined;
+  className?: string | undefined;
+}) {
+  return (
+    <div className={cn("mx-auto", width === "narrow" ? "max-w-3xl" : "max-w-6xl", className)}>
+      {children}
+    </div>
+  );
+}
+
+function SkeletonRows({ variant }: { variant: "list" | "cards" }) {
+  if (variant === "cards") {
+    return (
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-hidden>
+        {[0, 1, 2].map((i) => (
+          <li key={i} className="h-36 animate-pulse rounded-lg border border-border bg-muted/40" />
+        ))}
+      </ul>
+    );
+  }
+  return (
+    <ul className="divide-y divide-border" aria-hidden>
+      {[0, 1, 2].map((i) => (
+        <li key={i} className="flex items-center justify-between gap-3 py-4">
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="h-4 w-1/3 animate-pulse rounded bg-muted/60" />
+            <div className="h-3 w-1/2 animate-pulse rounded bg-muted/40" />
+          </div>
+          <div className="h-8 w-20 animate-pulse rounded bg-muted/40" />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+type ListQuery<T> = {
+  data?: T[] | undefined;
+  isLoading: boolean;
+  isError: boolean;
+  refetch: () => unknown;
+};
+
+/**
+ * Decide entre carregando / erro / vazio / conteúdo a partir do resultado de
+ * useList. Sem isto, o padrão `const { data = [] }` faz a tela anunciar
+ * "nenhum item cadastrado" enquanto o fetch ainda está em voo, e uma falha de
+ * rede fica indistinguível de uma conta vazia.
+ */
+export function ListState<T>({
+  query,
+  empty,
+  skeleton = "list",
+  errorTitle = "Não foi possível carregar",
+  errorDescription = "Isso não é uma lista vazia — houve uma falha ao buscar seus dados.",
+  children,
+}: {
+  query: ListQuery<T>;
+  empty: ReactNode;
+  skeleton?: "list" | "cards" | undefined;
+  errorTitle?: string | undefined;
+  errorDescription?: string | undefined;
+  children: (items: T[]) => ReactNode;
+}) {
+  if (query.isLoading) return <SkeletonRows variant={skeleton} />;
+
+  if (query.isError) {
+    return (
+      <EmptyState
+        icon={<AlertTriangle className="size-5" />}
+        title={errorTitle}
+        description={errorDescription}
+        action={
+          <Button variant="outline" size="sm" onClick={() => query.refetch()}>
+            <RefreshCw className="mr-1 size-4" /> Tentar de novo
+          </Button>
+        }
+      />
+    );
+  }
+
+  const items = query.data ?? [];
+  if (items.length === 0) return <>{empty}</>;
+  return <>{children(items)}</>;
+}
+
+/**
+ * Exclusão sempre passa por confirmação. A descrição deve dizer o efeito real
+ * (o que vai junto em cascata), não um "tem certeza?" genérico.
+ */
+export function ConfirmDelete({
+  title,
+  description,
+  confirmLabel = "Remover",
+  onConfirm,
+  trigger,
+}: {
+  title: string;
+  description: ReactNode;
+  confirmLabel?: string | undefined;
+  onConfirm: () => void;
+  trigger: ReactNode;
+}) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            className={buttonVariants({ variant: "destructive" })}
+            onClick={onConfirm}
+          >
+            {confirmLabel}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
@@ -237,7 +381,7 @@ export function TimeField({
           <button
             type="button"
             onClick={() => onChange("")}
-            className="shrink-0 text-xs text-muted-foreground hover:text-foreground"
+            className="shrink-0 rounded text-xs text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             limpar
           </button>

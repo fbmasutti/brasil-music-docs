@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PageHeader, StatCard, Section, EmptyState } from "@/components/ui-kit";
+import { PageHeader, PageContainer, StatCard, Section, EmptyState } from "@/components/ui-kit";
 import { useList, useProfile } from "@/lib/queries";
 import { dateBR, money, EVENT_STATUS } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -63,7 +63,6 @@ function Dashboard() {
   ];
   const gettingStartedDone = gettingStarted.filter((s) => s.done).length;
 
-
   const today = new Date().toISOString().slice(0, 10);
   // Eventos sem data ainda contam como "próximos" (ex.: show em negociação,
   // data não fechada) — só ficam no fim da lista, não somem da agenda.
@@ -96,7 +95,7 @@ function Dashboard() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <PageContainer>
       <PageHeader
         title={`Olá, ${profile?.stage_name || "artista"}`}
         subtitle="Panorama da sua operação: agenda, caixa previsto, documentos e pendências legais."
@@ -161,8 +160,6 @@ function Dashboard() {
         </div>
       </Section>
 
-
-
       {gettingStartedDone < gettingStarted.length ? (
         <Section
           title="Primeiros passos"
@@ -171,7 +168,7 @@ function Dashboard() {
           actions={
             <Button asChild size="sm">
               <Link to="/comecar">
-                <Sparkles className="mr-1 size-4" /> Configurar em 4 passos
+                <Sparkles className="mr-1 size-4" /> Configurar agora
               </Link>
             </Button>
           }
@@ -312,7 +309,11 @@ function Dashboard() {
       </div>
 
       <div className="mt-5 flex flex-wrap gap-2">
-        <MiniLink to="/equipe" icon={<Users className="size-3.5" />} label={`Equipe · ${team.length}`} />
+        <MiniLink
+          to="/equipe"
+          icon={<Users className="size-3.5" />}
+          label={`Equipe · ${team.length}`}
+        />
         <MiniLink
           to="/repertorio"
           icon={<Music4 className="size-3.5" />}
@@ -321,9 +322,13 @@ function Dashboard() {
         <MiniLink to="/formacoes" icon={<Sliders className="size-3.5" />} label="Formações" />
         <MiniLink to="/portfolio" icon={<Images className="size-3.5" />} label="Portfólio" />
         <MiniLink to="/marca" icon={<Megaphone className="size-3.5" />} label="Marca" />
-        <MiniLink to="/contratantes" icon={<FileText className="size-3.5" />} label="Contratantes" />
+        <MiniLink
+          to="/contratantes"
+          icon={<FileText className="size-3.5" />}
+          label="Contratantes"
+        />
       </div>
-    </div>
+    </PageContainer>
   );
 }
 
@@ -365,4 +370,3 @@ function MiniLink({ to, icon, label }: { to: string; icon: React.ReactNode; labe
     </Link>
   );
 }
-

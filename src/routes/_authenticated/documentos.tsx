@@ -11,7 +11,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PageHeader, Section, FieldGrid, TextField, TextAreaField } from "@/components/ui-kit";
+import {
+  PageHeader,
+  PageContainer,
+  Section,
+  FieldGrid,
+  TextField,
+  TextAreaField,
+  ConfirmDelete,
+} from "@/components/ui-kit";
 import { QuickAddClientDialog } from "@/components/QuickAddClientDialog";
 
 import { useList, useInsert, useRemove, useProfile } from "@/lib/queries";
@@ -86,7 +94,7 @@ function DocumentsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <PageContainer>
       <PageHeader
         title="Contratos & Recibos"
         subtitle="Escolha um modelo, complete os campos e exporte o PDF. Seus dados do Dados do Artista entram automaticamente."
@@ -236,14 +244,17 @@ function DocumentsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline">{d.status}</Badge>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => remove.mutate(d.id)}
-                        aria-label="Remover"
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
+                      <ConfirmDelete
+                        title={`Remover "${d.title}"?`}
+                        description="O registro sai do histórico de documentos gerados. O PDF que você já baixou não é afetado."
+                        confirmLabel="Remover documento"
+                        onConfirm={() => remove.mutate(d.id)}
+                        trigger={
+                          <Button variant="ghost" size="icon" aria-label={`Remover ${d.title}`}>
+                            <Trash2 className="size-4" />
+                          </Button>
+                        }
+                      />
                     </div>
                   </li>
                 ))}
@@ -262,7 +273,7 @@ function DocumentsPage() {
               <iframe
                 title="Pré-visualização do documento"
                 src={pdfPreviewUrl(spec)}
-                className="h-[520px] w-full"
+                className="h-[60vh] lg:h-[520px] w-full"
               />
             </div>
             <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
@@ -272,6 +283,6 @@ function DocumentsPage() {
           </Section>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

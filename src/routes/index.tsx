@@ -100,8 +100,7 @@ function Landing() {
           O toolkit anti-burocracia da música brasileira
         </p>
         <h1 className="max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">
-          Toda a papelada da sua carreira musical resolvida{" "}
-          <span className="text-primary">antes do soundcheck</span>.
+          Sua carreira musical resolvida <span className="text-primary">antes do soundcheck</span>.
         </h1>
         <p className="mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
           StageKit é o toolkit de gestão e burocracia para músicos e artistas profissionais:

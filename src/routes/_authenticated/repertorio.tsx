@@ -19,7 +19,15 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { PageHeader, Section, EmptyState, FieldGrid, TextField } from "@/components/ui-kit";
+import {
+  PageHeader,
+  PageContainer,
+  Section,
+  EmptyState,
+  FieldGrid,
+  TextField,
+  ConfirmDelete,
+} from "@/components/ui-kit";
 import { useList, useInsert, useRemove, useProfile } from "@/lib/queries";
 import { duration, parseDuration, ECAD_ASSOCIATIONS, dateBR } from "@/lib/format";
 import { downloadPdf } from "@/lib/pdf";
@@ -127,7 +135,7 @@ function RepertoirePage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <PageContainer>
       <PageHeader
         title="ECAD & Direitos Autorais"
         subtitle="Obras com metadados completos, split de autoria e relatórios de execução pública prontos para a associação."
@@ -269,14 +277,21 @@ function RepertoirePage() {
                       >
                         Split {total}%
                       </Badge>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeSong.mutate(s.id)}
-                        aria-label="Remover"
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
+                      <ConfirmDelete
+                        title={`Remover "${s.title}"?`}
+                        description={
+                          list.length
+                            ? `${list.length} autor(es) e o split de autoria desta obra serão apagados junto. Essa ação não pode ser desfeita.`
+                            : "A obra será apagada. Essa ação não pode ser desfeita."
+                        }
+                        confirmLabel="Remover obra"
+                        onConfirm={() => removeSong.mutate(s.id)}
+                        trigger={
+                          <Button variant="ghost" size="icon" aria-label={`Remover ${s.title}`}>
+                            <Trash2 className="size-4" />
+                          </Button>
+                        }
+                      />
                     </div>
                   </div>
 
@@ -288,14 +303,21 @@ function RepertoirePage() {
                           {w.association ? ` · ${w.association}` : ""}
                           {w.cae_ipi ? ` · CAE ${w.cae_ipi}` : ""}
                         </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeWriter.mutate(w.id)}
-                          aria-label="Remover autor"
-                        >
-                          <Trash2 className="size-3.5" />
-                        </Button>
+                        <ConfirmDelete
+                          title={`Remover ${w.name} da autoria?`}
+                          description={`O split de ${w.share_percent}% volta a ficar sem dono. Essa ação não pode ser desfeita.`}
+                          confirmLabel="Remover autor"
+                          onConfirm={() => removeWriter.mutate(w.id)}
+                          trigger={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Remover autor ${w.name}`}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          }
+                        />
                       </li>
                     ))}
                   </ul>
@@ -389,6 +411,6 @@ function RepertoirePage() {
           </ul>
         )}
       </Section>
-    </div>
+    </PageContainer>
   );
 }

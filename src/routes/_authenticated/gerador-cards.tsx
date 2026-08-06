@@ -13,7 +13,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PageHeader, Section, EmptyState, TextField, TimeField } from "@/components/ui-kit";
+import {
+  PageHeader,
+  PageContainer,
+  Section,
+  EmptyState,
+  TextField,
+  TimeField,
+} from "@/components/ui-kit";
 import { useList, useProfile } from "@/lib/queries";
 import { dateBR } from "@/lib/format";
 import { BRAND_PRESETS, presetPalette, type BrandPalette } from "@/lib/brand-presets";
@@ -108,6 +115,20 @@ function CardGeneratorPage() {
   // ("" significa "sem identidade", usando o visual padrão do StageKit).
   const [manualKitId, setManualKitId] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
+  // Largura disponível da moldura, para encolher a prévia em tela estreita
+  // sem mudar as dimensões reais do nó que vai ser exportado.
+  const [frameWidth, setFrameWidth] = useState(0);
+
+  useEffect(() => {
+    const el = frameRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(([entry]) => {
+      if (entry) setFrameWidth(entry.contentRect.width);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     if (eventId) return;
@@ -152,6 +173,8 @@ function CardGeneratorPage() {
 
   const dims = FORMATS[format];
   const isCompact = format !== "STORIES";
+  // 32px = padding p-4 da moldura nos dois lados. Nunca amplia (máx. 1).
+  const previewScale = frameWidth > 0 ? Math.min(1, (frameWidth - 32) / dims.width) : 1;
   // Escala de exportação derivada do formato, para todos saírem com 1080px de
   // largura real independentemente do tamanho da prévia na tela.
   const exportScale = EXPORT_WIDTH / dims.width;
@@ -166,6 +189,9 @@ function CardGeneratorPage() {
         cacheBust: true,
         width: dims.width,
         height: dims.height,
+        // O nó pode estar reduzido na tela (previewScale) para caber no
+        // celular; a imagem exportada tem que sair no tamanho nominal.
+        style: { transform: "none", transformOrigin: "top left" },
       });
       const a = document.createElement("a");
       a.href = dataUrl;
@@ -181,7 +207,7 @@ function CardGeneratorPage() {
 
   if (upcoming.length === 0) {
     return (
-      <div className="mx-auto max-w-3xl">
+      <PageContainer>
         <PageHeader title="Gerador de Posts" subtitle="Card de divulgação para Stories e Feed." />
         <EmptyState
           icon={<CalendarDays className="size-5" />}
@@ -193,14 +219,14 @@ function CardGeneratorPage() {
             </Button>
           }
         />
-      </div>
+      </PageContainer>
     );
   }
 
   const setCopyField = (k: keyof typeof copy) => (v: string) => setCopy((c) => ({ ...c, [k]: v }));
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <PageContainer>
       <PageHeader
         title="Gerador de Posts"
         subtitle="Card de divulgação com a sua identidade visual — ajuste os textos e exporte abaixo da prévia."
@@ -231,7 +257,7 @@ function CardGeneratorPage() {
                     type="button"
                     onClick={() => setFormat(key)}
                     className={cn(
-                      "rounded-lg border px-3 py-2 text-xs font-medium transition",
+                      "rounded-lg border px-3 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                       format === key
                         ? "border-primary bg-primary/10 text-foreground"
                         : "border-border text-muted-foreground hover:border-primary/60",
@@ -346,7 +372,8 @@ function CardGeneratorPage() {
           {/* Moldura: fundo xadrez discreto para separar o card da página e
               deixar claro onde a arte começa e termina. */}
           <div
-            className="rounded-2xl border border-border p-4"
+            ref={frameRef}
+            className="w-full max-w-full rounded-2xl border border-border p-4"
             style={{
               backgroundColor: "var(--muted)",
               backgroundImage:
@@ -355,61 +382,73 @@ function CardGeneratorPage() {
               backgroundPosition: "0 0, 8px 8px",
             }}
           >
+            {/* O nó exportado mantém as dimensões nominais (o toPng depende
+                delas); quem encolhe na tela pequena é este invólucro, via
+                scale. Sem isto o card vaza ~110px no iPhone SE. */}
             <div
-              ref={cardRef}
-              className="relative flex shrink-0 flex-col justify-end overflow-hidden rounded-xl shadow-2xl ring-1 ring-black/20"
-              style={{
-                width: dims.width,
-                height: dims.height,
-                background: palette.bg,
-                color: palette.text,
-              }}
+              className="mx-auto overflow-hidden"
+              style={{ width: dims.width * previewScale, height: dims.height * previewScale }}
             >
-              {showPhoto && brandKit?.photo_url ? (
-                <img
-                  src={brandKit.photo_url}
-                  alt=""
-                  crossOrigin="anonymous"
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              ) : null}
               <div
-                className={cn("relative flex flex-col gap-2", isCompact ? "p-6" : "p-7")}
+                ref={cardRef}
+                className="relative flex shrink-0 flex-col justify-end overflow-hidden rounded-xl shadow-2xl ring-1 ring-black/20"
                 style={{
-                  background: `linear-gradient(to top, ${palette.bg}f2 20%, ${palette.bg}00 75%)`,
+                  width: dims.width,
+                  height: dims.height,
+                  transform: `scale(${previewScale})`,
+                  transformOrigin: "top left",
+                  background: palette.bg,
+                  color: palette.text,
                 }}
               >
-                {brandKit?.logo_url ? (
+                {showPhoto && brandKit?.photo_url ? (
                   <img
-                    src={brandKit.logo_url}
-                    alt="Logo"
+                    src={brandKit.photo_url}
+                    alt=""
                     crossOrigin="anonymous"
-                    className="mb-3 h-10 max-w-[140px] object-contain"
+                    className="absolute inset-0 h-full w-full object-cover"
                   />
                 ) : null}
-                {copy.kicker ? (
-                  <p
-                    className="text-xs font-bold uppercase tracking-widest"
-                    style={{ color: palette.accent }}
-                  >
-                    {copy.kicker}
-                  </p>
-                ) : null}
-                {copy.headline ? (
-                  <p
-                    className={cn(
-                      "font-extrabold leading-tight",
-                      isCompact ? "text-2xl" : "text-3xl",
-                    )}
-                  >
-                    {copy.headline}
-                  </p>
-                ) : null}
-                <p className="text-sm opacity-90">{formatDateLine(copy.dateISO, copy.time)}</p>
-                {copy.locationLine ? (
-                  <p className="text-sm opacity-90">{copy.locationLine}</p>
-                ) : null}
-                {copy.footnote ? <p className="mt-1 text-xs opacity-75">{copy.footnote}</p> : null}
+                <div
+                  className={cn("relative flex flex-col gap-2", isCompact ? "p-6" : "p-7")}
+                  style={{
+                    background: `linear-gradient(to top, ${palette.bg}f2 20%, ${palette.bg}00 75%)`,
+                  }}
+                >
+                  {brandKit?.logo_url ? (
+                    <img
+                      src={brandKit.logo_url}
+                      alt="Logo"
+                      crossOrigin="anonymous"
+                      className="mb-3 h-10 max-w-[140px] object-contain"
+                    />
+                  ) : null}
+                  {copy.kicker ? (
+                    <p
+                      className="text-xs font-bold uppercase tracking-widest"
+                      style={{ color: palette.accent }}
+                    >
+                      {copy.kicker}
+                    </p>
+                  ) : null}
+                  {copy.headline ? (
+                    <p
+                      className={cn(
+                        "font-extrabold leading-tight",
+                        isCompact ? "text-2xl" : "text-3xl",
+                      )}
+                    >
+                      {copy.headline}
+                    </p>
+                  ) : null}
+                  <p className="text-sm opacity-90">{formatDateLine(copy.dateISO, copy.time)}</p>
+                  {copy.locationLine ? (
+                    <p className="text-sm opacity-90">{copy.locationLine}</p>
+                  ) : null}
+                  {copy.footnote ? (
+                    <p className="mt-1 text-xs opacity-75">{copy.footnote}</p>
+                  ) : null}
+                </div>
               </div>
             </div>
           </div>
@@ -431,6 +470,6 @@ function CardGeneratorPage() {
           </div>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

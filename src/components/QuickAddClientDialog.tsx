@@ -60,7 +60,12 @@ export function QuickAddClientDialog({ onCreated }: { onCreated?: (id: string) =
         ...f,
         name: f.name || data["nome_fantasia"] || data["razao_social"] || "",
         legal_name: data["razao_social"] ?? f.legal_name,
-        address: [data["descricao_tipo_de_logradouro"], data["logradouro"], data["numero"], data["bairro"]]
+        address: [
+          data["descricao_tipo_de_logradouro"],
+          data["logradouro"],
+          data["numero"],
+          data["bairro"],
+        ]
           .filter(Boolean)
           .join(" ")
           .trim(),
@@ -135,7 +140,11 @@ export function QuickAddClientDialog({ onCreated }: { onCreated?: (id: string) =
                 />
               </div>
               <Button type="button" variant="outline" onClick={fetchCnpj} disabled={lookup}>
-                {lookup ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
+                {lookup ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Search className="size-4" />
+                )}
                 <span className="ml-1 hidden sm:inline">Buscar</span>
               </Button>
             </div>
@@ -157,9 +166,17 @@ export function QuickAddClientDialog({ onCreated }: { onCreated?: (id: string) =
           {advanced ? (
             <FieldGrid>
               <div className="sm:col-span-2">
-                <TextField label="Razão social" value={form.legal_name} onChange={set("legal_name")} />
+                <TextField
+                  label="Razão social"
+                  value={form.legal_name}
+                  onChange={set("legal_name")}
+                />
               </div>
-              <TextField label="Responsável" value={form.contact_name} onChange={set("contact_name")} />
+              <TextField
+                label="Responsável"
+                value={form.contact_name}
+                onChange={set("contact_name")}
+              />
               <TextField label="Telefone" value={form.phone} onChange={set("phone")} />
               <TextField label="E-mail" value={form.email} onChange={set("email")} type="email" />
               <TextField label="Cidade" value={form.city} onChange={set("city")} />

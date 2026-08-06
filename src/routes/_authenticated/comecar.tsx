@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { PageHeader, Section, FieldGrid, TextField } from "@/components/ui-kit";
+import { PageHeader, PageContainer, Section, FieldGrid, TextField } from "@/components/ui-kit";
 import { useList, useProfile, useInsert, useUpdate, useSession } from "@/lib/queries";
 import { uploadBrandAsset, UploadError } from "@/lib/storage";
 import { BRAND_PRESETS, presetPalette } from "@/lib/brand-presets";
@@ -55,7 +55,7 @@ function WizardPage() {
   if (done) return <WizardDone />;
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <PageContainer width="narrow">
       <PageHeader
         title="Só o básico e você já está usando"
         subtitle="Dois passos com as informações permanentes do seu projeto. Contratantes, shows e equipe entram depois, quando precisar."
@@ -125,7 +125,7 @@ function WizardPage() {
       <p className="mt-4 text-center text-xs text-muted-foreground">
         Cada passo salva sozinho ao preencher — pode sair e voltar quando quiser.
       </p>
-    </div>
+    </PageContainer>
   );
 }
 
@@ -235,8 +235,8 @@ function StepMarca() {
   return (
     <div>
       <p className="mb-4 text-sm text-muted-foreground">
-        Isso define a cara dos seus posts de divulgação e o cabeçalho dos PDFs. Já deixamos um estilo
-        escolhido — trocar leva um clique.
+        Isso define a cara dos seus posts de divulgação e o cabeçalho dos PDFs. Já deixamos um
+        estilo escolhido — trocar leva um clique.
       </p>
 
       <div className="grid gap-3 sm:grid-cols-3">
@@ -291,7 +291,12 @@ function StepMarca() {
             e.target.value = "";
           }}
         />
-        <Button variant="outline" size="sm" disabled={uploading} onClick={() => fileRef.current?.click()}>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={uploading}
+          onClick={() => fileRef.current?.click()}
+        >
           {uploading ? (
             <Loader2 className="mr-1 size-4 animate-spin" />
           ) : (
@@ -344,7 +349,7 @@ function WizardDone() {
   ];
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <PageContainer width="narrow">
       <div className="text-center">
         <span className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary/15 text-primary">
           <Sparkles className="size-7" />
@@ -377,6 +382,6 @@ function WizardDone() {
           Ir para o painel
         </Button>
       </div>
-    </div>
+    </PageContainer>
   );
 }

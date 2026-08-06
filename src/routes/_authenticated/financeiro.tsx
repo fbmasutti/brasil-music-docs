@@ -23,11 +23,13 @@ import {
 } from "@/components/ui/select";
 import {
   PageHeader,
+  PageContainer,
   Section,
   StatCard,
   EmptyState,
   FieldGrid,
   TextField,
+  ConfirmDelete,
 } from "@/components/ui-kit";
 import { useList, useInsert, useRemove } from "@/lib/queries";
 import { dateBR, money, cacheStatus, CACHE_STATUS } from "@/lib/format";
@@ -134,7 +136,7 @@ function FinanceiroPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5">
+    <PageContainer className="space-y-5">
       <PageHeader
         title="Financeiro & Cachês"
         subtitle="Cachês pendentes, DRE rápido por show e reserva financeira de instrumentos."
@@ -294,14 +296,17 @@ function FinanceiroPage() {
                         {money(Number(exp.amount))}
                         {exp.notes ? ` · ${exp.notes}` : ""}
                       </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeExpense.mutate(exp.id)}
-                        aria-label="Remover custo"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
+                      <ConfirmDelete
+                        title="Remover este custo?"
+                        description={`${EXPENSE_CATEGORIES[exp.category] ?? exp.category} de ${money(Number(exp.amount))} sai do cálculo de lucro real deste show.`}
+                        confirmLabel="Remover custo"
+                        onConfirm={() => removeExpense.mutate(exp.id)}
+                        trigger={
+                          <Button variant="ghost" size="icon" aria-label="Remover custo">
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        }
+                      />
                     </li>
                   ))}
                 </ul>
@@ -449,14 +454,17 @@ function FinanceiroPage() {
                       {g.name}
                       {g.category ? ` · ${g.category}` : ""} · {money(Number(g.value))}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeGear.mutate(g.id)}
-                      aria-label="Remover"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
+                    <ConfirmDelete
+                      title={`Remover "${g.name}"?`}
+                      description="O instrumento sai da sua lista de equipamentos. Os lançamentos já feitos na reserva não são afetados."
+                      confirmLabel="Remover instrumento"
+                      onConfirm={() => removeGear.mutate(g.id)}
+                      trigger={
+                        <Button variant="ghost" size="icon" aria-label={`Remover ${g.name}`}>
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      }
+                    />
                   </li>
                 ))}
               </ul>
@@ -550,6 +558,6 @@ function FinanceiroPage() {
           </div>
         </div>
       </Section>
-    </div>
+    </PageContainer>
   );
 }

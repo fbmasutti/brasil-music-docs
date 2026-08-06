@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PageHeader, Section, StatCard } from "@/components/ui-kit";
+import { PageHeader, PageContainer, Section, StatCard } from "@/components/ui-kit";
 import { EventFormDialog } from "@/components/EventFormDialog";
 import { useList, useUpdate } from "@/lib/queries";
 import { dateBR, money, EVENT_STATUS } from "@/lib/format";
@@ -96,7 +96,7 @@ function EventDetail() {
   const googleCalendarUrl = buildGoogleCalendarUrl(event);
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <PageContainer>
       <Button asChild variant="ghost" size="sm" className="mb-4">
         <Link to="/eventos">
           <ArrowLeft className="mr-1 size-4" /> Agenda
@@ -282,6 +282,6 @@ function EventDetail() {
           ) : null}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

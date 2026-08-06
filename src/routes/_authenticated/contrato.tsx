@@ -184,10 +184,13 @@ function ContractWizard() {
               onClick={() => setStep(s.id)}
               className={cn(
                 "flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 step === s.id
                   ? "border-primary/50 bg-primary/15 text-primary"
                   : step > s.id
-                    ? "border-accent/40 bg-accent/10 text-accent"
+                    ? // --accent é violeta escuro, quase da mesma luminância do fundo:
+                      // usar success aqui, como nos demais indicadores de progresso.
+                      "border-success/40 bg-success/10 text-success"
                     : "border-border text-muted-foreground",
               )}
             >
@@ -300,7 +303,7 @@ function ContractWizard() {
               <iframe
                 title="Pré-visualização do contrato"
                 src={pdfPreviewUrl(spec)}
-                className="h-[520px] w-full"
+                className="h-[60vh] lg:h-[520px] w-full"
               />
             </div>
           </Section>

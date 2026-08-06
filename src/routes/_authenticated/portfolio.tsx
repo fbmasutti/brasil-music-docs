@@ -4,8 +4,23 @@ import { Images, Plus, Trash2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PageHeader, Section, EmptyState, FieldGrid, TextField, TextAreaField } from "@/components/ui-kit";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  PageHeader,
+  PageContainer,
+  Section,
+  EmptyState,
+  FieldGrid,
+  TextField,
+  TextAreaField,
+  ConfirmDelete,
+} from "@/components/ui-kit";
 import { useList, useInsert, useRemove } from "@/lib/queries";
 import { dateBR } from "@/lib/format";
 
@@ -15,10 +30,14 @@ export const Route = createFileRoute("/_authenticated/portfolio")({
       { title: "Portfólio e clipping — currículo artístico para editais" },
       {
         name: "description",
-        content: "Organize matérias, releases, prêmios e registros de shows por ano para anexar em editais de fomento.",
+        content:
+          "Organize matérias, releases, prêmios e registros de shows por ano para anexar em editais de fomento.",
       },
       { property: "og:title", content: "Portfólio e clipping — StageKit" },
-      { property: "og:description", content: "Seu histórico artístico documentado e pronto para comprovação." },
+      {
+        property: "og:description",
+        content: "Seu histórico artístico documentado e pronto para comprovação.",
+      },
     ],
   }),
   component: PortfolioPage,
@@ -44,7 +63,7 @@ function PortfolioPage() {
   const set = (k: keyof typeof empty) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <PageContainer>
       <PageHeader
         title="Portfólio & Clipping"
         subtitle="Comprovação de trajetória: matérias, prêmios, releases e registros de apresentações."
@@ -68,13 +87,31 @@ function PortfolioPage() {
               </SelectContent>
             </Select>
           </div>
-          <TextField label="Evento / veículo" value={form.event_name} onChange={set("event_name")} />
-          <TextField label="Data" value={form.happened_at} onChange={set("happened_at")} type="date" />
+          <TextField
+            label="Evento / veículo"
+            value={form.event_name}
+            onChange={set("event_name")}
+          />
+          <TextField
+            label="Data"
+            value={form.happened_at}
+            onChange={set("happened_at")}
+            type="date"
+          />
           <div className="sm:col-span-2">
-            <TextField label="Link" value={form.link_url} onChange={set("link_url")} placeholder="https://" />
+            <TextField
+              label="Link"
+              value={form.link_url}
+              onChange={set("link_url")}
+              placeholder="https://"
+            />
           </div>
           <div className="sm:col-span-2">
-            <TextAreaField label="Descrição" value={form.description} onChange={set("description")} />
+            <TextAreaField
+              label="Descrição"
+              value={form.description}
+              onChange={set("description")}
+            />
           </div>
         </FieldGrid>
         <Button
@@ -120,9 +157,17 @@ function PortfolioPage() {
                         .join(" · ")}
                     </p>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => remove.mutate(item.id)} aria-label="Remover">
-                    <Trash2 className="size-4" />
-                  </Button>
+                  <ConfirmDelete
+                    title={`Remover "${item.title}"?`}
+                    description="Este registro sai do portfólio e dos anexos de comprovação para editais. Essa ação não pode ser desfeita."
+                    confirmLabel="Remover registro"
+                    onConfirm={() => remove.mutate(item.id)}
+                    trigger={
+                      <Button variant="ghost" size="icon" aria-label={`Remover ${item.title}`}>
+                        <Trash2 className="size-4" />
+                      </Button>
+                    }
+                  />
                 </div>
                 {item.description ? (
                   <p className="mt-2 text-sm text-muted-foreground">{item.description}</p>
@@ -142,6 +187,6 @@ function PortfolioPage() {
           </ul>
         )}
       </Section>
-    </div>
+    </PageContainer>
   );
 }

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Layers, Plus, Trash2, UserPlus, Luggage, AlertTriangle } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -20,17 +20,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { PageHeader, Section, EmptyState, FieldGrid, TextField } from "@/components/ui-kit";
+  PageHeader,
+  PageContainer,
+  Section,
+  EmptyState,
+  FieldGrid,
+  TextField,
+  ConfirmDelete,
+} from "@/components/ui-kit";
 import { useList, useInsert, useRemove, useUpdate } from "@/lib/queries";
 import { money } from "@/lib/format";
 
@@ -90,7 +87,7 @@ function FormationsPage() {
   const [gearLabel, setGearLabel] = useState("");
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <PageContainer>
       <PageHeader
         title="Formações"
         subtitle="Presets por formação — ao escolher uma no evento, o cachê base, o roster e a mala de gig entram sozinhos."
@@ -184,40 +181,17 @@ function FormationsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {f.is_default ? <Badge variant="outline">Padrão</Badge> : null}
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" aria-label="Remover formação">
+                      <ConfirmDelete
+                        title={`Remover "${f.name}"?`}
+                        description={`${roster.length ? `${roster.length} integrante(s) do roster e ` : ""}${gear.length ? `${gear.length} item(ns) da mala de gig ` : "a mala de gig "}serão apagados junto com a formação.${riders.length ? ` ${riders.length} rider(s) vinculado(s) não serão apagados, só ficam sem formação.` : ""} Essa ação não pode ser desfeita.`}
+                        confirmLabel="Remover formação"
+                        onConfirm={() => removeFormation.mutate(f.id)}
+                        trigger={
+                          <Button variant="ghost" size="icon" aria-label={`Remover ${f.name}`}>
                             <Trash2 className="size-4" />
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Remover "{f.name}"?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              {roster.length > 0
-                                ? `${roster.length} integrante(s) do roster e `
-                                : ""}
-                              {gear.length > 0
-                                ? `${gear.length} item(ns) da mala de gig `
-                                : "a mala de gig "}
-                              serão apagados junto com a formação.
-                              {riders.length > 0
-                                ? ` ${riders.length} rider(s) vinculado(s) não serão apagados, só ficam sem formação.`
-                                : ""}{" "}
-                              Essa ação não pode ser desfeita.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction
-                              className={buttonVariants({ variant: "destructive" })}
-                              onClick={() => removeFormation.mutate(f.id)}
-                            >
-                              Remover formação
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                        }
+                      />
                     </div>
                   </div>
 
@@ -260,14 +234,21 @@ function FormationsPage() {
                               <span className="text-muted-foreground">
                                 {person?.name ?? "Integrante removido"} · {m.split_percent}%
                               </span>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => removeMember.mutate(m.id)}
-                                aria-label="Remover do roster"
-                              >
-                                <Trash2 className="size-3.5" />
-                              </Button>
+                              <ConfirmDelete
+                                title={`Tirar ${person?.name ?? "integrante"} desta formação?`}
+                                description={`O rateio de ${m.split_percent}% deixa de ser aplicado nos shows desta formação. O cadastro da pessoa em Equipe não é apagado.`}
+                                confirmLabel="Tirar do roster"
+                                onConfirm={() => removeMember.mutate(m.id)}
+                                trigger={
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    aria-label={`Remover ${person?.name ?? "integrante"} do roster`}
+                                  >
+                                    <Trash2 className="size-3.5" />
+                                  </Button>
+                                }
+                              />
                             </li>
                           );
                         })}
@@ -348,14 +329,21 @@ function FormationsPage() {
                             className="flex items-center justify-between gap-2 text-sm"
                           >
                             <span className="text-muted-foreground">{g.label}</span>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeGear.mutate(g.id)}
-                              aria-label="Remover item"
-                            >
-                              <Trash2 className="size-3.5" />
-                            </Button>
+                            <ConfirmDelete
+                              title={`Remover "${g.label}" da mala?`}
+                              description="O item sai da mala de gig padrão desta formação. Os shows já criados mantêm o checklist como está."
+                              confirmLabel="Remover item"
+                              onConfirm={() => removeGear.mutate(g.id)}
+                              trigger={
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  aria-label={`Remover ${g.label} da mala`}
+                                >
+                                  <Trash2 className="size-3.5" />
+                                </Button>
+                              }
+                            />
                           </li>
                         ))}
                       </ul>
@@ -411,6 +399,6 @@ function FormationsPage() {
           </ul>
         )}
       </Section>
-    </div>
+    </PageContainer>
   );
 }

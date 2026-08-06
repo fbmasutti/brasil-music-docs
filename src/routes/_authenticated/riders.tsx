@@ -3,11 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Sliders, Plus, Download, Trash2, Wand2, Pencil, ChevronDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Select,
   SelectContent,
@@ -17,11 +13,13 @@ import {
 } from "@/components/ui/select";
 import {
   PageHeader,
+  PageContainer,
   Section,
   EmptyState,
   FieldGrid,
   TextField,
   TextAreaField,
+  ConfirmDelete,
 } from "@/components/ui-kit";
 import { useList, useInsert, useUpdate, useRemove, useProfile } from "@/lib/queries";
 import { downloadPdf, type PdfBlock } from "@/lib/pdf";
@@ -226,7 +224,7 @@ function RidersPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <PageContainer>
       <PageHeader
         title="Rider & Mapa de Palco"
         subtitle="Escolha um formato pronto e o rider já nasce completo — depois você ajusta só o que quiser."
@@ -326,11 +324,7 @@ function RidersPage() {
                   value={form.lighting_requirements}
                   onChange={set("lighting_requirements")}
                 />
-                <TextAreaField
-                  label="Backline"
-                  value={form.backline}
-                  onChange={set("backline")}
-                />
+                <TextAreaField label="Backline" value={form.backline} onChange={set("backline")} />
                 <TextAreaField
                   label="Hospitality / camarim"
                   value={form.hospitality}
@@ -387,14 +381,17 @@ function RidersPage() {
                     >
                       <Pencil className="size-4" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => remove.mutate(r.id)}
-                      aria-label="Remover"
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
+                    <ConfirmDelete
+                      title={`Remover "${r.name}"?`}
+                      description="A channel list e o mapa de palco deste rider serão apagados. Os shows que usavam ele ficam sem rider vinculado."
+                      confirmLabel="Remover rider"
+                      onConfirm={() => remove.mutate(r.id)}
+                      trigger={
+                        <Button variant="ghost" size="icon" aria-label={`Remover ${r.name}`}>
+                          <Trash2 className="size-4" />
+                        </Button>
+                      }
+                    />
                   </div>
                 </li>
               );
@@ -402,6 +399,6 @@ function RidersPage() {
           </ul>
         )}
       </Section>
-    </div>
+    </PageContainer>
   );
 }

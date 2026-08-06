@@ -9,18 +9,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { buttonVariants } from "@/components/ui/button";
-import { PageHeader, Section, EmptyState } from "@/components/ui-kit";
+  PageHeader,
+  PageContainer,
+  Section,
+  EmptyState,
+  ConfirmDelete,
+  ListState,
+} from "@/components/ui-kit";
 import { EventFormDialog } from "@/components/EventFormDialog";
 import { useList, useRemove } from "@/lib/queries";
 import { dateBR, money, EVENT_STATUS } from "@/lib/format";
@@ -44,9 +39,10 @@ export const Route = createFileRoute("/_authenticated/eventos/")({
 });
 
 function EventsPage() {
-  const { data: events = [] } = useList("events", {
+  const eventsQuery = useList("events", {
     order: { column: "event_date", ascending: false },
   });
+  const events = eventsQuery.data ?? [];
   const { data: clients = [] } = useList("clients", { order: { column: "name" } });
   const remove = useRemove("events", "Evento removido");
 
@@ -62,7 +58,7 @@ function EventsPage() {
   const listProps = { clients, onRemove: (id: string) => remove.mutate(id) };
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <PageContainer>
       <PageHeader
         title="Agenda de Shows"
         subtitle="Clique em editar para ajustar qualquer show sem sair da agenda. Cada evento vira um dossiê: contrato, rider, setlist e checklist."
@@ -77,13 +73,20 @@ function EventsPage() {
         }
       />
 
-      {events.length === 0 ? (
-        <Section title="Agenda (0)">
-          <EmptyState
-            icon={<CalendarDays className="size-5" />}
-            title="Nenhum evento cadastrado"
-            description="Crie o primeiro evento para gerar contrato, rider e checklist de produção."
-          />
+      {eventsQuery.isLoading || eventsQuery.isError || events.length === 0 ? (
+        <Section title="Agenda">
+          <ListState
+            query={eventsQuery}
+            empty={
+              <EmptyState
+                icon={<CalendarDays className="size-5" />}
+                title="Nenhum evento cadastrado"
+                description="Crie o primeiro evento para gerar contrato, rider e checklist de produção."
+              />
+            }
+          >
+            {() => null}
+          </ListState>
         </Section>
       ) : (
         <div className="space-y-5">
@@ -107,7 +110,7 @@ function EventsPage() {
           ) : null}
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }
 
@@ -181,31 +184,17 @@ function EventList({
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : null}
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
+              <ConfirmDelete
+                title={`Remover "${e.title}"?`}
+                description="O checklist, os custos lançados e os documentos vinculados a este evento também serão removidos. Essa ação não pode ser desfeita."
+                confirmLabel="Remover evento"
+                onConfirm={() => onRemove(e.id)}
+                trigger={
                   <Button variant="ghost" size="icon" aria-label={`Remover ${e.title}`}>
                     <Trash2 className="size-4" />
                   </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Remover "{e.title}"?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      O checklist, os custos lançados e os documentos vinculados a este evento
-                      também serão removidos. Essa ação não pode ser desfeita.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction
-                      className={buttonVariants({ variant: "destructive" })}
-                      onClick={() => onRemove(e.id)}
-                    >
-                      Remover evento
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                }
+              />
             </div>
           </li>
         );

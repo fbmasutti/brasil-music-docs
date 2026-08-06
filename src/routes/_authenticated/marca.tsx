@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Palette, Plus, Trash2, ImagePlus, Loader2, Check, Pencil } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -12,17 +12,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { PageHeader, Section, EmptyState, TextField } from "@/components/ui-kit";
+  PageHeader,
+  PageContainer,
+  Section,
+  EmptyState,
+  TextField,
+  ConfirmDelete,
+  ListState,
+} from "@/components/ui-kit";
 import { useList, useInsert, useUpdate, useRemove, useSession } from "@/lib/queries";
 import { uploadBrandAsset, UploadError } from "@/lib/storage";
 import { BRAND_PRESETS, presetPalette } from "@/lib/brand-presets";
@@ -61,13 +58,14 @@ function toFormValues(kit: Tables<"brand_kits">): FormValues {
 }
 
 function BrandKitPage() {
-  const { data: kits = [] } = useList("brand_kits", {
+  const kitsQuery = useList("brand_kits", {
     order: { column: "created_at", ascending: false },
   });
+  const kits = kitsQuery.data ?? [];
   const remove = useRemove("brand_kits", "Identidade removida");
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <PageContainer>
       <PageHeader
         title="Identidade Visual"
         subtitle="Foto, logo e paleta de cores por formação — usados nos cards de divulgação e nos documentos."
@@ -82,84 +80,78 @@ function BrandKitPage() {
         }
       />
 
-      <Section title={`Identidades (${kits.length})`}>
-        {kits.length === 0 ? (
-          <EmptyState
-            icon={<Palette className="size-5" />}
-            title="Nenhuma identidade criada"
-            description="Crie uma identidade com foto, logo e paleta para usar nos posts de divulgação."
-          />
-        ) : (
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {kits.map((kit) => {
-              const preset = BRAND_PRESETS.find((p) => p.id === kit.preset);
-              return (
-                <li key={kit.id} className="overflow-hidden rounded-lg border border-border">
-                  <div
-                    className="flex h-24 items-center justify-center"
-                    style={{ background: preset?.palette.accent ?? "var(--primary)" }}
-                  >
-                    {kit.photo_url ? (
-                      <img src={kit.photo_url} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <Palette className="size-6 text-white/70" />
-                    )}
-                  </div>
-                  <div className="flex items-start justify-between gap-2 p-3">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{kit.name}</p>
-                      <p className="text-xs text-muted-foreground">{preset?.label ?? kit.preset}</p>
+      <Section title={kitsQuery.isLoading ? "Identidades" : `Identidades (${kits.length})`}>
+        <ListState
+          query={kitsQuery}
+          skeleton="cards"
+          empty={
+            <EmptyState
+              icon={<Palette className="size-5" />}
+              title="Nenhuma identidade criada"
+              description="Crie uma identidade com foto, logo e paleta para usar nos posts de divulgação."
+            />
+          }
+        >
+          {(items) => (
+            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {items.map((kit) => {
+                const preset = BRAND_PRESETS.find((p) => p.id === kit.preset);
+                return (
+                  <li key={kit.id} className="overflow-hidden rounded-lg border border-border">
+                    <div
+                      className="flex h-24 items-center justify-center"
+                      style={{ background: preset?.palette.accent ?? "var(--primary)" }}
+                    >
+                      {kit.photo_url ? (
+                        <img src={kit.photo_url} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <Palette className="size-6 text-white/70" />
+                      )}
                     </div>
-                    <div className="flex items-center gap-1">
-                      {kit.logo_url ? (
-                        <img
-                          src={kit.logo_url}
-                          alt="Logo"
-                          className="size-8 rounded border border-border bg-card object-contain p-1"
+                    <div className="flex items-start justify-between gap-2 p-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{kit.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {preset?.label ?? kit.preset}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {kit.logo_url ? (
+                          <img
+                            src={kit.logo_url}
+                            alt=""
+                            className="size-8 rounded border border-border bg-card object-contain p-1"
+                          />
+                        ) : null}
+                        <BrandKitFormDialog
+                          kit={kit}
+                          trigger={
+                            <Button variant="ghost" size="icon" aria-label={`Editar ${kit.name}`}>
+                              <Pencil className="size-4" />
+                            </Button>
+                          }
                         />
-                      ) : null}
-                      <BrandKitFormDialog
-                        kit={kit}
-                        trigger={
-                          <Button variant="ghost" size="icon" aria-label={`Editar ${kit.name}`}>
-                            <Pencil className="size-4" />
-                          </Button>
-                        }
-                      />
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" aria-label={`Remover ${kit.name}`}>
-                            <Trash2 className="size-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Remover "{kit.name}"?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              As formações que usam esta identidade voltam ao visual padrão do
-                              StageKit. Essa ação não pode ser desfeita.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction
-                              className={buttonVariants({ variant: "destructive" })}
-                              onClick={() => remove.mutate(kit.id)}
-                            >
-                              Remover identidade
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                        <ConfirmDelete
+                          title={`Remover "${kit.name}"?`}
+                          description="As formações que usam esta identidade voltam ao visual padrão do StageKit. Essa ação não pode ser desfeita."
+                          confirmLabel="Remover identidade"
+                          onConfirm={() => remove.mutate(kit.id)}
+                          trigger={
+                            <Button variant="ghost" size="icon" aria-label={`Remover ${kit.name}`}>
+                              <Trash2 className="size-4" />
+                            </Button>
+                          }
+                        />
+                      </div>
                     </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </ListState>
       </Section>
-    </div>
+    </PageContainer>
   );
 }
 
@@ -251,7 +243,7 @@ function BrandKitFormDialog({
                 type="button"
                 onClick={() => set("preset")(p.id)}
                 className={cn(
-                  "rounded-lg border p-3 text-left transition",
+                  "rounded-lg border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                   form.preset === p.id
                     ? "border-primary bg-primary/10"
                     : "border-border bg-card/60 hover:border-primary/60",

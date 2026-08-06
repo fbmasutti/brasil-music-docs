@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Building2, Plus, Trash2, Pencil } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -11,17 +11,15 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { PageHeader, Section, EmptyState, FieldGrid, TextField } from "@/components/ui-kit";
+  PageHeader,
+  PageContainer,
+  Section,
+  EmptyState,
+  FieldGrid,
+  TextField,
+  ConfirmDelete,
+  ListState,
+} from "@/components/ui-kit";
 import { useList, useInsert, useUpdate, useRemove } from "@/lib/queries";
 import { maskCpfCnpj } from "@/lib/format";
 import type { Tables } from "@/integrations/supabase/types";
@@ -76,11 +74,12 @@ function toFormValues(c: Tables<"clients">): FormValues {
 }
 
 function ContractorsPage() {
-  const { data: clients = [] } = useList("clients", { order: { column: "name" } });
+  const clientsQuery = useList("clients", { order: { column: "name" } });
+  const clients = clientsQuery.data ?? [];
   const remove = useRemove("clients", "Contratante removido");
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <PageContainer>
       <PageHeader
         title="Contratantes"
         subtitle="Casas de show, prefeituras, produtores e escolas — reaproveitados em contratos e recibos."
@@ -94,66 +93,57 @@ function ContractorsPage() {
           />
         }
       />
-      <Section title={`Contratantes (${clients.length})`}>
-        {clients.length === 0 ? (
-          <EmptyState
-            icon={<Building2 className="size-5" />}
-            title="Nenhum contratante cadastrado"
-            description="Cadastre quem contrata seus shows para emitir contratos e recibos em segundos."
-          />
-        ) : (
-          <ul className="divide-y divide-border">
-            {clients.map((c) => (
-              <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                <div className="min-w-0">
-                  <p className="font-medium">{c.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {[c.legal_name, c.doc, c.city && `${c.city}${c.state ? `/${c.state}` : ""}`]
-                      .filter(Boolean)
-                      .join(" · ") || "sem detalhes"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1">
-                  <ClientFormDialog
-                    client={c}
-                    trigger={
-                      <Button variant="ghost" size="icon" aria-label={`Editar ${c.name}`}>
-                        <Pencil className="size-4" />
-                      </Button>
-                    }
-                  />
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" aria-label={`Remover ${c.name}`}>
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Remover "{c.name}"?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Os shows e documentos ligados a este contratante ficam sem vínculo, mas
-                          não são apagados. Essa ação não pode ser desfeita.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          className={buttonVariants({ variant: "destructive" })}
-                          onClick={() => remove.mutate(c.id)}
-                        >
-                          Remover contratante
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+      <Section title={clientsQuery.isLoading ? "Contratantes" : `Contratantes (${clients.length})`}>
+        <ListState
+          query={clientsQuery}
+          empty={
+            <EmptyState
+              icon={<Building2 className="size-5" />}
+              title="Nenhum contratante cadastrado"
+              description="Cadastre quem contrata seus shows para emitir contratos e recibos em segundos."
+            />
+          }
+        >
+          {(items) => (
+            <ul className="divide-y divide-border">
+              {items.map((c) => (
+                <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                  <div className="min-w-0">
+                    <p className="font-medium">{c.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {[c.legal_name, c.doc, c.city && `${c.city}${c.state ? `/${c.state}` : ""}`]
+                        .filter(Boolean)
+                        .join(" · ") || "sem detalhes"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <ClientFormDialog
+                      client={c}
+                      trigger={
+                        <Button variant="ghost" size="icon" aria-label={`Editar ${c.name}`}>
+                          <Pencil className="size-4" />
+                        </Button>
+                      }
+                    />
+                    <ConfirmDelete
+                      title={`Remover "${c.name}"?`}
+                      description="Os shows e documentos ligados a este contratante ficam sem vínculo, mas não são apagados. Essa ação não pode ser desfeita."
+                      confirmLabel="Remover contratante"
+                      onConfirm={() => remove.mutate(c.id)}
+                      trigger={
+                        <Button variant="ghost" size="icon" aria-label={`Remover ${c.name}`}>
+                          <Trash2 className="size-4" />
+                        </Button>
+                      }
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </ListState>
       </Section>
-    </div>
+    </PageContainer>
   );
 }
 

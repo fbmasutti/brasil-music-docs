@@ -13,7 +13,6 @@ import {
   Settings,
   LogOut,
   Menu,
-  X,
   Radio,
   Layers,
   Palette,
@@ -25,6 +24,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
@@ -137,30 +137,24 @@ export function AppLayout() {
         <UserBox profileName={profile?.stage_name} onSignOut={handleSignOut} />
       </aside>
 
-      {open ? (
-        <div className="fixed inset-0 z-50 flex lg:hidden">
-          <div
-            className="absolute inset-0 bg-background/80 backdrop-blur-sm"
-            onClick={() => setOpen(false)}
-            aria-hidden
-          />
-          <aside className="relative flex w-72 flex-col overflow-y-auto border-r border-sidebar-border bg-sidebar py-5">
-            <div className="flex items-center justify-between px-5">
-              <Brand compact />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setOpen(false)}
-                aria-label="Fechar menu"
-              >
-                <X className="size-4" />
-              </Button>
-            </div>
-            <div className="mt-4 flex flex-1 flex-col">{nav}</div>
-            <UserBox profileName={profile?.stage_name} onSignOut={handleSignOut} />
-          </aside>
-        </div>
-      ) : null}
+      {/* Sheet em vez de div manual: traz foco preso, fechar no Escape e
+          bloqueio de scroll do fundo, que a implementação anterior não tinha. */}
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent
+          side="left"
+          className="flex w-72 max-w-[85vw] flex-col overflow-y-auto border-sidebar-border bg-sidebar p-0 py-5 lg:hidden"
+        >
+          <SheetHeader className="px-5 text-left">
+            <SheetTitle asChild>
+              <div>
+                <Brand compact />
+              </div>
+            </SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 flex flex-1 flex-col">{nav}</div>
+          <UserBox profileName={profile?.stage_name} onSignOut={handleSignOut} />
+        </SheetContent>
+      </Sheet>
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/85 px-4 backdrop-blur md:px-8">

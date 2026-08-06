@@ -3,8 +3,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PageHeader, Section, FieldGrid, TextField } from "@/components/ui-kit";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { PageHeader, PageContainer, Section, FieldGrid, TextField } from "@/components/ui-kit";
 import { useProfile, useUpdate } from "@/lib/queries";
 import { maskCpfCnpj, maskCep, CNAE_OPTIONS, ECAD_ASSOCIATIONS } from "@/lib/format";
 
@@ -14,10 +20,14 @@ export const Route = createFileRoute("/_authenticated/perfil")({
       { title: "Dados do Artista — dados legais do artista" },
       {
         name: "description",
-        content: "CPF/CNPJ, CNAE, inscrição municipal, dados bancários e associação ECAD reutilizados em todos os documentos.",
+        content:
+          "CPF/CNPJ, CNAE, inscrição municipal, dados bancários e associação ECAD reutilizados em todos os documentos.",
       },
       { property: "og:title", content: "Dados do Artista — StageKit" },
-      { property: "og:description", content: "Centralize seus dados legais e fiscais com segurança." },
+      {
+        property: "og:description",
+        content: "Centralize seus dados legais e fiscais com segurança.",
+      },
     ],
   }),
   component: ProfilePage,
@@ -72,7 +82,7 @@ function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <PageContainer>
       <PageHeader
         title="Dados do Artista"
         subtitle="Estes dados alimentam automaticamente contratos, recibos, riders e declarações."
@@ -157,6 +167,6 @@ function ProfilePage() {
           ))}
         </FieldGrid>
       </Section>
-    </div>
+    </PageContainer>
   );
 }

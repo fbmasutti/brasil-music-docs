@@ -73,7 +73,13 @@ export function StagePlot({
       <div className="flex flex-wrap items-center gap-2">
         <Label className="text-xs text-muted-foreground">Adicionar ao palco:</Label>
         {STAGE_KINDS.map((k) => (
-          <Button key={k.kind} type="button" variant="outline" size="sm" onClick={() => add(k.kind)}>
+          <Button
+            key={k.kind}
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => add(k.kind)}
+          >
             {k.icon}
             <span className="ml-1 text-xs">{k.label}</span>
           </Button>
@@ -81,49 +87,53 @@ export function StagePlot({
       </div>
 
       <div className="rounded-lg border border-border bg-muted/20 p-3">
-        <p className="mb-2 text-center text-[10px] uppercase tracking-widest text-muted-foreground">
+        <p className="mb-2 text-center text-xs uppercase tracking-widest text-muted-foreground">
           Fundo do palco
         </p>
-        <div className="grid grid-cols-4 gap-2">
-          {Array.from({ length: ROWS * COLS }).map((_, index) => {
-            const col = index % COLS;
-            const row = Math.floor(index / COLS);
-            const cell = items.filter((i) => i.col === col && i.row === row);
-            return (
-              <div
-                key={`${col}-${row}`}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const id = e.dataTransfer.getData("text/plain");
-                  if (id) drop(col, row, id);
-                }}
-                className="flex min-h-20 flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border/70 p-1.5"
-              >
-                {cell.map((item) => (
-                  <div
-                    key={item.id}
-                    draggable
-                    onDragStart={(e) => e.dataTransfer.setData("text/plain", item.id)}
-                    className="group flex w-full cursor-grab items-center gap-1 rounded bg-primary/15 px-1.5 py-1 text-[11px] text-primary"
-                  >
-                    {iconFor(item.kind)}
-                    <span className="truncate">{item.label}</span>
-                    <button
-                      type="button"
-                      aria-label={`Remover ${item.label}`}
-                      className="ml-auto opacity-60 hover:opacity-100"
-                      onClick={() => onChange(items.filter((i) => i.id !== item.id))}
+        {/* A grade é espacial (representa o palco), então não pode empilhar no
+            celular — rola horizontalmente mantendo a proporção. */}
+        <div className="overflow-x-auto">
+          <div className="grid min-w-[420px] grid-cols-4 gap-2">
+            {Array.from({ length: ROWS * COLS }).map((_, index) => {
+              const col = index % COLS;
+              const row = Math.floor(index / COLS);
+              const cell = items.filter((i) => i.col === col && i.row === row);
+              return (
+                <div
+                  key={`${col}-${row}`}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const id = e.dataTransfer.getData("text/plain");
+                    if (id) drop(col, row, id);
+                  }}
+                  className="flex min-h-20 flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border/70 p-1.5"
+                >
+                  {cell.map((item) => (
+                    <div
+                      key={item.id}
+                      draggable
+                      onDragStart={(e) => e.dataTransfer.setData("text/plain", item.id)}
+                      className="group flex w-full cursor-grab items-center gap-1 rounded bg-primary/15 px-1.5 py-1 text-[11px] text-primary"
                     >
-                      <Trash2 className="size-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            );
-          })}
+                      {iconFor(item.kind)}
+                      <span className="truncate">{item.label}</span>
+                      <button
+                        type="button"
+                        aria-label={`Remover ${item.label}`}
+                        className="ml-auto opacity-60 hover:opacity-100"
+                        onClick={() => onChange(items.filter((i) => i.id !== item.id))}
+                      >
+                        <Trash2 className="size-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
         </div>
-        <p className="mt-2 text-center text-[10px] uppercase tracking-widest text-muted-foreground">
+        <p className="mt-2 text-center text-xs uppercase tracking-widest text-muted-foreground">
           Plateia
         </p>
       </div>

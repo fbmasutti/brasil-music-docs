@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Users, Plus, Trash2, Pencil } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -13,17 +13,15 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { PageHeader, Section, EmptyState, FieldGrid, TextField } from "@/components/ui-kit";
+  PageHeader,
+  PageContainer,
+  Section,
+  EmptyState,
+  FieldGrid,
+  TextField,
+  ConfirmDelete,
+  ListState,
+} from "@/components/ui-kit";
 import { useList, useInsert, useUpdate, useRemove } from "@/lib/queries";
 import { maskCpfCnpj, maskPis } from "@/lib/format";
 import type { Tables } from "@/integrations/supabase/types";
@@ -80,11 +78,12 @@ function toFormValues(m: Tables<"team_members">): FormValues {
 }
 
 function TeamPage() {
-  const { data: members = [] } = useList("team_members", { order: { column: "name" } });
+  const membersQuery = useList("team_members", { order: { column: "name" } });
+  const members = membersQuery.data ?? [];
   const remove = useRemove("team_members", "Integrante removido");
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <PageContainer>
       <PageHeader
         title="Equipe"
         subtitle="Músicos, técnicos e produtores que viajam com você — reaproveitados em riders e rooming lists."
@@ -98,68 +97,59 @@ function TeamPage() {
           />
         }
       />
-      <Section title={`Equipe (${members.length})`}>
-        {members.length === 0 ? (
-          <EmptyState
-            icon={<Users className="size-5" />}
-            title="Nenhum integrante cadastrado"
-            description="Cadastre a banda e a equipe técnica para preencher riders e rooming lists automaticamente."
-          />
-        ) : (
-          <ul className="divide-y divide-border">
-            {members.map((m) => (
-              <li key={m.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                <div className="min-w-0">
-                  <p className="font-medium">{m.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {[m.role, m.instrument, m.cpf, m.pix_key].filter(Boolean).join(" · ") ||
-                      "sem detalhes"}
-                  </p>
-                  {m.food_restrictions ? (
-                    <p className="text-xs text-warning">Alimentação: {m.food_restrictions}</p>
-                  ) : null}
-                </div>
-                <div className="flex items-center gap-1">
-                  <MemberFormDialog
-                    member={m}
-                    trigger={
-                      <Button variant="ghost" size="icon" aria-label={`Editar ${m.name}`}>
-                        <Pencil className="size-4" />
-                      </Button>
-                    }
-                  />
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" aria-label={`Remover ${m.name}`}>
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Remover "{m.name}"?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          A pessoa sai também das formações em que estava, junto com o rateio
-                          configurado. Essa ação não pode ser desfeita.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          className={buttonVariants({ variant: "destructive" })}
-                          onClick={() => remove.mutate(m.id)}
-                        >
-                          Remover integrante
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+      <Section title={membersQuery.isLoading ? "Equipe" : `Equipe (${members.length})`}>
+        <ListState
+          query={membersQuery}
+          empty={
+            <EmptyState
+              icon={<Users className="size-5" />}
+              title="Nenhum integrante cadastrado"
+              description="Cadastre a banda e a equipe técnica para preencher riders e rooming lists automaticamente."
+            />
+          }
+        >
+          {(items) => (
+            <ul className="divide-y divide-border">
+              {items.map((m) => (
+                <li key={m.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                  <div className="min-w-0">
+                    <p className="font-medium">{m.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {[m.role, m.instrument, m.cpf, m.pix_key].filter(Boolean).join(" · ") ||
+                        "sem detalhes"}
+                    </p>
+                    {m.food_restrictions ? (
+                      <p className="text-xs text-warning">Alimentação: {m.food_restrictions}</p>
+                    ) : null}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <MemberFormDialog
+                      member={m}
+                      trigger={
+                        <Button variant="ghost" size="icon" aria-label={`Editar ${m.name}`}>
+                          <Pencil className="size-4" />
+                        </Button>
+                      }
+                    />
+                    <ConfirmDelete
+                      title={`Remover "${m.name}"?`}
+                      description="A pessoa sai também das formações em que estava, junto com o rateio configurado. Essa ação não pode ser desfeita."
+                      confirmLabel="Remover integrante"
+                      onConfirm={() => remove.mutate(m.id)}
+                      trigger={
+                        <Button variant="ghost" size="icon" aria-label={`Remover ${m.name}`}>
+                          <Trash2 className="size-4" />
+                        </Button>
+                      }
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </ListState>
       </Section>
-    </div>
+    </PageContainer>
   );
 }
 
