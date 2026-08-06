@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PageHeader, Section, EmptyState, TextField } from "@/components/ui-kit";
+import { PageHeader, Section, EmptyState, TextField, TimeField } from "@/components/ui-kit";
 import { useList, useProfile } from "@/lib/queries";
 import { dateBR } from "@/lib/format";
 import { BRAND_PRESETS, presetPalette, type BrandPalette } from "@/lib/brand-presets";
@@ -39,10 +39,16 @@ export const Route = createFileRoute("/_authenticated/gerador-cards")({
   component: CardGeneratorPage,
 });
 
+// width/height são o tamanho da PRÉVIA. A exportação reescala para 1080px de
+// largura em todos os formatos (ver EXPORT_WIDTH), então Stories sai 1080x1920,
+// Feed 1:1 sai 1080x1080 e Feed 4:5 sai 1080x1350.
 const FORMATS = {
-  STORIES: { label: "Stories 9:16", width: 360, height: 640 },
-  FEED: { label: "Feed 1:1", width: 460, height: 460 },
+  STORIES: { label: "Stories 9:16", width: 315, height: 560 },
+  FEED_11: { label: "Feed 1:1", width: 420, height: 420 },
+  FEED_45: { label: "Feed 4:5", width: 400, height: 500 },
 } as const;
+
+const EXPORT_WIDTH = 1080;
 
 type FormatKey = keyof typeof FORMATS;
 
@@ -57,14 +63,23 @@ function paletteOf(kit: Tables<"brand_kits"> | undefined): BrandPalette {
   return presetPalette(kit?.preset ?? "neon_night");
 }
 
+/**
+ * Data e hora ficam como valores estruturados (ISO e HH:MM), não como texto —
+ * assim o usuário escolhe em calendário/dropdown em vez de digitar separadores.
+ * A linha exibida no card é derivada por formatDateLine().
+ */
+function formatDateLine(dateISO: string, time: string) {
+  if (!dateISO) return time ? `Horário: ${time}` : "Data a definir";
+  return `${dateBR(dateISO)}${time ? ` · ${time}` : ""}`;
+}
+
 /** Textos que o card mostra, derivados do evento mas livres para ajuste fino. */
 function defaultCopy(event: Tables<"events"> | undefined, stageName: string) {
   return {
     kicker: stageName,
     headline: event?.title ?? "",
-    dateLine: event?.event_date
-      ? `${dateBR(event.event_date)}${event.start_time ? ` · ${event.start_time}` : ""}`
-      : "Data a definir",
+    dateISO: event?.event_date ?? "",
+    time: event?.start_time ?? "",
     locationLine: [event?.venue, event?.city].filter(Boolean).join(", ") || "Local a definir",
     footnote: "",
   };
@@ -136,14 +151,18 @@ function CardGeneratorPage() {
   }, [currentEventId, stageName]);
 
   const dims = FORMATS[format];
-  const isFeed = format === "FEED";
+  const isCompact = format !== "STORIES";
+  // Escala de exportação derivada do formato, para todos saírem com 1080px de
+  // largura real independentemente do tamanho da prévia na tela.
+  const exportScale = EXPORT_WIDTH / dims.width;
+  const exportHeight = Math.round(dims.height * exportScale);
 
   async function exportPng() {
     if (!cardRef.current || !event) return;
     setExporting(true);
     try {
       const dataUrl = await toPng(cardRef.current, {
-        pixelRatio: 3,
+        pixelRatio: exportScale,
         cacheBust: true,
         width: dims.width,
         height: dims.height,
@@ -163,7 +182,7 @@ function CardGeneratorPage() {
   if (upcoming.length === 0) {
     return (
       <div className="mx-auto max-w-3xl">
-        <PageHeader title="Gerador de Cards" subtitle="Card de divulgação para Stories e Feed." />
+        <PageHeader title="Gerador de Posts" subtitle="Card de divulgação para Stories e Feed." />
         <EmptyState
           icon={<CalendarDays className="size-5" />}
           title="Nenhum show futuro cadastrado"
@@ -183,18 +202,8 @@ function CardGeneratorPage() {
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
-        title="Gerador de Cards"
-        subtitle="Card de divulgação com a identidade visual da formação — ajuste os textos antes de exportar."
-        actions={
-          <Button onClick={exportPng} disabled={!event || exporting} size="sm">
-            {exporting ? (
-              <Loader2 className="mr-1 size-4 animate-spin" />
-            ) : (
-              <Download className="mr-1 size-4" />
-            )}
-            Exportar Imagem (PNG)
-          </Button>
-        }
+        title="Gerador de Posts"
+        subtitle="Card de divulgação com a sua identidade visual — ajuste os textos e exporte abaixo da prévia."
       />
 
       <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
@@ -215,7 +224,7 @@ function CardGeneratorPage() {
 
             <div className="mt-4 space-y-2">
               <Label>Formato</Label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 {(Object.keys(FORMATS) as FormatKey[]).map((key) => (
                   <button
                     key={key}
@@ -255,7 +264,7 @@ function CardGeneratorPage() {
               <p className="text-xs text-muted-foreground">
                 {brandKits.length === 0 ? (
                   <>
-                    Nenhum brand kit cadastrado.{" "}
+                    Nenhuma identidade visual cadastrada.{" "}
                     <Link to="/marca" className="text-primary hover:underline">
                       Criar um agora
                     </Link>{" "}
@@ -270,7 +279,7 @@ function CardGeneratorPage() {
                     {!brandKit.photo_url ? " · este kit não tem foto" : ""}
                   </>
                 ) : (
-                  "O card usa só as cores padrão — escolha um brand kit para incluir foto e logo."
+                  "O card usa só as cores padrão — escolha uma identidade visual para incluir foto e logo."
                 )}
               </p>
             </div>
@@ -296,11 +305,18 @@ function CardGeneratorPage() {
                 onChange={setCopyField("kicker")}
               />
               <TextField label="Título" value={copy.headline} onChange={setCopyField("headline")} />
-              <TextField
-                label="Data e hora"
-                value={copy.dateLine}
-                onChange={setCopyField("dateLine")}
-              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <TextField
+                  label="Data"
+                  value={copy.dateISO}
+                  onChange={setCopyField("dateISO")}
+                  type="date"
+                />
+                <TimeField label="Hora" value={copy.time} onChange={setCopyField("time")} />
+              </div>
+              <p className="-mt-2 text-xs text-muted-foreground">
+                No card aparece como: {formatDateLine(copy.dateISO, copy.time)}
+              </p>
               <TextField
                 label="Local"
                 value={copy.locationLine}
@@ -322,56 +338,96 @@ function CardGeneratorPage() {
           </Section>
         </div>
 
-        <div className="flex items-start justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <p className="self-start text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Prévia
+          </p>
+
+          {/* Moldura: fundo xadrez discreto para separar o card da página e
+              deixar claro onde a arte começa e termina. */}
           <div
-            ref={cardRef}
-            className="relative flex shrink-0 flex-col justify-end overflow-hidden rounded-2xl"
+            className="rounded-2xl border border-border p-4"
             style={{
-              width: dims.width,
-              height: dims.height,
-              background: palette.bg,
-              color: palette.text,
+              backgroundColor: "var(--muted)",
+              backgroundImage:
+                "linear-gradient(45deg, color-mix(in oklab, var(--background) 60%, transparent) 25%, transparent 25%, transparent 75%, color-mix(in oklab, var(--background) 60%, transparent) 75%), linear-gradient(45deg, color-mix(in oklab, var(--background) 60%, transparent) 25%, transparent 25%, transparent 75%, color-mix(in oklab, var(--background) 60%, transparent) 75%)",
+              backgroundSize: "16px 16px",
+              backgroundPosition: "0 0, 8px 8px",
             }}
           >
-            {showPhoto && brandKit?.photo_url ? (
-              <img
-                src={brandKit.photo_url}
-                alt=""
-                crossOrigin="anonymous"
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-            ) : null}
             <div
-              className={cn("relative flex flex-col gap-2", isFeed ? "p-6" : "p-7")}
+              ref={cardRef}
+              className="relative flex shrink-0 flex-col justify-end overflow-hidden rounded-xl shadow-2xl ring-1 ring-black/20"
               style={{
-                background: `linear-gradient(to top, ${palette.bg}f2 20%, ${palette.bg}00 75%)`,
+                width: dims.width,
+                height: dims.height,
+                background: palette.bg,
+                color: palette.text,
               }}
             >
-              {brandKit?.logo_url ? (
+              {showPhoto && brandKit?.photo_url ? (
                 <img
-                  src={brandKit.logo_url}
-                  alt="Logo"
+                  src={brandKit.photo_url}
+                  alt=""
                   crossOrigin="anonymous"
-                  className="mb-3 h-10 max-w-[140px] object-contain"
+                  className="absolute inset-0 h-full w-full object-cover"
                 />
               ) : null}
-              {copy.kicker ? (
-                <p
-                  className="text-xs font-bold uppercase tracking-widest"
-                  style={{ color: palette.accent }}
-                >
-                  {copy.kicker}
-                </p>
-              ) : null}
-              {copy.headline ? (
-                <p className={cn("font-extrabold leading-tight", isFeed ? "text-2xl" : "text-3xl")}>
-                  {copy.headline}
-                </p>
-              ) : null}
-              {copy.dateLine ? <p className="text-sm opacity-90">{copy.dateLine}</p> : null}
-              {copy.locationLine ? <p className="text-sm opacity-90">{copy.locationLine}</p> : null}
-              {copy.footnote ? <p className="mt-1 text-xs opacity-75">{copy.footnote}</p> : null}
+              <div
+                className={cn("relative flex flex-col gap-2", isCompact ? "p-6" : "p-7")}
+                style={{
+                  background: `linear-gradient(to top, ${palette.bg}f2 20%, ${palette.bg}00 75%)`,
+                }}
+              >
+                {brandKit?.logo_url ? (
+                  <img
+                    src={brandKit.logo_url}
+                    alt="Logo"
+                    crossOrigin="anonymous"
+                    className="mb-3 h-10 max-w-[140px] object-contain"
+                  />
+                ) : null}
+                {copy.kicker ? (
+                  <p
+                    className="text-xs font-bold uppercase tracking-widest"
+                    style={{ color: palette.accent }}
+                  >
+                    {copy.kicker}
+                  </p>
+                ) : null}
+                {copy.headline ? (
+                  <p
+                    className={cn(
+                      "font-extrabold leading-tight",
+                      isCompact ? "text-2xl" : "text-3xl",
+                    )}
+                  >
+                    {copy.headline}
+                  </p>
+                ) : null}
+                <p className="text-sm opacity-90">{formatDateLine(copy.dateISO, copy.time)}</p>
+                {copy.locationLine ? (
+                  <p className="text-sm opacity-90">{copy.locationLine}</p>
+                ) : null}
+                {copy.footnote ? <p className="mt-1 text-xs opacity-75">{copy.footnote}</p> : null}
+              </div>
             </div>
+          </div>
+
+          {/* Exportar fica no fim do fluxo visual, junto da prévia pronta —
+              não no topo da página, antes de existir o que baixar. */}
+          <div className="flex flex-col items-center gap-1.5">
+            <Button onClick={exportPng} disabled={!event || exporting} size="lg">
+              {exporting ? (
+                <Loader2 className="mr-1 size-4 animate-spin" />
+              ) : (
+                <Download className="mr-1 size-4" />
+              )}
+              Exportar Imagem (PNG)
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              {EXPORT_WIDTH} × {exportHeight} px · {FORMATS[format].label}
+            </p>
           </div>
         </div>
       </div>

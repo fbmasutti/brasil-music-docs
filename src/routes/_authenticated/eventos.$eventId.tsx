@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Circle,
   FileText,
+  Megaphone,
   Pencil,
   Sliders,
 } from "lucide-react";
@@ -132,6 +133,11 @@ function EventDetail() {
                 </Button>
               }
             />
+            <Button asChild size="sm" variant="outline">
+              <Link to="/gerador-cards" search={{ event: event.id }}>
+                <Megaphone className="mr-1 size-4" /> Gerar post
+              </Link>
+            </Button>
             {googleCalendarUrl ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

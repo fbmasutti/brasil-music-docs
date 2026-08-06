@@ -38,6 +38,8 @@
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
   --color-cyan: var(--cyan);
+  --color-lime: var(--lime);
+  --color-orange: var(--orange);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -80,6 +82,10 @@
   --warning: oklch(0.78 0.15 78);
   --warning-foreground: oklch(0.18 0.02 78);
   --cyan: oklch(0.72 0.14 205);
+  /* Acentos de apoio, para o painel não ficar só em violeta.
+     Uso pontual (valores positivos, destaques), não cor de marca. */
+  --lime: oklch(0.86 0.2 118); /* #C4E000 */
+  --orange: oklch(0.68 0.21 43); /* #FC640F */
   --border: oklch(0.27 0.008 285);
   --input: oklch(0.28 0.008 285);
   --ring: oklch(0.62 0.21 295);
@@ -119,7 +125,8 @@
 }
 
 @utility glow-violet {
-  box-shadow: 0 0 0 1px color-mix(in oklab, var(--primary) 35%, transparent),
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--primary) 35%, transparent),
     0 18px 50px -24px color-mix(in oklab, var(--primary) 65%, transparent);
 }
 

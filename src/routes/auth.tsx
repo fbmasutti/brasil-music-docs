@@ -10,15 +10,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 
 export const Route = createFileRoute("/auth")({
+  // A landing manda ?modo=criar em "Começar agora" e ?modo=entrar em "Entrar",
+  // para os dois CTAs não caírem na mesma aba.
+  validateSearch: (search: Record<string, unknown>): { modo?: "entrar" | "criar" | undefined } => ({
+    modo: search["modo"] === "criar" ? "criar" : search["modo"] === "entrar" ? "entrar" : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Entrar no StageKit — Painel do músico" },
       {
         name: "description",
-        content: "Acesse seu painel StageKit para gerar contratos, riders, documentos de ECAD e editais.",
+        content:
+          "Acesse seu painel StageKit para gerar contratos, riders, documentos de ECAD e editais.",
       },
       { property: "og:title", content: "Entrar no StageKit" },
-      { property: "og:description", content: "Acesse o hub de documentação da sua carreira musical." },
+      {
+        property: "og:description",
+        content: "Acesse o hub de documentação da sua carreira musical.",
+      },
     ],
   }),
   component: AuthPage,
@@ -26,6 +35,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { modo } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -102,12 +112,12 @@ function AuthPage() {
             <div className="space-y-3 text-center">
               <h1 className="text-lg font-semibold">Confirme seu e-mail</h1>
               <p className="text-sm text-muted-foreground">
-                Enviamos um link de confirmação para <strong>{email}</strong>. Clique nele para ativar sua
-                conta e acessar o painel.
+                Enviamos um link de confirmação para <strong>{email}</strong>. Clique nele para
+                ativar sua conta e acessar o painel.
               </p>
             </div>
           ) : (
-            <Tabs defaultValue="in">
+            <Tabs defaultValue={modo === "criar" ? "up" : "in"}>
               <TabsList className="w-full">
                 <TabsTrigger className="flex-1" value="in">
                   Entrar
@@ -139,7 +149,8 @@ function AuthPage() {
               </TabsContent>
 
               <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
-                <span className="h-px flex-1 bg-border" /> ou <span className="h-px flex-1 bg-border" />
+                <span className="h-px flex-1 bg-border" /> ou{" "}
+                <span className="h-px flex-1 bg-border" />
               </div>
               <Button variant="outline" className="w-full" onClick={google} type="button">
                 Continuar com Google

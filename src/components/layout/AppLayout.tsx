@@ -58,7 +58,7 @@ const NAV_GROUPS: NavGroup[] = [
     defaultOpen: false,
     items: [
       { to: "/gerador-cards", label: "Gerador de Posts", icon: Megaphone },
-      { to: "/marca", label: "Marca & Brand Kit", icon: Palette },
+      { to: "/marca", label: "Identidade Visual", icon: Palette },
       { to: "/portfolio", label: "Comprovação & Portfólio", icon: Images },
     ],
   },

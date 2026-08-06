@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PageHeader, Section, FieldGrid, TextField } from "@/components/ui-kit";
+import { PageHeader, Section, FieldGrid, TextField, TimeField } from "@/components/ui-kit";
 import { QuickAddClientDialog } from "@/components/QuickAddClientDialog";
 import { useList, useInsert } from "@/lib/queries";
 import { dateBR, money, EVENT_STATUS } from "@/lib/format";
@@ -322,11 +322,10 @@ function MagicPastePage() {
               onChange={set("event_date")}
               type="date"
             />
-            <TextField
+            <TimeField
               label="Início do show"
               value={form.start_time}
               onChange={set("start_time")}
-              type="time"
             />
             <TextField label="Local / Casa" value={form.venue} onChange={set("venue")} />
             <TextField label="Cidade" value={form.city} onChange={set("city")} />

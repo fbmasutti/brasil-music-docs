@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CalendarDays, CalendarPlus, Plus, Trash2, Pencil } from "lucide-react";
+import { CalendarDays, CalendarPlus, Plus, Trash2, Pencil, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -157,6 +157,11 @@ function EventList({
                   </Button>
                 }
               />
+              <Button asChild variant="ghost" size="icon" aria-label={`Gerar post de ${e.title}`}>
+                <Link to="/gerador-cards" search={{ event: e.id }}>
+                  <Megaphone className="size-4" />
+                </Link>
+              </Button>
               {googleCalendarUrl ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

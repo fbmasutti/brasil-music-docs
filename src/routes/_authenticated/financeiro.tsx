@@ -277,7 +277,7 @@ function FinanceiroPage() {
               <StatCard
                 label="Lucro real"
                 value={money(lucroReal)}
-                tone={lucroReal >= 0 ? "violet" : "amber"}
+                tone={lucroReal >= 0 ? "lime" : "amber"}
               />
             </div>
 

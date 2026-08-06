@@ -32,13 +32,13 @@ import type { Tables } from "@/integrations/supabase/types";
 export const Route = createFileRoute("/_authenticated/marca")({
   head: () => ({
     meta: [
-      { title: "Marca & Brand Kit — StageKit" },
+      { title: "Identidade Visual — StageKit" },
       {
         name: "description",
         content:
           "Fotos, logo e paleta de cores prontos para gerar cards de divulgação e documentos com a sua cara.",
       },
-      { property: "og:title", content: "Marca & Brand Kit — StageKit" },
+      { property: "og:title", content: "Identidade Visual — StageKit" },
       {
         property: "og:description",
         content: "Sua identidade visual, pronta para reutilizar em cada formação.",
@@ -64,30 +64,30 @@ function BrandKitPage() {
   const { data: kits = [] } = useList("brand_kits", {
     order: { column: "created_at", ascending: false },
   });
-  const remove = useRemove("brand_kits", "Brand kit removido");
+  const remove = useRemove("brand_kits", "Identidade removida");
 
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
-        title="Marca & Brand Kit"
+        title="Identidade Visual"
         subtitle="Foto, logo e paleta de cores por formação — usados nos cards de divulgação e nos documentos."
         actions={
           <BrandKitFormDialog
             trigger={
               <Button size="sm">
-                <Plus className="mr-1 size-4" /> Novo brand kit
+                <Plus className="mr-1 size-4" /> Nova identidade
               </Button>
             }
           />
         }
       />
 
-      <Section title={`Brand kits (${kits.length})`}>
+      <Section title={`Identidades (${kits.length})`}>
         {kits.length === 0 ? (
           <EmptyState
             icon={<Palette className="size-5" />}
-            title="Nenhum brand kit criado"
-            description="Crie um brand kit com foto, logo e paleta para usar nos cards de divulgação de cada formação."
+            title="Nenhuma identidade criada"
+            description="Crie uma identidade com foto, logo e paleta para usar nos posts de divulgação."
           />
         ) : (
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -136,7 +136,7 @@ function BrandKitPage() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Remover "{kit.name}"?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              As formações que usam este brand kit voltam ao visual padrão do
+                              As formações que usam esta identidade voltam ao visual padrão do
                               StageKit. Essa ação não pode ser desfeita.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
@@ -146,7 +146,7 @@ function BrandKitPage() {
                               className={buttonVariants({ variant: "destructive" })}
                               onClick={() => remove.mutate(kit.id)}
                             >
-                              Remover brand kit
+                              Remover identidade
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
@@ -173,8 +173,8 @@ function BrandKitFormDialog({
 }) {
   const isEdit = Boolean(kit);
   const { data: session } = useSession();
-  const insert = useInsert("brand_kits", "Brand kit criado");
-  const update = useUpdate("brand_kits", "Brand kit atualizado");
+  const insert = useInsert("brand_kits", "Identidade criada");
+  const update = useUpdate("brand_kits", "Identidade atualizada");
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormValues>(kit ? toFormValues(kit) : empty);
@@ -232,7 +232,7 @@ function BrandKitFormDialog({
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Editar brand kit" : "Novo brand kit"}</DialogTitle>
+          <DialogTitle>{isEdit ? "Editar identidade" : "Nova identidade"}</DialogTitle>
         </DialogHeader>
 
         <TextField
@@ -295,7 +295,7 @@ function BrandKitFormDialog({
 
         <DialogFooter>
           <Button disabled={!form.name || pending || uploading !== null} onClick={save}>
-            {isEdit ? "Salvar alterações" : "Salvar brand kit"}
+            {isEdit ? "Salvar alterações" : "Salvar identidade"}
           </Button>
         </DialogFooter>
       </DialogContent>

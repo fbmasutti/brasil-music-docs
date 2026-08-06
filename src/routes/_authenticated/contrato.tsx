@@ -13,8 +13,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PageHeader, Section, TextField } from "@/components/ui-kit";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { PageHeader, Section, TextField, TimeField } from "@/components/ui-kit";
 import { QuickAddClientDialog } from "@/components/QuickAddClientDialog";
 import { useList, useInsert, useProfile } from "@/lib/queries";
 import { getTemplate, type EventRow } from "@/lib/documents";
@@ -195,7 +201,10 @@ function ContractWizard() {
       <div className="grid gap-5 lg:grid-cols-5">
         <div className="space-y-5 lg:col-span-3">
           {step === 1 ? (
-            <Section title="Passo 1 — Quem contrata?" description="Selecione ou cadastre em 10 segundos.">
+            <Section
+              title="Passo 1 — Quem contrata?"
+              description="Selecione ou cadastre em 10 segundos."
+            >
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <Label>Contratante</Label>
@@ -218,18 +227,28 @@ function ContractWizard() {
           ) : null}
 
           {step === 2 ? (
-            <Section title="Passo 2 — Quanto e quando?" description="Data, horário e cachê combinado.">
+            <Section
+              title="Passo 2 — Quanto e quando?"
+              description="Data, horário e cachê combinado."
+            >
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Data do show</Label>
                   <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
                 </div>
-                <div className="space-y-2">
-                  <Label>Horário</Label>
-                  <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-                </div>
-                <TextField label="Cachê total (R$)" value={fee} onChange={setFee} placeholder="2500" />
-                <TextField label="Sinal / entrada (R$)" value={deposit} onChange={setDeposit} placeholder="1000" />
+                <TimeField label="Horário" value={startTime} onChange={setStartTime} />
+                <TextField
+                  label="Cachê total (R$)"
+                  value={fee}
+                  onChange={setFee}
+                  placeholder="2500"
+                />
+                <TextField
+                  label="Sinal / entrada (R$)"
+                  value={deposit}
+                  onChange={setDeposit}
+                  placeholder="1000"
+                />
               </div>
             </Section>
           ) : null}
@@ -237,7 +256,12 @@ function ContractWizard() {
           {step === 3 ? (
             <Section title="Passo 3 — Onde?" description="Nome da casa e cidade do evento.">
               <div className="grid gap-4 sm:grid-cols-2">
-                <TextField label="Nome do local" value={venue} onChange={setVenue} placeholder="Casa de show, praça, bar" />
+                <TextField
+                  label="Nome do local"
+                  value={venue}
+                  onChange={setVenue}
+                  placeholder="Casa de show, praça, bar"
+                />
                 <TextField label="Cidade" value={city} onChange={setCity} placeholder="São Paulo" />
               </div>
             </Section>
@@ -273,7 +297,11 @@ function ContractWizard() {
             className="lg:sticky lg:top-24"
           >
             <div className="overflow-hidden rounded-lg border border-border bg-muted/30">
-              <iframe title="Pré-visualização do contrato" src={pdfPreviewUrl(spec)} className="h-[520px] w-full" />
+              <iframe
+                title="Pré-visualização do contrato"
+                src={pdfPreviewUrl(spec)}
+                className="h-[520px] w-full"
+              />
             </div>
           </Section>
         </div>

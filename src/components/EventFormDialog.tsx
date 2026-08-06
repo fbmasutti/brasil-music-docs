@@ -1,4 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { Link } from "@tanstack/react-router";
+import { Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -16,7 +18,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { FieldGrid, TextField, TextAreaField } from "@/components/ui-kit";
+import { FieldGrid, TextField, TextAreaField, TimeField } from "@/components/ui-kit";
 import { QuickAddClientDialog } from "@/components/QuickAddClientDialog";
 import { useList, useInsert, useUpdate } from "@/lib/queries";
 import { EVENT_STATUS } from "@/lib/format";
@@ -255,18 +257,12 @@ export function EventFormDialog({
             type="date"
           />
           <TextField label="Local / Casa" value={form.venue} onChange={set("venue")} />
-          <TextField
+          <TimeField
             label="Passagem de som"
             value={form.soundcheck_time}
             onChange={set("soundcheck_time")}
-            type="time"
           />
-          <TextField
-            label="Início do show"
-            value={form.start_time}
-            onChange={set("start_time")}
-            type="time"
-          />
+          <TimeField label="Início do show" value={form.start_time} onChange={set("start_time")} />
           <TextField label="Cidade" value={form.city} onChange={set("city")} />
           <TextField label="UF" value={form.state} onChange={set("state")} />
           <div className="sm:col-span-2">
@@ -310,7 +306,16 @@ export function EventFormDialog({
             />
           </div>
         </FieldGrid>
-        <DialogFooter>
+        <DialogFooter className="sm:justify-between">
+          {isEdit && event ? (
+            <Button asChild variant="ghost" size="sm" onClick={() => setOpen(false)}>
+              <Link to="/gerador-cards" search={{ event: event.id }}>
+                <Megaphone className="mr-1 size-4" /> Gerar post deste show
+              </Link>
+            </Button>
+          ) : (
+            <span />
+          )}
           <Button disabled={!form.title || pending} onClick={save}>
             {isEdit ? "Salvar alterações" : "Criar evento com checklist"}
           </Button>

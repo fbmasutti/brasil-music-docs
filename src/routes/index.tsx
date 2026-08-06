@@ -63,6 +63,21 @@ const FEATURES = [
   },
 ];
 
+const STEPS = [
+  {
+    title: "Cadastre seus dados uma vez",
+    text: "Nome artístico, CPF/CNPJ e identidade visual ficam salvos e entram sozinhos em todo contrato, rider e post.",
+  },
+  {
+    title: "Cole a conversa do WhatsApp",
+    text: "Data, local e cachê são extraídos da negociação. Você confere na tela e confirma — nada é salvo sem sua revisão.",
+  },
+  {
+    title: "Gere o que precisar",
+    text: "Do mesmo show saem contrato, rider técnico, post de divulgação, checklist de equipamento e controle de cachê.",
+  },
+];
+
 function Landing() {
   return (
     <div className="min-h-screen">
@@ -73,8 +88,10 @@ function Landing() {
           </span>
           <span className="font-extrabold tracking-tight">StageKit</span>
         </div>
-        <Button asChild size="sm">
-          <Link to="/auth">Entrar</Link>
+        <Button asChild size="sm" variant="outline">
+          <Link to="/auth" search={{ modo: "entrar" }}>
+            Entrar
+          </Link>
         </Button>
       </header>
 
@@ -93,12 +110,38 @@ function Landing() {
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Button asChild size="lg">
-            <Link to="/auth">
-              Começar agora <ArrowRight className="ml-1 size-4" />
+            <Link to="/auth" search={{ modo: "criar" }}>
+              Criar minha conta <ArrowRight className="ml-1 size-4" />
             </Link>
           </Button>
+          {/* Âncora, não login: quem ainda não conhece o produto precisa
+              entender antes de criar conta. */}
           <Button asChild size="lg" variant="outline">
-            <Link to="/auth">Ver o painel</Link>
+            <a href="#como-funciona">Comece por aqui</a>
+          </Button>
+        </div>
+      </section>
+
+      <section id="como-funciona" className="mx-auto max-w-6xl scroll-mt-8 px-5 pb-16">
+        <h2 className="mb-6 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          Como funciona
+        </h2>
+        <ol className="grid gap-4 md:grid-cols-3">
+          {STEPS.map((s, i) => (
+            <li key={s.title} className="panel p-5">
+              <span className="flex size-9 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-sm font-bold text-primary">
+                {i + 1}
+              </span>
+              <h3 className="mt-4 font-semibold">{s.title}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{s.text}</p>
+            </li>
+          ))}
+        </ol>
+        <div className="mt-6">
+          <Button asChild>
+            <Link to="/auth" search={{ modo: "criar" }}>
+              Criar conta e testar <ArrowRight className="ml-1 size-4" />
+            </Link>
           </Button>
         </div>
       </section>

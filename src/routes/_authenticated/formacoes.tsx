@@ -37,13 +37,13 @@ import { money } from "@/lib/format";
 export const Route = createFileRoute("/_authenticated/formacoes")({
   head: () => ({
     meta: [
-      { title: "Formações & Presets — StageKit" },
+      { title: "Formações — StageKit" },
       {
         name: "description",
         content:
           "Presets de formação (voz e violão, trio, banda completa) com roster, cachê base e mala de gig.",
       },
-      { property: "og:title", content: "Formações & Presets — StageKit" },
+      { property: "og:title", content: "Formações — StageKit" },
       {
         property: "og:description",
         content: "Cada formação carrega seu roster, cachê base e mala de gig padrão.",
@@ -72,7 +72,7 @@ function FormationsPage() {
 
   const insertFormation = useInsert("formations", "Formação criada");
   const removeFormation = useRemove("formations", "Formação removida");
-  const updateFormation = useUpdate("formations", "Brand kit vinculado");
+  const updateFormation = useUpdate("formations", "Identidade vinculada");
   const insertMember = useInsert("formation_members", "Integrante vinculado");
   const removeMember = useRemove("formation_members", "Integrante removido");
   const insertGear = useInsert("gear_checklist_items", "Item adicionado");
@@ -92,7 +92,7 @@ function FormationsPage() {
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
-        title="Formações & Presets"
+        title="Formações"
         subtitle="Presets por formação — ao escolher uma no evento, o cachê base, o roster e a mala de gig entram sozinhos."
         actions={
           <Dialog open={open} onOpenChange={setOpen}>
@@ -223,7 +223,7 @@ function FormationsPage() {
 
                   <div className="mt-3 max-w-xs space-y-1.5">
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Brand kit
+                      Identidade visual
                     </p>
                     <Select
                       value={f.brand_kit_id ?? ""}
