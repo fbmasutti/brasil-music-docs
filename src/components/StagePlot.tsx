@@ -1,4 +1,4 @@
-import { Mic, Guitar, Drum, Piano, Speaker, Music2, Trash2, Plus } from "lucide-react";
+import { Mic, Piano, Speaker, Music2, Trash2, Plus } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -12,20 +12,53 @@ import {
 
 export type StageItem = { id: string; kind: StageKind; label: string; col: number; row: number };
 
-export type StageKind = "voz" | "guitarra" | "baixo" | "bateria" | "teclado" | "monitor" | "outro";
+export type StageKind =
+  | "voz"
+  | "guitarra"
+  | "violao"
+  | "baixo"
+  | "bateria"
+  | "teclado"
+  | "monitor"
+  | "cubo_guitarra"
+  | "cubo_baixo"
+  | "pandeiro"
+  | "tantan"
+  | "sax"
+  | "trombone"
+  | "trompete"
+  | "outro";
 
-export const STAGE_KINDS: { kind: StageKind; label: string; icon: ReactNode }[] = [
-  { kind: "voz", label: "Voz", icon: <Mic className="size-4" /> },
-  { kind: "guitarra", label: "Guitarra / Violão", icon: <Guitar className="size-4" /> },
-  { kind: "baixo", label: "Baixo", icon: <Guitar className="size-4" /> },
-  { kind: "bateria", label: "Bateria / Percussão", icon: <Drum className="size-4" /> },
-  { kind: "teclado", label: "Teclado", icon: <Piano className="size-4" /> },
-  { kind: "monitor", label: "Monitor / Retorno", icon: <Speaker className="size-4" /> },
-  { kind: "outro", label: "Outro", icon: <Music2 className="size-4" /> },
-];
+/** Ícone próprio em public/stage-icons (SVG desenhado), com fallback lucide para os
+ * elementos que ainda não têm arte dedicada (voz, teclado, monitor, outro). */
+export const STAGE_KINDS: { kind: StageKind; label: string; iconSrc?: string; icon?: ReactNode }[] =
+  [
+    { kind: "voz", label: "Voz", icon: <Mic className="size-4" /> },
+    { kind: "guitarra", label: "Guitarra", iconSrc: "/stage-icons/guitarra.svg" },
+    { kind: "violao", label: "Violão", iconSrc: "/stage-icons/violao.svg" },
+    { kind: "baixo", label: "Baixo", iconSrc: "/stage-icons/baixo.svg" },
+    { kind: "bateria", label: "Bateria / Percussão", iconSrc: "/stage-icons/bateria.svg" },
+    { kind: "teclado", label: "Teclado", icon: <Piano className="size-4" /> },
+    { kind: "monitor", label: "Monitor / Retorno", icon: <Speaker className="size-4" /> },
+    { kind: "cubo_guitarra", label: "Cubo de guitarra", iconSrc: "/stage-icons/cubo-guitarra.svg" },
+    { kind: "cubo_baixo", label: "Cubo de baixo", iconSrc: "/stage-icons/cubo-baixo.svg" },
+    { kind: "pandeiro", label: "Pandeiro", iconSrc: "/stage-icons/pandeiro.svg" },
+    { kind: "tantan", label: "Tantã", iconSrc: "/stage-icons/tantan.svg" },
+    { kind: "sax", label: "Sax", iconSrc: "/stage-icons/sax.svg" },
+    { kind: "trombone", label: "Trombone", iconSrc: "/stage-icons/trombone.svg" },
+    { kind: "trompete", label: "Trompete", iconSrc: "/stage-icons/trompete.svg" },
+    { kind: "outro", label: "Outro", icon: <Music2 className="size-4" /> },
+  ];
 
-const iconFor = (kind: StageKind) =>
-  STAGE_KINDS.find((k) => k.kind === kind)?.icon ?? <Music2 className="size-4" />;
+function StageIcon({ kind, className }: { kind: StageKind; className?: string }) {
+  const def = STAGE_KINDS.find((k) => k.kind === kind);
+  if (def?.iconSrc) {
+    return <img src={def.iconSrc} alt="" className={className} />;
+  }
+  return <>{def?.icon ?? <Music2 className={className} />}</>;
+}
+
+const iconFor = (kind: StageKind) => <StageIcon kind={kind} className="size-4" />;
 
 export const COLS = 4;
 export const ROWS = 3;
@@ -80,7 +113,7 @@ export function StagePlot({
             size="sm"
             onClick={() => add(k.kind)}
           >
-            {k.icon}
+            <StageIcon kind={k.kind} className="size-4" />
             <span className="ml-1 text-xs">{k.label}</span>
           </Button>
         ))}

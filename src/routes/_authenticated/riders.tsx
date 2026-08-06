@@ -125,6 +125,12 @@ function RidersPage() {
           // Espera um frame: no primeiro commit o nó existe no DOM mas ainda
           // pode não ter fontes/estilos aplicados, e a captura sairia torta.
           await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+          // Os ícones do mapa de palco são <img> de SVG carregados à parte; sem
+          // esperar o decode, a captura pode sair com os ícones em branco.
+          const images = Array.from(node.querySelectorAll("img"));
+          await Promise.all(
+            images.map((img) => (img.complete ? Promise.resolve() : img.decode().catch(() => {}))),
+          );
           dataUrl = await toPng(node, { pixelRatio: 2, cacheBust: true, backgroundColor: "#fff" });
         }
       } catch {
