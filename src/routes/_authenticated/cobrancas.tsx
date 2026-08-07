@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import QRCode from "qrcode";
-import { toPng } from "html-to-image";
-import { QrCode, Copy, Download, AlertTriangle } from "lucide-react";
+import { toJpeg } from "html-to-image";
+import { QrCode, Copy, Download, AlertTriangle, Maximize2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -46,7 +47,9 @@ function CobrancasPage() {
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [fullscreenOpen, setFullscreenOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const modalCardRef = useRef<HTMLDivElement>(null);
 
   function applyEvent(id: string) {
     setEventId(id);
@@ -98,17 +101,18 @@ function CobrancasPage() {
     toast.success("Código Pix copiado. É só colar no app do banco.");
   }
 
-  async function downloadCard() {
-    if (!cardRef.current) return;
+  async function downloadCard(ref: RefObject<HTMLDivElement | null>) {
+    if (!ref.current) return;
     try {
-      const dataUrl = await toPng(cardRef.current, {
+      const dataUrl = await toJpeg(ref.current, {
         pixelRatio: 2,
         cacheBust: true,
         backgroundColor: "#fff",
+        quality: 0.95,
       });
       const a = document.createElement("a");
       a.href = dataUrl;
-      a.download = "cobranca-pix.png";
+      a.download = "cobranca-pix.jpg";
       a.click();
     } catch {
       toast.error("Não foi possível gerar a imagem. Tente novamente.");
@@ -201,10 +205,13 @@ function CobrancasPage() {
           </div>
 
           <div className="mt-4 flex flex-wrap justify-center gap-2">
-            <Button onClick={copyPayload}>
+            <Button onClick={() => setFullscreenOpen(true)}>
+              <Maximize2 className="mr-1 size-4" /> Mostrar em tela cheia
+            </Button>
+            <Button variant="outline" onClick={copyPayload}>
               <Copy className="mr-1 size-4" /> Copiar código Pix
             </Button>
-            <Button variant="outline" onClick={downloadCard}>
+            <Button variant="outline" onClick={() => downloadCard(cardRef)}>
               <Download className="mr-1 size-4" /> Baixar imagem
             </Button>
           </div>
@@ -215,6 +222,39 @@ function CobrancasPage() {
           Preencha os dados acima para gerar o QR Code.
         </div>
       ) : null}
+
+      {/* Fullscreen: pra mostrar de longe pra quem vai pagar, escanear e fechar —
+          não precisa ficar aberto, só o tempo do scan. */}
+      <Dialog open={fullscreenOpen} onOpenChange={setFullscreenOpen}>
+        <DialogContent className="flex h-[100dvh] max-h-[100dvh] w-screen max-w-none flex-col items-center justify-center gap-6 border-0 bg-white p-6 sm:rounded-none">
+          <DialogTitle className="sr-only">QR Code Pix — {receiverName}</DialogTitle>
+          <button
+            type="button"
+            onClick={() => setFullscreenOpen(false)}
+            aria-label="Fechar"
+            className="absolute right-4 top-4 rounded-full p-2 text-zinc-500 hover:bg-zinc-100"
+          >
+            <X className="size-6" />
+          </button>
+          <div ref={modalCardRef} className="flex flex-col items-center gap-5 text-center">
+            {qrDataUrl ? (
+              <img src={qrDataUrl} alt="QR Code Pix" className="size-[min(75vw,420px)]" />
+            ) : null}
+            <div>
+              <p className="text-xl font-semibold text-zinc-900">{receiverName}</p>
+              {amount ? (
+                <p className="text-3xl font-bold text-zinc-900">
+                  {money(Number(amount.replace(",", ".")) || 0)}
+                </p>
+              ) : null}
+              {description ? <p className="text-sm text-zinc-500">{description}</p> : null}
+            </div>
+          </div>
+          <Button size="lg" variant="outline" onClick={() => downloadCard(modalCardRef)}>
+            <Download className="mr-1 size-4" /> Baixar imagem
+          </Button>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }
