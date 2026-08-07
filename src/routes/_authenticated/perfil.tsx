@@ -103,7 +103,8 @@ function ProfilePage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="PF">Pessoa Física</SelectItem>
-                <SelectItem value="PJ">Pessoa Jurídica (MEI / LTDA)</SelectItem>
+                <SelectItem value="MEI">MEI — Microempreendedor Individual</SelectItem>
+                <SelectItem value="PJ">Pessoa Jurídica (LTDA e outros)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -154,17 +155,37 @@ function ProfilePage() {
 
       <Section title="Dados cadastrais, bancários e autorais">
         <FieldGrid>
-          {FIELDS.map(([key, label]) => (
-            <TextField
-              key={key}
-              label={label}
-              value={form[key] ?? ""}
-              onChange={(v) =>
-                set(key)(key === "cpf_cnpj" ? maskCpfCnpj(v) : key === "cep" ? maskCep(v) : v)
-              }
-              type={key === "cnd_expires_at" ? "date" : "text"}
-            />
-          ))}
+          {FIELDS.map(([key, label]) => {
+            if (key === "legal_name") {
+              const isMei = form["entity_type"] === "MEI";
+              return (
+                <div key={key} className="space-y-2">
+                  <TextField
+                    label={isMei ? "Nome completo do titular" : label}
+                    value={form[key] ?? ""}
+                    onChange={set(key)}
+                  />
+                  {isMei ? (
+                    <p className="text-xs text-muted-foreground">
+                      A razão social do MEI (nome + CPF) é composta automaticamente nos documentos —
+                      não digite o CPF aqui.
+                    </p>
+                  ) : null}
+                </div>
+              );
+            }
+            return (
+              <TextField
+                key={key}
+                label={label}
+                value={form[key] ?? ""}
+                onChange={(v) =>
+                  set(key)(key === "cpf_cnpj" ? maskCpfCnpj(v) : key === "cep" ? maskCep(v) : v)
+                }
+                type={key === "cnd_expires_at" ? "date" : "text"}
+              />
+            );
+          })}
         </FieldGrid>
       </Section>
     </PageContainer>

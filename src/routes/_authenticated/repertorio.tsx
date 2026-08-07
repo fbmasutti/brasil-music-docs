@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { toast } from "sonner";
 import {
   Music4,
   Plus,
@@ -9,6 +10,8 @@ import {
   Pencil,
   FileBadge,
   ExternalLink,
+  Wand2,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,8 +43,9 @@ import {
 } from "@/components/ui-kit";
 import { useList, useInsert, useUpdate, useRemove, useProfile } from "@/lib/queries";
 import type { Tables } from "@/integrations/supabase/types";
-import { duration, parseDuration, ECAD_ASSOCIATIONS, dateBR } from "@/lib/format";
+import { duration, parseDuration, ECAD_ASSOCIATIONS, dateBR, razaoSocial } from "@/lib/format";
 import { downloadPdf } from "@/lib/pdf";
+import { fetchTrackMeta } from "@/lib/oembed";
 
 export const Route = createFileRoute("/_authenticated/repertorio")({
   head: () => ({
@@ -147,7 +151,7 @@ function RepertoirePage() {
             type: "note",
             text: "Declaro que as obras acima foram executadas publicamente na apresentação indicada, para fins de distribuição de direitos autorais pelo ECAD.",
           },
-          { type: "signatures", names: [profile?.legal_name ?? profile?.stage_name ?? "Titular"] },
+          { type: "signatures", names: [razaoSocial(profile) || "Titular"] },
         ],
       },
       "relatorio-ecad",
@@ -524,10 +528,31 @@ function SongFormDialog({
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptySong);
+  const [fetchingLink, setFetchingLink] = useState(false);
   const set =
     <K extends keyof typeof emptySong>(k: K) =>
     (v: (typeof emptySong)[K]) =>
       setForm((f) => ({ ...f, [k]: v }));
+
+  async function fetchFromLink() {
+    if (!form.external_link.trim()) return;
+    setFetchingLink(true);
+    try {
+      const meta = await fetchTrackMeta(form.external_link);
+      if (!meta) {
+        toast.error("Não consegui ler esse link. Confira se é do YouTube ou Spotify.");
+        return;
+      }
+      setForm((f) => ({
+        ...f,
+        title: meta.title || f.title,
+        original_authors: f.origin !== "autoral" && meta.author ? meta.author : f.original_authors,
+      }));
+      toast.success("Título preenchido a partir do link.");
+    } finally {
+      setFetchingLink(false);
+    }
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -642,13 +667,36 @@ function SongFormDialog({
             </>
           )}
           <TextField label="Intérpretes" value={form.performers} onChange={set("performers")} />
-          <div className="sm:col-span-2">
-            <TextField
-              label="Link (Spotify, YouTube, Deezer...)"
-              value={form.external_link}
-              onChange={set("external_link")}
-              placeholder="https://open.spotify.com/track/..."
-            />
+          <div className="space-y-2 sm:col-span-2">
+            <Label>Link (Spotify, YouTube...)</Label>
+            <div className="flex flex-wrap gap-2">
+              <input
+                className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm"
+                value={form.external_link}
+                onChange={(e) => set("external_link")(e.target.value)}
+                placeholder="https://open.spotify.com/track/..."
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!form.external_link.trim() || fetchingLink}
+                onClick={fetchFromLink}
+              >
+                {fetchingLink ? (
+                  <Loader2 className="mr-1 size-3.5 animate-spin" />
+                ) : (
+                  <Wand2 className="mr-1 size-3.5" />
+                )}
+                Buscar dados do link
+              </Button>
+            </div>
+            {!isOwn ? (
+              <p className="text-xs text-muted-foreground">
+                Preenche o título (e o autor, quando der pra separar) automaticamente — não traz
+                gênero, duração nem ISRC.
+              </p>
+            ) : null}
           </div>
         </FieldGrid>
         {isOwn ? (

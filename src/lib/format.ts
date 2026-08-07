@@ -26,6 +26,28 @@ export function longDateBR(value?: string | null) {
   return dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
 }
 
+type RazaoSocialInput = {
+  entity_type?: string | null;
+  legal_name?: string | null;
+  stage_name?: string | null;
+  cpf_cnpj?: string | null;
+};
+
+/**
+ * Razão social do MEI é, por regra, "Nome completo do titular" + CPF — nunca
+ * digitada à mão (é assim que alguém acaba salvando "Nome 12345678900" junto
+ * no cadastro). Composta aqui, na hora de gerar o documento, a partir do nome
+ * civil puro guardado em legal_name; PF e PJ usam o campo como está.
+ */
+export function razaoSocial(profile: RazaoSocialInput | null | undefined): string {
+  if (!profile) return "";
+  const name = profile.legal_name?.trim() || profile.stage_name?.trim() || "";
+  if (profile.entity_type === "MEI" && profile.cpf_cnpj) {
+    return name ? `${name} ${profile.cpf_cnpj}` : profile.cpf_cnpj;
+  }
+  return name;
+}
+
 export function duration(seconds?: number | null) {
   const s = Math.max(0, Math.round(Number(seconds ?? 0)));
   const m = Math.floor(s / 60);

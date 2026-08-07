@@ -90,6 +90,12 @@ const NAV_GROUPS: NavGroup[] = [
 
 const NAV_STORAGE_PREFIX = "stagekit:nav-group:";
 
+const ENTITY_TYPE_LABEL: Record<string, string> = {
+  PF: "Pessoa Física",
+  MEI: "MEI",
+  PJ: "Pessoa Jurídica",
+};
+
 export function AppLayout() {
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -190,8 +196,8 @@ export function AppLayout() {
               {profile?.stage_name || "StageKit"}
             </p>
             <p className="truncate text-xs text-muted-foreground">
-              {profile?.entity_type === "PJ" ? "Pessoa Jurídica (MEI/LTDA)" : "Pessoa Física / MEI"}{" "}
-              · {profile?.city || "cidade não informada"}
+              {ENTITY_TYPE_LABEL[profile?.entity_type ?? "PF"] ?? "Pessoa Física"} ·{" "}
+              {profile?.city || "cidade não informada"}
             </p>
           </div>
           {pathname !== "/dashboard" ? (

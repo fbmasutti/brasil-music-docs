@@ -17,7 +17,7 @@ import {
 import { PageHeader, PageContainer, Section, FieldGrid, TextField } from "@/components/ui-kit";
 import { useList, useProfile } from "@/lib/queries";
 import { buildPixPayload } from "@/lib/pix";
-import { money } from "@/lib/format";
+import { money, razaoSocial } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/cobrancas")({
   head: () => ({
@@ -60,7 +60,7 @@ function CobrancasPage() {
     setDescription(event.title);
   }
 
-  const receiverName = profile?.legal_name || profile?.stage_name || "";
+  const receiverName = razaoSocial(profile) || profile?.stage_name || "";
   const city = profile?.city || "";
   const pixKey = profile?.pix_key || "";
 

@@ -1,6 +1,6 @@
 import type { Tables } from "@/integrations/supabase/types";
 import type { PdfBlock } from "./pdf";
-import { longDateBR, money } from "./format";
+import { longDateBR, money, razaoSocial } from "./format";
 
 export type ProfileRow = Tables<"profiles">;
 export type ClientRow = Tables<"clients">;
@@ -61,7 +61,7 @@ const docLabel = (profile: Partial<ProfileRow>) => (profile.doc_type === "CNPJ" 
 function artistBlock(profile: Partial<ProfileRow>): [string, string][] {
   return kvRows([
     ["Nome artístico", profile.stage_name],
-    ["Razão social / Nome civil", profile.legal_name],
+    ["Razão social / Nome civil", razaoSocial(profile)],
     [docLabel(profile), profile.cpf_cnpj],
     ["CNAE principal", profile.cnae],
     ["Inscrição municipal", profile.inscricao_municipal],
@@ -366,7 +366,7 @@ export const DOC_TEMPLATES: DocTemplate[] = [
       { type: "para", text: "DECLARO ainda estar em situação regular perante as Fazendas Federal, Estadual e Municipal, a Justiça do Trabalho e o FGTS, comprometendo-me a apresentar as respectivas certidões negativas quando solicitadas." },
       { type: "kv", rows: artistBlock(profile) },
       { type: "para", text: place(profile, values) },
-      { type: "signatures", names: [`${profile.legal_name || profile.stage_name || "Declarante"}`] },
+      { type: "signatures", names: [razaoSocial(profile) || "Declarante"] },
     ],
   },
   {
