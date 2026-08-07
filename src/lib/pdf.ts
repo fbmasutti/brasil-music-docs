@@ -237,14 +237,21 @@ export function buildPdf(spec: PdfDoc): jsPDF {
         break;
       }
       case "image": {
-        // Cabe na largura do conteúdo; se a altura resultante não couber na
+        // Cabe na largura do conteúdo e nunca passa da altura útil da página
+        // (importante em paisagem, onde a folha é baixa); se não couber na
         // página atual, quebra antes de desenhar para não cortar o mapa.
-        const imgW = CONTENT;
-        const imgH = imgW / (block.aspect || 1);
+        const maxH = H - M * 2 - 14 - (block.caption ? 8 : 0);
+        let imgW = CONTENT;
+        let imgH = imgW / (block.aspect || 1);
+        if (imgH > maxH) {
+          imgH = maxH;
+          imgW = imgH * (block.aspect || 1);
+        }
         ensure(imgH + (block.caption ? 8 : 4));
         try {
-          doc.addImage(block.dataUrl, "PNG", M, y - 2, imgW, imgH);
+          doc.addImage(block.dataUrl, "PNG", M + (CONTENT - imgW) / 2, y - 2, imgW, imgH);
           y += imgH + 2;
+
         } catch {
           // Se a captura falhar, o documento segue sem o desenho em vez de
           // quebrar a geração inteira.
