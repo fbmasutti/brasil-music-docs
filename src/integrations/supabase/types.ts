@@ -150,6 +150,7 @@ export type Database = {
           event_id: string
           id: string
           notes: string | null
+          team_member_id: string | null
           user_id: string
         }
         Insert: {
@@ -159,6 +160,7 @@ export type Database = {
           event_id: string
           id?: string
           notes?: string | null
+          team_member_id?: string | null
           user_id: string
         }
         Update: {
@@ -168,6 +170,7 @@ export type Database = {
           event_id?: string
           id?: string
           notes?: string | null
+          team_member_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -176,6 +179,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_expenses_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
             referencedColumns: ["id"]
           },
         ]

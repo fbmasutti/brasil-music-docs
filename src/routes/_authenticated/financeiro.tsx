@@ -11,6 +11,8 @@ import {
   PiggyBank,
   Guitar,
   TrendingUp,
+  CheckCircle2,
+  HandCoins,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -60,6 +62,7 @@ const EXPENSE_CATEGORIES: Record<string, string> = {
   ALUGUEL_EQUIPAMENTO: "Aluguel de equipamento",
   TECNICO: "Técnico contratado",
   ALIMENTACAO: "Alimentação",
+  PARCEIRO: "Pagamento a parceiro",
   OUTRO: "Outro",
 };
 
@@ -123,7 +126,12 @@ function FinanceiroPage() {
   const selectedEvent = events.find((e) => e.id === eventId);
   const roster = formationMembers.filter((m) => m.formation_id === selectedEvent?.formation_id);
   const feeTotal = Number(selectedEvent?.fee_total ?? 0);
-  const custosOperacionais = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+  // Pagamento a parceiro é lançado como despesa (categoria PARCEIRO) só para
+  // ter registro/recibo — o valor já está descontado via rateioTotal, então
+  // fica de fora de "custos operacionais" pra não contar duas vezes.
+  const operationalExpenses = expenses.filter((e) => e.category !== "PARCEIRO");
+  const partnerExpenses = expenses.filter((e) => e.category === "PARCEIRO");
+  const custosOperacionais = operationalExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
   const rateioTotal = roster.reduce(
     (sum, m) => sum + (feeTotal * Number(m.split_percent)) / 100,
     0,
@@ -295,7 +303,7 @@ function FinanceiroPage() {
                   Custos operacionais
                 </p>
                 <ul className="space-y-1.5">
-                  {expenses.map((exp) => (
+                  {operationalExpenses.map((exp) => (
                     <li key={exp.id} className="flex items-center justify-between gap-2 text-sm">
                       <span className="text-muted-foreground">
                         {EXPENSE_CATEGORIES[exp.category] ?? exp.category} —{" "}
@@ -418,17 +426,55 @@ function FinanceiroPage() {
                       const person = teamMembers.find((t) => t.id === m.team_member_id);
                       const cut = (feeTotal * Number(m.split_percent)) / 100;
                       const pixKey = person?.pix_key;
+                      const paidExpense = partnerExpenses.find(
+                        (e) => e.team_member_id === m.team_member_id,
+                      );
                       return (
-                        <li key={m.id} className="flex items-center justify-between gap-2 text-sm">
+                        <li
+                          key={m.id}
+                          className="flex flex-wrap items-center justify-between gap-2 text-sm"
+                        >
                           <span className="text-muted-foreground">
                             {person?.name ?? "Integrante removido"} · {m.split_percent}% ={" "}
                             {money(cut)}
                           </span>
-                          {pixKey ? (
-                            <Button variant="ghost" size="sm" onClick={() => copyPix(pixKey)}>
-                              <Copy className="mr-1 size-3.5" /> Copiar Chave PIX
-                            </Button>
-                          ) : null}
+                          <div className="flex items-center gap-1.5">
+                            {pixKey ? (
+                              <Button variant="ghost" size="sm" onClick={() => copyPix(pixKey)}>
+                                <Copy className="mr-1 size-3.5" /> Copiar Chave PIX
+                              </Button>
+                            ) : null}
+                            {paidExpense ? (
+                              <ConfirmDelete
+                                title="Desfazer pagamento?"
+                                description={`Remove o registro de ${money(Number(paidExpense.amount))} pago a ${person?.name ?? "esse integrante"} nesse show.`}
+                                confirmLabel="Desfazer"
+                                onConfirm={() => removeExpense.mutate(paidExpense.id)}
+                                trigger={
+                                  <Badge variant="outline" className="cursor-pointer text-success">
+                                    <CheckCircle2 className="mr-1 size-3.5" /> Pago
+                                  </Badge>
+                                }
+                              />
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={!person || insertExpense.isPending}
+                                onClick={() =>
+                                  insertExpense.mutate({
+                                    event_id: eventId,
+                                    category: "PARCEIRO",
+                                    amount: cut,
+                                    team_member_id: m.team_member_id,
+                                    notes: `Rateio de ${person?.name ?? "integrante"} (${m.split_percent}%)`,
+                                  })
+                                }
+                              >
+                                <HandCoins className="mr-1 size-3.5" /> Registrar pagamento
+                              </Button>
+                            )}
+                          </div>
                         </li>
                       );
                     })}
