@@ -23,6 +23,7 @@ import {
   ConfirmDelete,
 } from "@/components/ui-kit";
 import { useList, useInsert, useUpdate, useRemove, useProfile } from "@/lib/queries";
+import { useActiveFormation } from "@/lib/active-formation";
 import { downloadPdf, type PdfBlock } from "@/lib/pdf";
 import {
   StagePlot,
@@ -114,6 +115,7 @@ function RidersPage() {
   const { data: profile } = useProfile();
   const { data: riders = [] } = useList("technical_riders", { order: { column: "name" } });
   const { data: formations = [] } = useList("formations", { order: { column: "name" } });
+  const { activeFormationId } = useActiveFormation();
   const insert = useInsert("technical_riders", "Rider salvo");
   const update = useUpdate("technical_riders", "Rider atualizado");
   const remove = useRemove("technical_riders", "Rider removido");
@@ -218,7 +220,9 @@ function RidersPage() {
     setEditingId(null);
     setFormOpen(true);
     setAdvancedOpen(false);
-    setForm(empty);
+    // Novo rider já nasce com a formação "tocando como" do header, em vez de
+    // pedir pra escolher de novo algo que já está definido globalmente.
+    setForm({ ...empty, formation_id: activeFormationId ?? "" });
     setStage([]);
     setChannels([]);
   }

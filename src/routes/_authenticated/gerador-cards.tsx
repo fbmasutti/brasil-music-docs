@@ -24,6 +24,7 @@ import {
 } from "@/components/ui-kit";
 import { useList, useProfile } from "@/lib/queries";
 import { dateBR } from "@/lib/format";
+import { useActiveFormation } from "@/lib/active-formation";
 import { BRAND_PRESETS, presetPalette, type BrandPalette } from "@/lib/brand-presets";
 import { cn } from "@/lib/utils";
 import type { Tables } from "@/integrations/supabase/types";
@@ -150,8 +151,11 @@ function CardGeneratorPage() {
     setDialogOpen(true);
   }
 
+  const { activeFormation } = useActiveFormation();
   const event = upcoming.find((e) => e.id === eventId);
-  const formation = formations.find((f) => f.id === event?.formation_id);
+  // Sem show selecionado (card avulso), herda a formação "tocando como" do
+  // header em vez de ficar sem identidade nenhuma.
+  const formation = event ? formations.find((f) => f.id === event.formation_id) : activeFormation;
 
   // Exigir show -> formação -> brand kit para usar uma foto é fricção demais:
   // quem acabou de subir a imagem espera vê-la. Então herda da formação

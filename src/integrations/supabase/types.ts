@@ -564,6 +564,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active_formation_id: string | null
           address: string | null
           bank_account: string | null
           bank_agency: string | null
@@ -594,6 +595,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          active_formation_id?: string | null
           address?: string | null
           bank_account?: string | null
           bank_agency?: string | null
@@ -624,6 +626,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          active_formation_id?: string | null
           address?: string | null
           bank_account?: string | null
           bank_agency?: string | null
@@ -653,7 +656,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_active_formation_id_fkey"
+            columns: ["active_formation_id"]
+            isOneToOne: false
+            referencedRelation: "formations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       setlist_songs: {
         Row: {

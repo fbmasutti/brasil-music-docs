@@ -28,10 +28,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { useProfile } from "@/lib/queries";
+import { useList, useProfile } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/lib/theme";
+import { ActiveFormationProvider, useActiveFormation } from "@/lib/active-formation";
+import { presetPalette } from "@/lib/brand-presets";
+import type { Tables } from "@/integrations/supabase/types";
 
 type NavItem = { to: string; label: string; icon: LucideIcon };
 type NavGroup = { key: string; label: string; items: NavItem[]; defaultOpen: boolean };
@@ -150,81 +159,84 @@ export function AppLayout() {
   );
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
-      <aside className="hidden w-72 shrink-0 flex-col border-r border-sidebar-border bg-sidebar py-5 lg:flex">
-        <Link to="/dashboard" className="block transition-opacity hover:opacity-80">
-          <Brand />
-        </Link>
-        {nav}
-        <UserBox profileName={profile?.stage_name} onSignOut={handleSignOut} />
-      </aside>
-
-      {/* Sheet em vez de div manual: traz foco preso, fechar no Escape e
-          bloqueio de scroll do fundo, que a implementação anterior não tinha. */}
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent
-          side="left"
-          className="flex w-72 max-w-[85vw] flex-col overflow-y-auto border-sidebar-border bg-sidebar p-0 py-5 lg:hidden"
-        >
-          <SheetHeader className="px-5 text-left">
-            <SheetTitle asChild>
-              <div>
-                <Link to="/dashboard" onClick={() => setOpen(false)} className="block">
-                  <Brand compact />
-                </Link>
-              </div>
-            </SheetTitle>
-          </SheetHeader>
-          <div className="mt-4 flex flex-1 flex-col">{nav}</div>
+    <ActiveFormationProvider>
+      <div className="flex min-h-screen w-full bg-background">
+        <aside className="hidden w-72 shrink-0 flex-col border-r border-sidebar-border bg-sidebar py-5 lg:flex">
+          <Link to="/dashboard" className="block transition-opacity hover:opacity-80">
+            <Brand />
+          </Link>
+          {nav}
           <UserBox profileName={profile?.stage_name} onSignOut={handleSignOut} />
-        </SheetContent>
-      </Sheet>
+        </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/85 px-4 backdrop-blur md:px-8">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden"
-            onClick={() => setOpen(true)}
-            aria-label="Abrir menu"
+        {/* Sheet em vez de div manual: traz foco preso, fechar no Escape e
+            bloqueio de scroll do fundo, que a implementação anterior não tinha. */}
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetContent
+            side="left"
+            className="flex w-72 max-w-[85vw] flex-col overflow-y-auto border-sidebar-border bg-sidebar p-0 py-5 lg:hidden"
           >
-            <Menu className="size-5" />
-          </Button>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-foreground">
-              {profile?.stage_name || "StageKit"}
-            </p>
-            <p className="truncate text-xs text-muted-foreground">
-              {ENTITY_TYPE_LABEL[profile?.entity_type ?? "PF"] ?? "Pessoa Física"} ·{" "}
-              {profile?.city || "cidade não informada"}
-            </p>
-          </div>
-          {pathname !== "/dashboard" ? (
-            <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
-              <Link to="/dashboard">
-                <LayoutDashboard className="mr-1 size-4" /> Painel
-              </Link>
+            <SheetHeader className="px-5 text-left">
+              <SheetTitle asChild>
+                <div>
+                  <Link to="/dashboard" onClick={() => setOpen(false)} className="block">
+                    <Brand compact />
+                  </Link>
+                </div>
+              </SheetTitle>
+            </SheetHeader>
+            <div className="mt-4 flex flex-1 flex-col">{nav}</div>
+            <UserBox profileName={profile?.stage_name} onSignOut={handleSignOut} />
+          </SheetContent>
+        </Sheet>
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/85 px-4 backdrop-blur md:px-8">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => setOpen(true)}
+              aria-label="Abrir menu"
+            >
+              <Menu className="size-5" />
             </Button>
-          ) : null}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleTheme}
-            aria-label={theme === "dark" ? "Mudar para tema claro" : "Mudar para tema escuro"}
-            // O tema real vem do script inline (antes da hidratação) e pode
-            // divergir do "dark" padrão do primeiro render no servidor —
-            // só o ícone pisca por um frame, as cores da página não.
-            suppressHydrationWarning
-          >
-            {theme === "dark" ? <Sun className="size-4.5" /> : <Moon className="size-4.5" />}
-          </Button>
-        </header>
-        <main className="flex-1 px-4 py-6 md:px-8 md:py-10">
-          <Outlet />
-        </main>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-foreground">
+                {profile?.stage_name || "StageKit"}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {ENTITY_TYPE_LABEL[profile?.entity_type ?? "PF"] ?? "Pessoa Física"} ·{" "}
+                {profile?.city || "cidade não informada"}
+              </p>
+            </div>
+            <FormationSwitcher />
+            {pathname !== "/dashboard" ? (
+              <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+                <Link to="/dashboard">
+                  <LayoutDashboard className="mr-1 size-4" /> Painel
+                </Link>
+              </Button>
+            ) : null}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              aria-label={theme === "dark" ? "Mudar para tema claro" : "Mudar para tema escuro"}
+              // O tema real vem do script inline (antes da hidratação) e pode
+              // divergir do "dark" padrão do primeiro render no servidor —
+              // só o ícone pisca por um frame, as cores da página não.
+              suppressHydrationWarning
+            >
+              {theme === "dark" ? <Sun className="size-4.5" /> : <Moon className="size-4.5" />}
+            </Button>
+          </header>
+          <main className="flex-1 px-4 py-6 md:px-8 md:py-10">
+            <Outlet />
+          </main>
+        </div>
       </div>
-    </div>
+    </ActiveFormationProvider>
   );
 }
 
@@ -277,6 +289,66 @@ function Brand({ compact }: { compact?: boolean | undefined }) {
         <p className="text-[11px] text-sidebar-foreground/60">Toolkit do artista</p>
       </div>
     </div>
+  );
+}
+
+function formationDotColor(brandKit: Tables<"brand_kits"> | undefined): string {
+  const raw = brandKit?.palette;
+  if (raw && typeof raw === "object" && !Array.isArray(raw) && "accent" in raw) {
+    return (raw as { accent: string }).accent;
+  }
+  return presetPalette(brandKit?.preset ?? "neon_night").accent;
+}
+
+// "Tocando como": troca a formação ativa pra qualquer tela que herde brand
+// kit ou roster (Gerador de Posts, Riders), sem precisar reconfigurar nada a
+// cada vez — é o contexto que fica ligado, não a tela.
+function FormationSwitcher() {
+  const { formations, activeFormation, activeFormationId, setActiveFormationId } =
+    useActiveFormation();
+  const { data: brandKits = [] } = useList("brand_kits");
+
+  if (formations.length === 0) return null;
+
+  const activeBrandKit = brandKits.find((k) => k.id === activeFormation?.brand_kit_id);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="hidden items-center gap-2 sm:inline-flex">
+          {activeFormation ? (
+            <span
+              className="size-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: formationDotColor(activeBrandKit) }}
+            />
+          ) : null}
+          <span className="max-w-32 truncate">
+            Tocando como: {activeFormation?.name ?? "Padrão (solo)"}
+          </span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={() => setActiveFormationId(null)}>
+          Nenhuma (padrão solo)
+        </DropdownMenuItem>
+        {formations.map((f) => {
+          const kit = brandKits.find((k) => k.id === f.brand_kit_id);
+          return (
+            <DropdownMenuItem
+              key={f.id}
+              onSelect={() => setActiveFormationId(f.id)}
+              className={cn(f.id === activeFormationId && "font-semibold")}
+            >
+              <span
+                className="mr-2 size-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: formationDotColor(kit) }}
+              />
+              {f.name}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
