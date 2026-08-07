@@ -2,6 +2,7 @@ import { Music2, Trash2, Plus, Speaker } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -117,7 +118,15 @@ function isLarge(kind: StageKind) {
 function StageIcon({ kind, className }: { kind: StageKind; className?: string }) {
   const def = STAGE_KINDS.find((k) => k.kind === kind);
   if (def?.iconSrc) {
-    return <img src={def.iconSrc} alt="" className={className} />;
+    // SVGs próprios usam preenchimento escuro fixo (não currentColor) —
+    // sem backdrop claro, somem no fundo escuro do tema dark.
+    return (
+      <img
+        src={def.iconSrc}
+        alt=""
+        className={cn("rounded-md dark:bg-white/90 dark:p-1", className)}
+      />
+    );
   }
   return <>{def?.icon ?? <Music2 className={className} />}</>;
 }
