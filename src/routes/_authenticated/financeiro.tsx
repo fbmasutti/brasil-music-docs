@@ -199,7 +199,7 @@ function FinanceiroPage() {
                     <Link
                       to="/eventos/$eventId"
                       params={{ eventId: e.id }}
-                      className="font-medium hover:text-primary"
+                      className="block truncate font-medium hover:text-primary"
                     >
                       {e.title}
                     </Link>
@@ -243,7 +243,7 @@ function FinanceiroPage() {
                   <Link
                     to="/eventos/$eventId"
                     params={{ eventId: e.id }}
-                    className="font-medium hover:text-primary"
+                    className="block truncate font-medium hover:text-primary"
                   >
                     {e.title}
                   </Link>

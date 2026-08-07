@@ -240,7 +240,7 @@ export function StagePlot({
                     const id = e.dataTransfer.getData("text/plain");
                     if (id) drop(col, row, id);
                   }}
-                  className="flex min-h-24 flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border/70 p-1.5"
+                  className="flex min-h-28 flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-border/70 p-1.5"
                 >
                   {cell.map((item) => (
                     <div
@@ -248,19 +248,19 @@ export function StagePlot({
                       draggable
                       title={item.label}
                       onDragStart={(e) => e.dataTransfer.setData("text/plain", item.id)}
-                      className="group relative flex w-full cursor-grab flex-col items-center gap-0.5 rounded bg-primary/15 px-1.5 py-1.5 text-primary"
+                      className="group relative flex cursor-grab items-center justify-center"
                     >
                       <button
                         type="button"
                         aria-label={`Remover ${item.label}`}
-                        className="absolute right-0.5 top-0.5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                        className="absolute -right-1 -top-1 rounded-full bg-background text-destructive opacity-0 shadow-sm group-hover:opacity-100 focus-visible:opacity-100"
                         onClick={() => onChange(items.filter((i) => i.id !== item.id))}
                       >
-                        <Trash2 className="size-3" />
+                        <Trash2 className="size-3.5" />
                       </button>
                       <StageIcon
                         kind={item.kind}
-                        className={isLarge(item.kind) ? "size-12" : "size-8"}
+                        className={isLarge(item.kind) ? "size-24" : "size-16"}
                       />
                     </div>
                   ))}
@@ -287,7 +287,7 @@ export function StagePlot({
  * grade e os mesmos ícones da tela, então trocar os ícones melhora os dois.
  */
 export const PRINT_PLOT_WIDTH = 840;
-export const PRINT_PLOT_HEIGHT = 460;
+export const PRINT_PLOT_HEIGHT = 560;
 
 export function StagePlotPrintable({ items }: { items: StageItem[] }) {
   return (
@@ -351,17 +351,14 @@ export function StagePlotPrintable({ items }: { items: StageItem[] }) {
                     flexDirection: "column",
                     alignItems: "center",
                     gap: 2,
-                    background: "#ede9fe",
-                    color: "#5b21b6",
-                    borderRadius: 6,
-                    padding: "4px 6px",
-                    fontWeight: 600,
                     maxWidth: "100%",
+                    fontWeight: 600,
+                    color: "#3f3f46",
                   }}
                 >
                   <StageIcon
                     kind={item.kind}
-                    className={isLarge(item.kind) ? "size-14" : "size-9"}
+                    className={isLarge(item.kind) ? "size-24" : "size-16"}
                   />
                   {/* No papel não dá pra passar o mouse pra ver o nome (diferente da
                       tela, que usa title=), então a legenda fica — só bem discreta. */}

@@ -36,17 +36,26 @@ import { useTheme } from "@/lib/theme";
 type NavItem = { to: string; label: string; icon: LucideIcon };
 type NavGroup = { key: string; label: string; items: NavItem[]; defaultOpen: boolean };
 
-// Nível 1: o que se usa no dia a dia de show. Sempre visível.
+// Nível 1: só o que se checa todo dia. Tudo que é "ação pontual" foi pro
+// grupo Ferramentas — misturar os dois é o que deixava o nível 1 confuso.
 const NAV_TOP: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/magic-paste", label: "Importar do WhatsApp", icon: Wand2 },
   { to: "/eventos", label: "Agenda de Shows", icon: CalendarDays },
   { to: "/financeiro", label: "Financeiro & Cachês", icon: Wallet },
-  { to: "/cobrancas", label: "Cobrança via PIX", icon: QrCode },
 ];
 
 // Nível 2: agrupado por intenção, para o menu não virar uma lista de 13 itens.
 const NAV_GROUPS: NavGroup[] = [
+  {
+    key: "ferramentas",
+    label: "Ferramentas rápidas",
+    defaultOpen: true,
+    items: [
+      { to: "/magic-paste", label: "Importar do WhatsApp", icon: Wand2 },
+      { to: "/cobrancas", label: "Cobrança via PIX", icon: QrCode },
+      { to: "/gerador-cards", label: "Gerador de Posts", icon: Megaphone },
+    ],
+  },
   {
     key: "docs",
     label: "Documentos",
@@ -58,13 +67,12 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    key: "divulgacao",
-    label: "Divulgação",
+    key: "marca",
+    label: "Identidade & Portfólio",
     defaultOpen: false,
     items: [
-      { to: "/gerador-cards", label: "Gerador de Posts", icon: Megaphone },
       { to: "/marca", label: "Identidade Visual", icon: Palette },
-      { to: "/portfolio", label: "Comprovação & Portfólio", icon: Images },
+      { to: "/portfolio", label: "Portfólio & Clipping", icon: Images },
     ],
   },
   {
@@ -138,7 +146,9 @@ export function AppLayout() {
   return (
     <div className="flex min-h-screen w-full bg-background">
       <aside className="hidden w-72 shrink-0 flex-col border-r border-sidebar-border bg-sidebar py-5 lg:flex">
-        <Brand />
+        <Link to="/dashboard" className="block transition-opacity hover:opacity-80">
+          <Brand />
+        </Link>
         {nav}
         <UserBox profileName={profile?.stage_name} onSignOut={handleSignOut} />
       </aside>
@@ -153,7 +163,9 @@ export function AppLayout() {
           <SheetHeader className="px-5 text-left">
             <SheetTitle asChild>
               <div>
-                <Brand compact />
+                <Link to="/dashboard" onClick={() => setOpen(false)} className="block">
+                  <Brand compact />
+                </Link>
               </div>
             </SheetTitle>
           </SheetHeader>

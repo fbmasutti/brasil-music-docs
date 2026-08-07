@@ -139,7 +139,7 @@ function DocumentsPage() {
               <FieldGrid className="mt-4">
                 {template.useClient ? (
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <Label>Contratante</Label>
                       <QuickAddClientDialog onCreated={setClientId} />
                     </div>
@@ -271,7 +271,9 @@ function DocumentsPage() {
             description="Atualiza conforme você preenche os campos."
             className="lg:sticky lg:top-24"
           >
-            <div className="overflow-hidden rounded-lg border border-border bg-muted/30">
+            {/* O PDF em si é sempre branco, então a moldura fica num cinza claro fixo —
+                não segue o tema, pra nunca ficar escura ao redor de um documento branco. */}
+            <div className="overflow-hidden rounded-lg border border-border bg-zinc-100">
               <iframe
                 title="Pré-visualização do documento"
                 src={pdfPreviewUrl(spec)}

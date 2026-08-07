@@ -299,7 +299,9 @@ function ContractWizard() {
             description="O contrato se reescreve conforme você responde."
             className="lg:sticky lg:top-24"
           >
-            <div className="overflow-hidden rounded-lg border border-border bg-muted/30">
+            {/* O PDF em si é sempre branco, então a moldura fica num cinza claro fixo —
+                não segue o tema, pra nunca ficar escura ao redor de um documento branco. */}
+            <div className="overflow-hidden rounded-lg border border-border bg-zinc-100">
               <iframe
                 title="Pré-visualização do contrato"
                 src={pdfPreviewUrl(spec)}
