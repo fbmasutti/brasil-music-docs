@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toPng } from "html-to-image";
 import { toast } from "sonner";
-import { Download, Loader2, CalendarDays, RotateCcw } from "lucide-react";
+import { Download, Loader2, CalendarDays, RotateCcw, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -107,6 +108,7 @@ function CardGeneratorPage() {
   );
 
   const [eventId, setEventId] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [format, setFormat] = useState<FormatKey>("STORIES");
   const [showPhoto, setShowPhoto] = useState(true);
   const [copy, setCopy] = useState(defaultCopy(undefined, ""));
@@ -120,6 +122,9 @@ function CardGeneratorPage() {
   // sem mudar as dimensões reais do nó que vai ser exportado.
   const [frameWidth, setFrameWidth] = useState(0);
 
+  // O frame só existe no DOM com o modal aberto (Radix desmonta o conteúdo do
+  // Dialog fechado), então o observer precisa reanexar quando dialogOpen muda —
+  // só na montagem ele nunca encontraria o nó na primeira abertura.
   useEffect(() => {
     const el = frameRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
@@ -128,16 +133,22 @@ function CardGeneratorPage() {
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [dialogOpen]);
 
+  // Chegar aqui com ?event= (dashboard, evento, magic paste...) já abre o
+  // editor pronto — só o acesso direto pela lista pede um clique em "Criar post".
   useEffect(() => {
-    if (eventId) return;
     if (eventIdParam && upcoming.some((e) => e.id === eventIdParam)) {
       setEventId(eventIdParam);
-    } else if (upcoming.length) {
-      setEventId(upcoming[0]!.id);
+      setDialogOpen(true);
     }
-  }, [upcoming, eventId, eventIdParam]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eventIdParam, upcoming.length]);
+
+  function openEditor(id: string) {
+    setEventId(id);
+    setDialogOpen(true);
+  }
 
   const event = upcoming.find((e) => e.id === eventId);
   const formation = formations.find((f) => f.id === event?.formation_id);
@@ -229,247 +240,283 @@ function CardGeneratorPage() {
     <PageContainer>
       <PageHeader
         title="Gerador de Posts"
-        subtitle="Card de divulgação com a sua identidade visual — ajuste os textos e exporte abaixo da prévia."
+        subtitle="Escolha um show e crie o card de divulgação — o editor abre em destaque, sem sair da lista."
       />
 
-      <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
-        <div className="space-y-5">
-          <Section title="Show">
-            <Select value={eventId} onValueChange={setEventId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecionar show" />
-              </SelectTrigger>
-              <SelectContent>
-                {upcoming.map((e) => (
-                  <SelectItem key={e.id} value={e.id}>
-                    {e.title} — {e.event_date ? dateBR(e.event_date) : "data a definir"}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <div className="mt-4 space-y-2">
-              <Label>Formato</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {(Object.keys(FORMATS) as FormatKey[]).map((key) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setFormat(key)}
-                    className={cn(
-                      "rounded-lg border px-3 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                      format === key
-                        ? "border-primary bg-primary/10 text-foreground"
-                        : "border-border text-muted-foreground hover:border-primary/60",
-                    )}
-                  >
-                    {FORMATS[key].label}
-                  </button>
-                ))}
+      <Section title={`Próximos shows (${upcoming.length})`}>
+        <ul className="divide-y divide-border">
+          {upcoming.map((e) => (
+            <li key={e.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+              <div>
+                <p className="font-medium">{e.title}</p>
+                <p className="text-xs text-muted-foreground">
+                  {e.event_date ? dateBR(e.event_date) : "data a definir"}
+                </p>
               </div>
-            </div>
-
-            <div className="mt-4 space-y-2">
-              <Label>Identidade visual</Label>
-              <Select
-                value={effectiveKitId || NO_KIT}
-                onValueChange={(v) => setManualKitId(v === NO_KIT ? "" : v)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={NO_KIT}>Sem identidade (padrão StageKit)</SelectItem>
-                  {brandKits.map((k) => (
-                    <SelectItem key={k.id} value={k.id}>
-                      {k.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                {brandKits.length === 0 ? (
-                  <>
-                    Nenhuma identidade visual cadastrada.{" "}
-                    <Link to="/marca" className="text-primary hover:underline">
-                      Criar um agora
-                    </Link>{" "}
-                    para usar sua foto e logo no card.
-                  </>
-                ) : brandKit ? (
-                  <>
-                    {preset?.label ?? brandKit.preset}
-                    {formation?.brand_kit_id === brandKit.id
-                      ? ` · herdado da formação "${formation.name}"`
-                      : ""}
-                    {!brandKit.photo_url ? " · este kit não tem foto" : ""}
-                  </>
-                ) : (
-                  "O card usa só as cores padrão — escolha uma identidade visual para incluir foto e logo."
-                )}
-              </p>
-            </div>
-          </Section>
-
-          <Section
-            title="Ajuste fino"
-            description="Os textos vêm do show; edite livremente para este card."
-            actions={
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setCopy(defaultCopy(event, stageName))}
-              >
-                <RotateCcw className="mr-1 size-3.5" /> Restaurar
+              <Button size="sm" onClick={() => openEditor(e.id)}>
+                <Megaphone className="mr-1 size-4" /> Criar post
               </Button>
-            }
-          >
-            <div className="space-y-4">
-              <TextField
-                label="Chamada (topo)"
-                value={copy.kicker}
-                onChange={setCopyField("kicker")}
-              />
-              <TextField label="Título" value={copy.headline} onChange={setCopyField("headline")} />
-              <div className="grid gap-4 sm:grid-cols-2">
-                <TextField
-                  label="Data"
-                  value={copy.dateISO}
-                  onChange={setCopyField("dateISO")}
-                  type="date"
-                />
-                <TimeField label="Hora" value={copy.time} onChange={setCopyField("time")} />
-              </div>
-              <p className="-mt-2 text-xs text-muted-foreground">
-                No card aparece como: {formatDateLine(copy.dateISO, copy.time)}
-              </p>
-              <TextField
-                label="Local"
-                value={copy.locationLine}
-                onChange={setCopyField("locationLine")}
-              />
-              <TextField
-                label="Rodapé (opcional)"
-                value={copy.footnote}
-                onChange={setCopyField("footnote")}
-                placeholder="Ingressos na bio, classificação, etc."
-              />
-              {brandKit?.photo_url ? (
-                <label className="flex items-center justify-between gap-2 text-sm">
-                  Usar foto de fundo
-                  <Switch checked={showPhoto} onCheckedChange={setShowPhoto} />
-                </label>
-              ) : null}
-            </div>
-          </Section>
-        </div>
+            </li>
+          ))}
+        </ul>
+      </Section>
 
-        <div className="flex flex-col items-center gap-4">
-          <p className="self-start text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Prévia
-          </p>
-
-          {/* Moldura: fundo xadrez discreto para separar o card da página e
-              deixar claro onde a arte começa e termina. */}
-          <div
-            ref={frameRef}
-            className="w-full max-w-full rounded-2xl border border-border p-4"
-            style={{
-              backgroundColor: "var(--muted)",
-              backgroundImage:
-                "linear-gradient(45deg, color-mix(in oklab, var(--background) 60%, transparent) 25%, transparent 25%, transparent 75%, color-mix(in oklab, var(--background) 60%, transparent) 75%), linear-gradient(45deg, color-mix(in oklab, var(--background) 60%, transparent) 25%, transparent 25%, transparent 75%, color-mix(in oklab, var(--background) 60%, transparent) 75%)",
-              backgroundSize: "16px 16px",
-              backgroundPosition: "0 0, 8px 8px",
-            }}
-          >
-            {/* O nó exportado mantém as dimensões nominais (o toPng depende
-                delas); quem encolhe na tela pequena é este invólucro, via
-                scale. Sem isto o card vaza ~110px no iPhone SE. */}
-            <div
-              className="mx-auto overflow-hidden"
-              style={{ width: dims.width * previewScale, height: dims.height * previewScale }}
-            >
-              <div
-                ref={cardRef}
-                className="relative flex shrink-0 flex-col justify-end overflow-hidden rounded-xl shadow-2xl ring-1 ring-black/20"
-                style={{
-                  width: dims.width,
-                  height: dims.height,
-                  transform: `scale(${previewScale})`,
-                  transformOrigin: "top left",
-                  background: palette.bg,
-                  color: palette.text,
-                }}
-              >
-                {showPhoto && brandKit?.photo_url ? (
-                  <img
-                    src={brandKit.photo_url}
-                    alt=""
-                    crossOrigin="anonymous"
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                ) : null}
-                <div
-                  className={cn("relative flex flex-col gap-2", isCompact ? "p-6" : "p-7")}
-                  style={{
-                    background: `linear-gradient(to top, ${palette.bg}f2 20%, ${palette.bg}00 75%)`,
-                  }}
-                >
-                  {brandKit?.logo_url ? (
-                    <img
-                      src={brandKit.logo_url}
-                      alt="Logo"
-                      crossOrigin="anonymous"
-                      className="mb-3 h-10 max-w-[140px] object-contain"
-                    />
-                  ) : null}
-                  {copy.kicker ? (
-                    <p
-                      className="text-xs font-bold uppercase tracking-widest"
-                      style={{ color: palette.accent }}
-                    >
-                      {copy.kicker}
-                    </p>
-                  ) : null}
-                  {copy.headline ? (
-                    <p
-                      className={cn(
-                        "font-extrabold leading-tight",
-                        isCompact ? "text-2xl" : "text-3xl",
-                      )}
-                    >
-                      {copy.headline}
-                    </p>
-                  ) : null}
-                  <p className="text-sm opacity-90">{formatDateLine(copy.dateISO, copy.time)}</p>
-                  {copy.locationLine ? (
-                    <p className="text-sm opacity-90">{copy.locationLine}</p>
-                  ) : null}
-                  {copy.footnote ? (
-                    <p className="mt-1 text-xs opacity-75">{copy.footnote}</p>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Exportar fica no fim do fluxo visual, junto da prévia pronta —
-              não no topo da página, antes de existir o que baixar. */}
-          <div className="flex flex-col items-center gap-1.5">
-            <Button onClick={exportPng} disabled={!event || exporting} size="lg">
-              {exporting ? (
-                <Loader2 className="mr-1 size-4 animate-spin" />
-              ) : (
-                <Download className="mr-1 size-4" />
-              )}
-              Exportar Imagem (PNG)
-            </Button>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="flex h-[92vh] max-h-[92vh] w-[96vw] max-w-6xl flex-col overflow-hidden p-0 sm:rounded-2xl">
+          <DialogTitle className="sr-only">Gerador de post — {event?.title ?? ""}</DialogTitle>
+          <div className="shrink-0 border-b border-border px-5 py-3 pr-12">
+            <p className="truncate text-sm font-semibold">{event?.title}</p>
             <p className="text-xs text-muted-foreground">
-              {EXPORT_WIDTH} × {exportHeight} px · {FORMATS[format].label}
+              {event?.event_date ? dateBR(event.event_date) : "Data a definir"}
             </p>
           </div>
-        </div>
-      </div>
+
+          <div className="grid flex-1 gap-6 overflow-y-auto p-5 lg:grid-cols-[340px_1fr]">
+            <div className="space-y-5">
+              <Section title="Show">
+                <Select value={eventId} onValueChange={setEventId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar show" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {upcoming.map((e) => (
+                      <SelectItem key={e.id} value={e.id}>
+                        {e.title} — {e.event_date ? dateBR(e.event_date) : "data a definir"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <div className="mt-4 space-y-2">
+                  <Label>Formato</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(Object.keys(FORMATS) as FormatKey[]).map((key) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setFormat(key)}
+                        className={cn(
+                          "rounded-lg border px-3 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                          format === key
+                            ? "border-primary bg-primary/10 text-foreground"
+                            : "border-border text-muted-foreground hover:border-primary/60",
+                        )}
+                      >
+                        {FORMATS[key].label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-2">
+                  <Label>Identidade visual</Label>
+                  <Select
+                    value={effectiveKitId || NO_KIT}
+                    onValueChange={(v) => setManualKitId(v === NO_KIT ? "" : v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NO_KIT}>Sem identidade (padrão StageKit)</SelectItem>
+                      {brandKits.map((k) => (
+                        <SelectItem key={k.id} value={k.id}>
+                          {k.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    {brandKits.length === 0 ? (
+                      <>
+                        Nenhuma identidade visual cadastrada.{" "}
+                        <Link to="/marca" className="text-primary hover:underline">
+                          Criar um agora
+                        </Link>{" "}
+                        para usar sua foto e logo no card.
+                      </>
+                    ) : brandKit ? (
+                      <>
+                        {preset?.label ?? brandKit.preset}
+                        {formation?.brand_kit_id === brandKit.id
+                          ? ` · herdado da formação "${formation.name}"`
+                          : ""}
+                        {!brandKit.photo_url ? " · este kit não tem foto" : ""}
+                      </>
+                    ) : (
+                      "O card usa só as cores padrão — escolha uma identidade visual para incluir foto e logo."
+                    )}
+                  </p>
+                </div>
+              </Section>
+
+              <Section
+                title="Ajuste fino"
+                description="Os textos vêm do show; edite livremente para este card."
+                actions={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setCopy(defaultCopy(event, stageName))}
+                  >
+                    <RotateCcw className="mr-1 size-3.5" /> Restaurar
+                  </Button>
+                }
+              >
+                <div className="space-y-4">
+                  <TextField
+                    label="Chamada (topo)"
+                    value={copy.kicker}
+                    onChange={setCopyField("kicker")}
+                  />
+                  <TextField
+                    label="Título"
+                    value={copy.headline}
+                    onChange={setCopyField("headline")}
+                  />
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <TextField
+                      label="Data"
+                      value={copy.dateISO}
+                      onChange={setCopyField("dateISO")}
+                      type="date"
+                    />
+                    <TimeField label="Hora" value={copy.time} onChange={setCopyField("time")} />
+                  </div>
+                  <p className="-mt-2 text-xs text-muted-foreground">
+                    No card aparece como: {formatDateLine(copy.dateISO, copy.time)}
+                  </p>
+                  <TextField
+                    label="Local"
+                    value={copy.locationLine}
+                    onChange={setCopyField("locationLine")}
+                  />
+                  <TextField
+                    label="Rodapé (opcional)"
+                    value={copy.footnote}
+                    onChange={setCopyField("footnote")}
+                    placeholder="Ingressos na bio, classificação, etc."
+                  />
+                  {brandKit?.photo_url ? (
+                    <label className="flex items-center justify-between gap-2 text-sm">
+                      Usar foto de fundo
+                      <Switch checked={showPhoto} onCheckedChange={setShowPhoto} />
+                    </label>
+                  ) : null}
+                </div>
+              </Section>
+            </div>
+
+            <div className="flex flex-col items-center gap-4">
+              <p className="self-start text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Prévia
+              </p>
+
+              {/* Moldura: fundo xadrez discreto para separar o card da página e
+              deixar claro onde a arte começa e termina. */}
+              <div
+                ref={frameRef}
+                className="w-full max-w-full rounded-2xl border border-border p-4"
+                style={{
+                  backgroundColor: "var(--muted)",
+                  backgroundImage:
+                    "linear-gradient(45deg, color-mix(in oklab, var(--background) 60%, transparent) 25%, transparent 25%, transparent 75%, color-mix(in oklab, var(--background) 60%, transparent) 75%), linear-gradient(45deg, color-mix(in oklab, var(--background) 60%, transparent) 25%, transparent 25%, transparent 75%, color-mix(in oklab, var(--background) 60%, transparent) 75%)",
+                  backgroundSize: "16px 16px",
+                  backgroundPosition: "0 0, 8px 8px",
+                }}
+              >
+                {/* O nó exportado mantém as dimensões nominais (o toPng depende
+                delas); quem encolhe na tela pequena é este invólucro, via
+                scale. Sem isto o card vaza ~110px no iPhone SE. */}
+                <div
+                  className="mx-auto overflow-hidden"
+                  style={{ width: dims.width * previewScale, height: dims.height * previewScale }}
+                >
+                  <div
+                    ref={cardRef}
+                    className="relative flex shrink-0 flex-col justify-end overflow-hidden rounded-xl shadow-2xl ring-1 ring-black/20"
+                    style={{
+                      width: dims.width,
+                      height: dims.height,
+                      transform: `scale(${previewScale})`,
+                      transformOrigin: "top left",
+                      background: palette.bg,
+                      color: palette.text,
+                    }}
+                  >
+                    {showPhoto && brandKit?.photo_url ? (
+                      <img
+                        src={brandKit.photo_url}
+                        alt=""
+                        crossOrigin="anonymous"
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                    ) : null}
+                    <div
+                      className={cn("relative flex flex-col gap-2", isCompact ? "p-6" : "p-7")}
+                      style={{
+                        background: `linear-gradient(to top, ${palette.bg}f2 20%, ${palette.bg}00 75%)`,
+                      }}
+                    >
+                      {brandKit?.logo_url ? (
+                        <img
+                          src={brandKit.logo_url}
+                          alt="Logo"
+                          crossOrigin="anonymous"
+                          className="mb-3 h-10 max-w-[140px] object-contain"
+                        />
+                      ) : null}
+                      {copy.kicker ? (
+                        <p
+                          className="text-xs font-bold uppercase tracking-widest"
+                          style={{ color: palette.accent }}
+                        >
+                          {copy.kicker}
+                        </p>
+                      ) : null}
+                      {copy.headline ? (
+                        <p
+                          className={cn(
+                            "font-extrabold leading-tight",
+                            isCompact ? "text-2xl" : "text-3xl",
+                          )}
+                        >
+                          {copy.headline}
+                        </p>
+                      ) : null}
+                      <p className="text-sm opacity-90">
+                        {formatDateLine(copy.dateISO, copy.time)}
+                      </p>
+                      {copy.locationLine ? (
+                        <p className="text-sm opacity-90">{copy.locationLine}</p>
+                      ) : null}
+                      {copy.footnote ? (
+                        <p className="mt-1 text-xs opacity-75">{copy.footnote}</p>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Exportar fica no fim do fluxo visual, junto da prévia pronta —
+              não no topo da página, antes de existir o que baixar. */}
+              <div className="flex flex-col items-center gap-1.5">
+                <Button onClick={exportPng} disabled={!event || exporting} size="lg">
+                  {exporting ? (
+                    <Loader2 className="mr-1 size-4 animate-spin" />
+                  ) : (
+                    <Download className="mr-1 size-4" />
+                  )}
+                  Exportar Imagem (PNG)
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  {EXPORT_WIDTH} × {exportHeight} px · {FORMATS[format].label}
+                </p>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }
