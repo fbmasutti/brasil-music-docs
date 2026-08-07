@@ -117,6 +117,11 @@ export const EVENT_STATUS: Record<string, { label: string; tone: string }> = {
   },
 };
 
+// Cinza claro: reconhecimento sem juízo de valor (nem bom nem ruim, só um
+// estado padrão) — para rótulos que hoje saem sem nenhuma cor (ex.: status
+// de documento parado em "Rascunho"), diferente de warning/success/etc.
+export const NEUTRAL_TONE = "bg-muted/50 text-muted-foreground border-border";
+
 export const CACHE_STATUS = {
   PENDENTE: { label: "Pendente", tone: "bg-warning/15 text-warning border-warning/30" },
   SINAL_PAGO: { label: "Sinal Pago", tone: "bg-cyan/15 text-cyan border-cyan/30" },

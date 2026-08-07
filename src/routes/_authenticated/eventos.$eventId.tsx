@@ -28,7 +28,7 @@ import {
 import { PageHeader, PageContainer, Section, StatCard } from "@/components/ui-kit";
 import { EventFormDialog } from "@/components/EventFormDialog";
 import { useList, useUpdate } from "@/lib/queries";
-import { dateBR, money, EVENT_STATUS } from "@/lib/format";
+import { dateBR, money, EVENT_STATUS, NEUTRAL_TONE } from "@/lib/format";
 import { buildGoogleCalendarUrl, downloadICS } from "@/lib/calendar-link";
 
 export const Route = createFileRoute("/_authenticated/eventos/$eventId")({
@@ -251,7 +251,9 @@ function EventDetail() {
                 {docs.map((d) => (
                   <li key={d.id} className="flex items-center justify-between gap-2">
                     <span className="truncate">{d.title}</span>
-                    <Badge variant="outline">{d.status}</Badge>
+                    <Badge variant="outline" className={NEUTRAL_TONE}>
+                      {d.status}
+                    </Badge>
                   </li>
                 ))}
               </ul>

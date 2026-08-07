@@ -1,10 +1,11 @@
-import type { ReactNode } from "react";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { AlertTriangle, ChevronDown, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -255,31 +256,70 @@ export function Section({
   actions,
   children,
   className,
+  collapsible = false,
+  defaultOpen = true,
 }: {
   title?: string | undefined;
   description?: string | undefined;
   actions?: ReactNode | undefined;
   children: ReactNode;
   className?: string | undefined;
+  // Para seções secundárias em páginas longas (histórico, config avançada):
+  // renderizadas fechadas por padrão, reduz rolagem sem esconder a função.
+  collapsible?: boolean | undefined;
+  defaultOpen?: boolean | undefined;
 }) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  if (!collapsible) {
+    return (
+      <section className={cn("panel p-5", className)}>
+        {title || actions ? (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              {title ? (
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-foreground">
+                  {title}
+                </h2>
+              ) : null}
+              {description ? (
+                <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+              ) : null}
+            </div>
+            {actions}
+          </div>
+        ) : null}
+        {children}
+      </section>
+    );
+  }
+
   return (
     <section className={cn("panel p-5", className)}>
-      {title || actions ? (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            {title ? (
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-foreground">
-                {title}
-              </h2>
-            ) : null}
-            {description ? (
-              <p className="mt-1 text-xs text-muted-foreground">{description}</p>
-            ) : null}
-          </div>
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <CollapsibleTrigger className="flex items-center gap-2 text-left">
+            <ChevronDown
+              className={cn(
+                "size-4 shrink-0 text-muted-foreground transition-transform",
+                open && "rotate-180",
+              )}
+            />
+            <div>
+              {title ? (
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-foreground">
+                  {title}
+                </h2>
+              ) : null}
+              {description ? (
+                <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+              ) : null}
+            </div>
+          </CollapsibleTrigger>
           {actions}
         </div>
-      ) : null}
-      {children}
+        <CollapsibleContent className="mt-4">{children}</CollapsibleContent>
+      </Collapsible>
     </section>
   );
 }

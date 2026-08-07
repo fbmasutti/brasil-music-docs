@@ -25,7 +25,7 @@ import { QuickAddClientDialog } from "@/components/QuickAddClientDialog";
 import { useList, useInsert, useRemove, useProfile } from "@/lib/queries";
 import { DOC_TEMPLATES, getTemplate } from "@/lib/documents";
 import { downloadPdf, pdfPreviewUrl, type PdfDoc } from "@/lib/pdf";
-import { dateBR } from "@/lib/format";
+import { dateBR, NEUTRAL_TONE } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/documentos")({
   head: () => ({
@@ -243,7 +243,9 @@ function DocumentsPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline">{d.status}</Badge>
+                      <Badge variant="outline" className={NEUTRAL_TONE}>
+                        {d.status}
+                      </Badge>
                       <ConfirmDelete
                         title={`Remover "${d.title}"?`}
                         description="O registro sai do histórico de documentos gerados. O PDF que você já baixou não é afetado."

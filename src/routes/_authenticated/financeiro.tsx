@@ -232,7 +232,7 @@ function FinanceiroPage() {
         )}
       </Section>
 
-      <Section title={`Cachês pagos (${paidInFull.length})`}>
+      <Section title={`Cachês pagos (${paidInFull.length})`} collapsible defaultOpen={false}>
         {paidInFull.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhum cachê quitado ainda.</p>
         ) : (
@@ -520,6 +520,8 @@ function FinanceiroPage() {
       <Section
         title="Reserva Financeira"
         description="Instrumentos e equipamentos, e o quanto já foi reservado pra manutenção em luthier."
+        collapsible
+        defaultOpen={false}
       >
         <div className="grid gap-5 lg:grid-cols-2">
           <div>
