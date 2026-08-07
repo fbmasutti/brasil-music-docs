@@ -246,6 +246,7 @@ export function StagePlot({
                     <div
                       key={item.id}
                       draggable
+                      title={item.label}
                       onDragStart={(e) => e.dataTransfer.setData("text/plain", item.id)}
                       className="group relative flex w-full cursor-grab flex-col items-center gap-0.5 rounded bg-primary/15 px-1.5 py-1.5 text-primary"
                     >
@@ -261,7 +262,6 @@ export function StagePlot({
                         kind={item.kind}
                         className={isLarge(item.kind) ? "size-12" : "size-8"}
                       />
-                      <span className="w-full truncate text-center text-[10px]">{item.label}</span>
                     </div>
                   ))}
                 </div>
@@ -355,7 +355,6 @@ export function StagePlotPrintable({ items }: { items: StageItem[] }) {
                     color: "#5b21b6",
                     borderRadius: 6,
                     padding: "4px 6px",
-                    fontSize: 10,
                     fontWeight: 600,
                     maxWidth: "100%",
                   }}
@@ -364,8 +363,11 @@ export function StagePlotPrintable({ items }: { items: StageItem[] }) {
                     kind={item.kind}
                     className={isLarge(item.kind) ? "size-14" : "size-9"}
                   />
+                  {/* No papel não dá pra passar o mouse pra ver o nome (diferente da
+                      tela, que usa title=), então a legenda fica — só bem discreta. */}
                   <span
                     style={{
+                      fontSize: 6,
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       textAlign: "center",
