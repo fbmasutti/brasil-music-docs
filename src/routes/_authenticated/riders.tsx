@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Sliders, Plus, Download, Trash2, Wand2, Pencil, ChevronDown } from "lucide-react";
+import { Sliders, Plus, Download, Trash2, Wand2, Pencil, ChevronDown, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,6 +44,8 @@ import {
 } from "@/components/StagePlot";
 import { toPng } from "html-to-image";
 import { RIDER_PRESETS, presetToStageItems } from "@/lib/rider-presets";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import type { PdfOrientation } from "@/lib/pdf";
 
 export const Route = createFileRoute("/_authenticated/riders")({
   head: () => ({
@@ -135,7 +137,13 @@ function RidersPage() {
   const [form, setForm] = useState(empty);
   // Rider aguardando exportação: enquanto está setado, o mapa é renderizado
   // fora da tela para ser capturado como imagem e entrar no PDF.
-  const [pendingExport, setPendingExport] = useState<RiderRow | null>(null);
+  const [pendingExport, setPendingExport] = useState<{
+    rider: RiderRow;
+    orientation: PdfOrientation;
+  } | null>(null);
+  // Aba ativa do modal — o mapa de palco em aba própria deixa de depender de
+  // rolagem para ser descoberto.
+  const [tab, setTab] = useState<"rider" | "mapa">("rider");
   const printRef = useRef<HTMLDivElement>(null);
   const [stage, setStage] = useState<StageItem[]>([]);
   const [channels, setChannels] = useState<ChannelRow[]>([]);
@@ -160,6 +168,7 @@ function RidersPage() {
     const taken = riders.filter((r) => r.name.startsWith(preset.label)).length;
     setEditingId(null);
     setFormOpen(true);
+    setTab("rider");
     setAdvancedOpen(false);
     setForm({
       ...empty,
@@ -176,7 +185,7 @@ function RidersPage() {
 
   useEffect(() => {
     if (!pendingExport) return;
-    const rider = pendingExport;
+    const rider = pendingExport.rider;
     const node = printRef.current;
     let cancelled = false;
     (async () => {
@@ -199,7 +208,7 @@ function RidersPage() {
         dataUrl = null;
       }
       if (cancelled) return;
-      exportRider(rider, dataUrl);
+      exportRider(rider, dataUrl, pendingExport.orientation);
       setPendingExport(null);
     })();
     return () => {
@@ -211,6 +220,7 @@ function RidersPage() {
   function startEdit(rider: RiderRow) {
     setEditingId(rider.id);
     setFormOpen(true);
+    setTab("rider");
     setAdvancedOpen(false);
     setForm({
       name: rider.name,
@@ -235,6 +245,7 @@ function RidersPage() {
   function startBlank() {
     setEditingId(null);
     setFormOpen(true);
+    setTab("rider");
     setAdvancedOpen(false);
     // Novo rider já nasce com a formação "tocando como" do header, em vez de
     // pedir pra escolher de novo algo que já está definido globalmente.
@@ -280,7 +291,7 @@ function RidersPage() {
     return brandKit ? paletteOf(brandKit).accent : undefined;
   }
 
-  function exportRider(rider: RiderRow, plotImage: string | null) {
+  function exportRider(rider: RiderRow, plotImage: string | null, orientation: PdfOrientation) {
     const channels = Array.isArray(rider.channel_list) ? (rider.channel_list as string[]) : [];
     const plot = parseStagePlot(rider.stage_plot);
     downloadPdf(
@@ -290,6 +301,7 @@ function RidersPage() {
         subtitle: profile?.legal_name ?? "Rider técnico e de hospitalidade",
         footer: `${profile?.stage_name ?? "StageKit"} · rider técnico`,
         accent: accentForRider(rider),
+        orientation,
         blocks: [
           ...(channels.length
             ? ([
@@ -588,8 +600,29 @@ function RidersPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setPendingExport(r)}>
-                      <Download className="mr-1 size-4" /> PDF
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPendingExport({ rider: r, orientation: "retrato" })}
+                    >
+                      <Download className="mr-1 size-4" /> PDF retrato
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPendingExport({ rider: r, orientation: "paisagem" })}
+                    >
+                      <Download className="mr-1 size-4" /> PDF paisagem
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        startEdit(r);
+                        setTab("mapa");
+                      }}
+                    >
+                      <Map className="mr-1 size-4" /> Mapa
                     </Button>
                     <Button
                       variant="ghost"
@@ -623,7 +656,7 @@ function RidersPage() {
       {pendingExport ? (
         <div aria-hidden style={{ position: "fixed", left: -9999, top: 0, pointerEvents: "none" }}>
           <div ref={printRef}>
-            <StagePlotPrintable items={parseStagePlot(pendingExport.stage_plot)} />
+            <StagePlotPrintable items={parseStagePlot(pendingExport.rider.stage_plot)} />
           </div>
         </div>
       ) : null}
