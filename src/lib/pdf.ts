@@ -19,6 +19,9 @@ export type PdfDoc = {
   brand?: string;
   logoDataUrl?: string | null;
   footer?: string;
+  /** Cor de destaque do Brand Kit da formação ativa (hex). Sem isso, cai no
+   * violeta padrão do StageKit — mesma aparência de sempre. */
+  accent?: string | undefined;
   blocks: PdfBlock[];
 };
 
@@ -27,12 +30,50 @@ const W = 210;
 const H = 297;
 const CONTENT = W - M * 2;
 
+const DEFAULT_ACCENT: [number, number, number] = [139, 92, 246];
+
+function hexToRgb(hex: string): [number, number, number] | null {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return null;
+  const n = parseInt(m[1] as string, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+function mix(a: [number, number, number], b: [number, number, number], t: number) {
+  return a.map((v, i) => Math.round(v + (b[i]! - v) * t)) as [number, number, number];
+}
+
+function luma([r, g, b]: [number, number, number]) {
+  return 0.299 * r + 0.587 * g + 0.114 * b;
+}
+
+/** Cores derivadas da cor de destaque — em documento impresso/branco, uma
+ * cor de brand kit muito clara (ex.: Studio Mono) precisa escurecer antes de
+ * virar preenchimento com texto branco em cima, senão fica ilegível. O texto
+ * dos títulos usa uma versão ainda mais escura, sempre legível em fundo
+ * branco independente de quão clara for a cor original. */
+function accentColors(accentHex: string | undefined) {
+  const raw = (accentHex && hexToRgb(accentHex)) || DEFAULT_ACCENT;
+  const fill: [number, number, number] = luma(raw) > 150 ? mix(raw, [0, 0, 0], 0.45) : raw;
+  const text = mix(raw, [0, 0, 0], 0.55);
+  const tint = mix(fill, [255, 255, 255], 0.92);
+  const subtitle = mix(raw, [255, 255, 255], 0.45);
+  return { line: raw, fill, text, tint, subtitle };
+}
+
 function newDoc() {
   return new jsPDF({ unit: "mm", format: "a4" });
 }
 
 export function buildPdf(spec: PdfDoc): jsPDF {
   const doc = newDoc();
+  const {
+    line: accentLine,
+    fill: accentFill,
+    text: accentText,
+    tint: accentTint,
+    subtitle: accentSubtitle,
+  } = accentColors(spec.accent);
   let y = M;
 
   const ensure = (needed: number) => {
@@ -59,7 +100,7 @@ export function buildPdf(spec: PdfDoc): jsPDF {
   doc.text((spec.brand || "StageKit").toUpperCase(), headerX, 13);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
-  doc.setTextColor(190, 180, 250);
+  doc.setTextColor(...accentSubtitle);
   doc.text(spec.subtitle || "Documentação profissional para músicos", headerX, 19);
   y = 36;
 
@@ -69,7 +110,7 @@ export function buildPdf(spec: PdfDoc): jsPDF {
   const titleLines = doc.splitTextToSize(spec.title.toUpperCase(), CONTENT);
   doc.text(titleLines, W / 2, y, { align: "center" });
   y += titleLines.length * 6 + 4;
-  doc.setDrawColor(139, 92, 246);
+  doc.setDrawColor(...accentLine);
   doc.setLineWidth(0.6);
   doc.line(M, y, W - M, y);
   y += 8;
@@ -91,7 +132,7 @@ export function buildPdf(spec: PdfDoc): jsPDF {
         ensure(14);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(11);
-        doc.setTextColor(60, 30, 140);
+        doc.setTextColor(...accentText);
         doc.text(block.text.toUpperCase(), M, y);
         y += 6;
         break;
@@ -151,7 +192,7 @@ export function buildPdf(spec: PdfDoc): jsPDF {
             ? block.widths.map((w) => (w / block.widths!.reduce((a, b) => a + b, 0)) * CONTENT)
             : Array.from({ length: cols }, () => CONTENT / cols);
         ensure(12);
-        doc.setFillColor(139, 92, 246);
+        doc.setFillColor(...accentFill);
         doc.rect(M, y - 4.5, CONTENT, 7, "F");
         doc.setFont("helvetica", "bold");
         doc.setFontSize(8.5);
@@ -171,7 +212,7 @@ export function buildPdf(spec: PdfDoc): jsPDF {
           const rowHeight = Math.max(...cellLines.map((l) => l.length)) * 4.4 + 2.5;
           ensure(rowHeight + 2);
           if (ri % 2 === 0) {
-            doc.setFillColor(244, 243, 250);
+            doc.setFillColor(...accentTint);
             doc.rect(M, y - 4, CONTENT, rowHeight, "F");
           }
           let cx = M;

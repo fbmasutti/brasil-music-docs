@@ -24,6 +24,7 @@ import {
 } from "@/components/ui-kit";
 import { useList, useInsert, useUpdate, useRemove, useProfile } from "@/lib/queries";
 import { useActiveFormation } from "@/lib/active-formation";
+import { paletteOf } from "@/lib/brand-presets";
 import { downloadPdf, type PdfBlock } from "@/lib/pdf";
 import {
   StagePlot,
@@ -115,7 +116,8 @@ function RidersPage() {
   const { data: profile } = useProfile();
   const { data: riders = [] } = useList("technical_riders", { order: { column: "name" } });
   const { data: formations = [] } = useList("formations", { order: { column: "name" } });
-  const { activeFormationId } = useActiveFormation();
+  const { data: brandKits = [] } = useList("brand_kits");
+  const { activeFormationId, activeFormation } = useActiveFormation();
   const insert = useInsert("technical_riders", "Rider salvo");
   const update = useUpdate("technical_riders", "Rider atualizado");
   const remove = useRemove("technical_riders", "Rider removido");
@@ -254,6 +256,16 @@ function RidersPage() {
     else insert.mutate(values, { onSuccess: closeForm });
   }
 
+  // Rider vinculado a uma formação usa o brand kit dela; sem vínculo, herda
+  // a formação "tocando como" do header — mesma lógica do Gerador de Posts.
+  function accentForRider(rider: RiderRow): string | undefined {
+    const formation = rider.formation_id
+      ? (formations.find((f) => f.id === rider.formation_id) ?? null)
+      : activeFormation;
+    const brandKit = brandKits.find((k) => k.id === formation?.brand_kit_id);
+    return brandKit ? paletteOf(brandKit).accent : undefined;
+  }
+
   function exportRider(rider: RiderRow, plotImage: string | null) {
     const channels = Array.isArray(rider.channel_list) ? (rider.channel_list as string[]) : [];
     const plot = parseStagePlot(rider.stage_plot);
@@ -263,6 +275,7 @@ function RidersPage() {
         brand: profile?.stage_name ?? "StageKit",
         subtitle: profile?.legal_name ?? "Rider técnico e de hospitalidade",
         footer: `${profile?.stage_name ?? "StageKit"} · rider técnico`,
+        accent: accentForRider(rider),
         blocks: [
           ...(channels.length
             ? ([

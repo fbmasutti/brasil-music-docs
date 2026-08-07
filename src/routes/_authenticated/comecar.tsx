@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader, PageContainer, Section, FieldGrid, TextField } from "@/components/ui-kit";
 import { useList, useProfile, useInsert, useUpdate, useSession } from "@/lib/queries";
 import { uploadBrandAsset, UploadError } from "@/lib/storage";
-import { BRAND_PRESETS, presetPalette } from "@/lib/brand-presets";
+import { BRAND_PRESETS, presetPalette, patternStyle, FONT_STACKS } from "@/lib/brand-presets";
 import { maskCpfCnpj } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -239,7 +239,7 @@ function StepMarca() {
         estilo escolhido — trocar leva um clique.
       </p>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {BRAND_PRESETS.map((p) => (
           <button
             key={p.id}
@@ -256,16 +256,22 @@ function StepMarca() {
             )}
           >
             <span className="flex items-center justify-between gap-2">
-              <span className="flex gap-1">
-                {[p.palette.bg, p.palette.card, p.palette.accent, p.palette.text].map((c) => (
-                  <span
-                    key={c}
-                    className="size-4 rounded-full border border-border"
-                    style={{ background: c }}
-                  />
-                ))}
+              <span
+                className="flex h-10 flex-1 items-center justify-center rounded"
+                style={{
+                  background: p.palette.bg,
+                  ...patternStyle(p.palette.pattern, p.palette.accent),
+                }}
+                aria-hidden
+              >
+                <span
+                  className="text-sm font-bold"
+                  style={{ fontFamily: FONT_STACKS[p.palette.fontFamily], color: p.palette.accent }}
+                >
+                  Aa
+                </span>
               </span>
-              {preset === p.id ? <Check className="size-3.5 text-primary" /> : null}
+              {preset === p.id ? <Check className="size-3.5 shrink-0 text-primary" /> : null}
             </span>
             <span className="mt-2 block text-sm font-semibold">{p.label}</span>
           </button>

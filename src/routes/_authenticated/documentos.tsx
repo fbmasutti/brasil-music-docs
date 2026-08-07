@@ -23,6 +23,7 @@ import {
 import { QuickAddClientDialog } from "@/components/QuickAddClientDialog";
 
 import { useList, useInsert, useRemove, useProfile } from "@/lib/queries";
+import { useDocumentAccent } from "@/lib/active-formation";
 import { DOC_TEMPLATES, getTemplate } from "@/lib/documents";
 import { downloadPdf, pdfPreviewUrl, type PdfDoc } from "@/lib/pdf";
 import { dateBR, NEUTRAL_TONE } from "@/lib/format";
@@ -66,6 +67,7 @@ function DocumentsPage() {
   const template = getTemplate(templateId)!;
   const client = clients.find((c) => c.id === clientId) ?? null;
   const event = events.find((e) => e.id === eventId) ?? null;
+  const accent = useDocumentAccent(event?.formation_id);
 
   const spec: PdfDoc = useMemo(
     () => ({
@@ -73,9 +75,10 @@ function DocumentsPage() {
       brand: profile?.stage_name ?? "StageKit",
       subtitle: profile?.legal_name ?? "Documentação profissional para músicos",
       footer: `${profile?.stage_name ?? "StageKit"} · gerado em ${dateBR(new Date().toISOString().slice(0, 10))}`,
+      accent,
       blocks: template.build({ values, profile: profile ?? {}, client, event }),
     }),
-    [template, values, profile, client, event],
+    [template, values, profile, client, event, accent],
   );
 
   const filename = `${template.id.toLowerCase()}-${(profile?.stage_name ?? "stagekit")

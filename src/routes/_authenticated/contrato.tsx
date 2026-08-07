@@ -23,6 +23,7 @@ import {
 import { PageHeader, Section, TextField, TimeField } from "@/components/ui-kit";
 import { QuickAddClientDialog } from "@/components/QuickAddClientDialog";
 import { useList, useInsert, useProfile } from "@/lib/queries";
+import { useDocumentAccent } from "@/lib/active-formation";
 import { getTemplate, type EventRow } from "@/lib/documents";
 import { downloadPdf, pdfPreviewUrl, type PdfDoc } from "@/lib/pdf";
 import { dateBR, money } from "@/lib/format";
@@ -96,12 +97,15 @@ function ContractWizard() {
     [venue, city, date, startTime, fee, deposit],
   );
 
+  const accent = useDocumentAccent();
+
   const spec: PdfDoc = useMemo(
     () => ({
       title: template.label,
       brand: profile?.stage_name ?? "StageKit",
       subtitle: profile?.legal_name ?? "Contrato de apresentação artística",
       footer: `${profile?.stage_name ?? "StageKit"} · gerado em ${dateBR(new Date().toISOString().slice(0, 10))}`,
+      accent,
       blocks: template.build({
         values: { city, signature_date: new Date().toISOString().slice(0, 10) },
         profile: profile ?? {},
@@ -109,7 +113,7 @@ function ContractWizard() {
         event: draftEvent,
       }),
     }),
-    [template, profile, client, draftEvent, city],
+    [template, profile, client, draftEvent, city, accent],
   );
 
   const filename = `contrato-show-${(client?.name ?? "contratante")

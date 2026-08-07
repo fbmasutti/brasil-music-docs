@@ -25,7 +25,7 @@ import {
 import { useList, useProfile } from "@/lib/queries";
 import { dateBR } from "@/lib/format";
 import { useActiveFormation } from "@/lib/active-formation";
-import { BRAND_PRESETS, presetPalette, type BrandPalette } from "@/lib/brand-presets";
+import { BRAND_PRESETS, paletteOf, patternStyle, FONT_STACKS } from "@/lib/brand-presets";
 import { cn } from "@/lib/utils";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -63,14 +63,6 @@ type FormatKey = keyof typeof FORMATS;
 
 // Select do Radix não aceita string vazia como valor de item.
 const NO_KIT = "__none__";
-
-function paletteOf(kit: Tables<"brand_kits"> | undefined): BrandPalette {
-  const raw = kit?.palette;
-  if (raw && typeof raw === "object" && !Array.isArray(raw) && "bg" in raw && "accent" in raw) {
-    return raw as unknown as BrandPalette;
-  }
-  return presetPalette(kit?.preset ?? "neon_night");
-}
 
 /**
  * Data e hora ficam como valores estruturados (ISO e HH:MM), não como texto —
@@ -446,8 +438,18 @@ function CardGeneratorPage() {
                       transformOrigin: "top left",
                       background: palette.bg,
                       color: palette.text,
+                      fontFamily: FONT_STACKS[palette.fontFamily],
                     }}
                   >
+                    {/* Grafismo da identidade — só aparece sem foto por cima,
+                    que já traz textura própria. */}
+                    {!(showPhoto && brandKit?.photo_url) ? (
+                      <div
+                        className="absolute inset-0"
+                        style={patternStyle(palette.pattern, palette.accent)}
+                        aria-hidden
+                      />
+                    ) : null}
                     {showPhoto && brandKit?.photo_url ? (
                       <img
                         src={brandKit.photo_url}

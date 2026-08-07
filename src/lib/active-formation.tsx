@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { useList, useProfile, useUpdate } from "@/lib/queries";
+import { paletteOf } from "@/lib/brand-presets";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Formation = Tables<"formations">;
@@ -41,4 +42,19 @@ export function useActiveFormation() {
   const ctx = useContext(ActiveFormationContext);
   if (!ctx) throw new Error("useActiveFormation deve estar dentro de ActiveFormationProvider");
   return ctx;
+}
+
+/**
+ * Cor de destaque pro cabeçalho do PDF: usa o brand kit da formação
+ * explícita (rider, show específico) quando houver, senão herda "tocando
+ * como" do header — mesma lógica de herança do Gerador de Posts.
+ */
+export function useDocumentAccent(explicitFormationId?: string | null): string | undefined {
+  const { formations, activeFormation } = useActiveFormation();
+  const { data: brandKits = [] } = useList("brand_kits");
+  const formation = explicitFormationId
+    ? (formations.find((f) => f.id === explicitFormationId) ?? null)
+    : activeFormation;
+  const brandKit = brandKits.find((k) => k.id === formation?.brand_kit_id);
+  return brandKit ? paletteOf(brandKit).accent : undefined;
 }

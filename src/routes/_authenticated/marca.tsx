@@ -22,7 +22,7 @@ import {
 } from "@/components/ui-kit";
 import { useList, useInsert, useUpdate, useRemove, useSession } from "@/lib/queries";
 import { uploadBrandAsset, UploadError } from "@/lib/storage";
-import { BRAND_PRESETS, presetPalette } from "@/lib/brand-presets";
+import { BRAND_PRESETS, presetPalette, patternStyle, FONT_STACKS } from "@/lib/brand-presets";
 import { cn } from "@/lib/utils";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -236,7 +236,7 @@ function BrandKitFormDialog({
 
         <div className="mt-4 space-y-2">
           <p className="text-sm font-medium">Preset visual</p>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {BRAND_PRESETS.map((p) => (
               <button
                 key={p.id}
@@ -253,11 +253,27 @@ function BrandKitFormDialog({
                   {form.preset === p.id ? <Check className="size-3.5 text-primary" /> : null}
                   {p.label}
                 </span>
+                {/* Amostra com a fonte e o grafismo reais do preset, não só a
+                cor — com 6 opções, uma barra lisa não diferencia mais nada. */}
                 <span
-                  className="mt-2 block h-6 rounded"
-                  style={{ background: p.palette.accent }}
+                  className="mt-2 flex h-14 items-center justify-center rounded"
+                  style={{
+                    background: p.palette.bg,
+                    color: p.palette.text,
+                    ...patternStyle(p.palette.pattern, p.palette.accent),
+                  }}
                   aria-hidden
-                />
+                >
+                  <span
+                    className="text-sm font-bold"
+                    style={{
+                      fontFamily: FONT_STACKS[p.palette.fontFamily],
+                      color: p.palette.accent,
+                    }}
+                  >
+                    Aa
+                  </span>
+                </span>
                 <span className="mt-2 block text-[11px] text-muted-foreground">
                   {p.description}
                 </span>

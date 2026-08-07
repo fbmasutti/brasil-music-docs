@@ -42,6 +42,7 @@ import {
   ListState,
 } from "@/components/ui-kit";
 import { useList, useInsert, useUpdate, useRemove, useProfile } from "@/lib/queries";
+import { useDocumentAccent } from "@/lib/active-formation";
 import type { Tables } from "@/integrations/supabase/types";
 import { duration, parseDuration, ECAD_ASSOCIATIONS, dateBR, razaoSocial } from "@/lib/format";
 import { downloadPdf } from "@/lib/pdf";
@@ -103,6 +104,7 @@ function RepertoirePage() {
   const [editingWriterId, setEditingWriterId] = useState<string | null>(null);
   const [writer, setWriter] = useState(emptyWriter);
   const [ecadEventId, setEcadEventId] = useState("");
+  const accent = useDocumentAccent();
 
   const setWriterField = (k: keyof typeof emptyWriter) => (v: string) =>
     setWriter((w) => ({ ...w, [k]: v }));
@@ -123,6 +125,7 @@ function RepertoirePage() {
         brand: profile?.stage_name ?? "StageKit",
         subtitle: `Associação: ${profile?.ecad_association ?? "não informada"} · CAE/IPI: ${profile?.cae_ipi ?? "—"}`,
         footer: `${profile?.stage_name ?? "StageKit"} · relatório de execução pública`,
+        accent,
         blocks: [
           {
             type: "kv",
@@ -166,6 +169,7 @@ function RepertoirePage() {
         brand: profile?.stage_name ?? "StageKit",
         subtitle: "Documento de apoio para registro em ECAD, UBC, ABRAMUS e demais associações",
         footer: `${profile?.stage_name ?? "StageKit"} · ficha de registro de obra`,
+        accent,
         blocks: [
           {
             type: "kv",

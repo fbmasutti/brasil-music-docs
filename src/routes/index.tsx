@@ -34,7 +34,7 @@ const FEATURES = [
   {
     icon: FileSignature,
     title: "Contratos & Recibos",
-    text: "Contratos de show, RPA, carta de anuência, cessão de imagem e declarações de não vínculo com cláusulas de W.O., hora extra e ECAD.",
+    text: "Contratos de show, RPA, carta de anuência, cessão de imagem e declarações de não vínculo com cláusulas de multa por cancelamento, hora extra e ECAD.",
   },
   {
     icon: Sliders,

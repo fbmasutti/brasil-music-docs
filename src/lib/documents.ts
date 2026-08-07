@@ -104,6 +104,21 @@ function eventBlock(event?: EventRow | null): [string, string][] {
   ]);
 }
 
+/** Foro da comarca do CONTRATADO — domicílio artístico (PF) ou sede do
+ * estabelecimento (MEI/PJ), ambos guardados no mesmo campo profile.city.
+ * Sem cidade cadastrada, cai no domicílio do CONTRATADO em vez de inventar
+ * uma comarca. */
+function foroClause(profile: Partial<ProfileRow>, title: string): PdfBlock {
+  const location = join([profile.city, profile.state], "/");
+  return {
+    type: "clause",
+    title,
+    text: location
+      ? `Fica eleito o foro da comarca de ${location}, com renúncia expressa a qualquer outro, por mais privilegiado que seja, para dirimir as questões oriundas deste contrato.`
+      : "Fica eleito o foro do domicílio do CONTRATADO, com renúncia expressa a qualquer outro, por mais privilegiado que seja, para dirimir as questões oriundas deste contrato.",
+  };
+}
+
 const place = (profile: Partial<ProfileRow>, values: Record<string, string>) => {
   const city = values["city"] || profile.city;
   return phrase(city ? `${city},` : "", longDateBR(values["signature_date"] || new Date().toISOString().slice(0, 10)) + ".");
@@ -115,7 +130,7 @@ export const DOC_TEMPLATES: DocTemplate[] = [
     id: "CONTRATO_SHOW",
     label: "Contrato de Performance / Show",
     category: "Shows & Eventos",
-    description: "Contrato de apresentação artística com cachê, sinal, W.O., hora extra e responsabilidade de ECAD.",
+    description: "Contrato de apresentação artística com cachê, sinal, multa por cancelamento, hora extra e responsabilidade de ECAD.",
     useClient: true,
     useEvent: true,
     fields: [
@@ -126,7 +141,7 @@ export const DOC_TEMPLATES: DocTemplate[] = [
       { name: "overtime_rate", label: "Valor da hora extra", type: "money" },
       { name: "ecad_responsible", label: "Responsável pelo ECAD", type: "select", options: ["CONTRATANTE", "CONTRATADO"] },
       { name: "tax_responsible", label: "Responsável por tributos/retenções", type: "select", options: ["CONTRATANTE", "CONTRATADO"] },
-      { name: "wo_policy", label: "Política de W.O. / cancelamento", type: "textarea", wide: true, placeholder: "Cancelamento por chuva ou W.O. mantém 100% do cachê quando comunicado com menos de 72h." },
+      { name: "cancellation_policy", label: "Política de cancelamento pelo contratante", type: "textarea", wide: true, placeholder: "Cancelamento com menos de 72h mantém 100% do cachê como multa compensatória." },
       { name: "extra_clauses", label: "Cláusulas adicionais", type: "textarea", wide: true },
     ],
     build: ({ values, profile, client, event }) => {
@@ -203,23 +218,34 @@ export const DOC_TEMPLATES: DocTemplate[] = [
         },
         {
           type: "clause",
-          title: "CLÁUSULA 4ª — CANCELAMENTO E W.O.",
+          title: "CLÁUSULA 4ª — CANCELAMENTO PELO CONTRATANTE",
           text:
-            values["wo_policy"] ||
-            "Em caso de cancelamento pelo CONTRATANTE com menos de 72 (setenta e duas) horas de antecedência, ou de W.O. por público insuficiente, permanece devido 100% (cem por cento) do cachê. Impedimentos climáticos que inviabilizem a montagem em local aberto seguem a mesma regra, salvo remarcação acordada por escrito.",
+            values["cancellation_policy"] ||
+            "O cancelamento da apresentação pelo CONTRATANTE — por qualquer motivo, inclusive por expectativa de público insuficiente — comunicado com menos de 72 (setenta e duas) horas de antecedência da data do evento sujeita o CONTRATANTE ao pagamento integral do cachê pactuado, a título de cláusula penal compensatória, sem prejuízo de eventuais perdas e danos comprovados. Cancelamentos comunicados com antecedência igual ou superior a 72 (setenta e duas) horas dispensam o pagamento do cachê remanescente, ressalvada a retenção do sinal já pago.",
         },
         {
           type: "clause",
-          title: "CLÁUSULA 5ª — ECAD E TRIBUTOS",
+          title: "CLÁUSULA 5ª — CASO FORTUITO E FORÇA MAIOR",
+          text: "Eventos de caso fortuito ou força maior que inviabilizem a realização da apresentação — incluindo condições climáticas severas em locais abertos, determinação de autoridade pública ou outro fato imprevisível e alheio à vontade das partes — desobrigam ambas as partes do cumprimento deste contrato, sem incidência de multa, cabendo a remarcação em nova data mediante acordo entre CONTRATANTE e CONTRATADO ou, não havendo acordo, a devolução proporcional de valores eventualmente antecipados.",
+        },
+        {
+          type: "clause",
+          title: "CLÁUSULA 6ª — ECAD E TRIBUTOS",
           text: `O recolhimento dos direitos autorais de execução pública junto ao ECAD é de responsabilidade do ${values["ecad_responsible"] || "CONTRATANTE"}. Tributos, retenções e encargos incidentes são de responsabilidade do ${values["tax_responsible"] || "CONTRATANTE"}, conforme legislação aplicável.`,
         },
         {
           type: "clause",
-          title: "CLÁUSULA 6ª — INFRAESTRUTURA E RIDER",
+          title: "CLÁUSULA 7ª — INFRAESTRUTURA E RIDER",
           text: "O CONTRATANTE se obriga a fornecer palco, sonorização, iluminação, energia estabilizada, camarim e alimentação conforme rider técnico e de hospitalidade anexo, parte integrante deste instrumento.",
         },
+        {
+          type: "clause",
+          title: "CLÁUSULA 8ª — VIGÊNCIA E RESCISÃO",
+          text: "O presente contrato vigora da data de sua assinatura até o cumprimento integral das obrigações nele previstas, extinguindo-se automaticamente após a realização do evento e a quitação de todos os valores devidos. É facultada a rescisão consensual a qualquer tempo, mediante acordo escrito entre as partes, observadas as penalidades já incidentes até a data da rescisão.",
+        },
+        foroClause(profile, "CLÁUSULA 9ª — FORO"),
         ...(values["extra_clauses"]
-          ? [{ type: "clause" as const, title: "CLÁUSULA 7ª — DISPOSIÇÕES ADICIONAIS", text: values["extra_clauses"] }]
+          ? [{ type: "clause" as const, title: "CLÁUSULA 10ª — DISPOSIÇÕES ADICIONAIS", text: values["extra_clauses"] }]
           : []),
         { type: "para", text: place(profile, values) },
         {
@@ -268,7 +294,7 @@ export const DOC_TEMPLATES: DocTemplate[] = [
         type: "para",
         text: phrase(
           `A presente anuência é ${values["exclusive"] || "não exclusiva"}`,
-          values["dates"] ? `e abrange o período/datas: ${values["dates"]}` : "",
+          values["dates"] ? `e abrange o período: ${values["dates"]}` : "",
           ".",
         ),
       },
@@ -521,6 +547,12 @@ export const DOC_TEMPLATES: DocTemplate[] = [
       },
       { type: "clause", title: "CLÁUSULA 3ª — FALTAS E REPOSIÇÕES", text: values["cancel_policy"] || "Aulas canceladas pelo aluno com menos de 24 horas de antecedência não serão repostas. Cancelamentos pelo professor serão repostos em data acordada entre as partes." },
       { type: "clause", title: "CLÁUSULA 4ª — NATUREZA", text: "O presente contrato é de natureza civil, não gerando vínculo empregatício entre as partes." },
+      {
+        type: "clause",
+        title: "CLÁUSULA 5ª — VIGÊNCIA E RESCISÃO",
+        text: "O presente contrato vigora por prazo indeterminado a partir da data de assinatura, podendo ser rescindido por qualquer das partes mediante aviso prévio de 30 (trinta) dias, sem prejuízo das mensalidades já vencidas até a data da rescisão.",
+      },
+      foroClause(profile, "CLÁUSULA 6ª — FORO"),
       { type: "para", text: place(profile, values) },
       { type: "signatures", names: [values["student_name"] || "Aluno(a)", profile.stage_name || "Professor(a)"] },
     ],
