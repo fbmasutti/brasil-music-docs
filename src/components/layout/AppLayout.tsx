@@ -21,6 +21,8 @@ import {
   Wallet,
   QrCode,
   ChevronDown,
+  Sun,
+  Moon,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,6 +31,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
+import { useTheme } from "@/lib/theme";
 
 type NavItem = { to: string; label: string; icon: LucideIcon };
 type NavGroup = { key: string; label: string; items: NavItem[]; defaultOpen: boolean };
@@ -85,6 +88,7 @@ export function AppLayout() {
   const { data: profile } = useProfile();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { theme, toggleTheme } = useTheme();
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
@@ -185,6 +189,18 @@ export function AppLayout() {
               </Link>
             </Button>
           ) : null}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            aria-label={theme === "dark" ? "Mudar para tema claro" : "Mudar para tema escuro"}
+            // O tema real vem do script inline (antes da hidratação) e pode
+            // divergir do "dark" padrão do primeiro render no servidor —
+            // só o ícone pisca por um frame, as cores da página não.
+            suppressHydrationWarning
+          >
+            {theme === "dark" ? <Sun className="size-4.5" /> : <Moon className="size-4.5" />}
+          </Button>
         </header>
         <main className="flex-1 px-4 py-6 md:px-8 md:py-10">
           <Outlet />

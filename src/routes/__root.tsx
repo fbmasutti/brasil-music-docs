@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { THEME_INIT_SCRIPT } from "../lib/theme";
 
 function NotFoundComponent() {
   return (
@@ -116,8 +117,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="pt-BR">
+    // O script de tema roda antes da hidratação e seta data-theme no <html>
+    // no cliente — o servidor nunca sabe esse valor, então esse atributo
+    // SEMPRE diverge entre SSR e cliente por design. suppressHydrationWarning
+    // aqui evita o React descartar a árvore inteira num "mismatch" esperado.
+    <html lang="pt-BR" suppressHydrationWarning>
       <head>
+        {/* Roda antes da hidratação pra aplicar o tema salvo sem piscar o
+            errado no primeiro paint — o SSR não sabe a preferência do usuário. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />
       </head>
       <body>

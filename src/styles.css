@@ -5,8 +5,11 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * StageKit design system — dark-first, deep zinc surfaces with a neon violet
- * accent and electric cyan secondary signal color. All colors are oklch.
+ * StageKit design system — nasceu dark-first (deep zinc + violeta neon +
+ * ciano elétrico), agora com uma variante clara no mesmo matiz. Alternado via
+ * atributo `data-theme` na tag <html> (ver src/lib/theme.ts), não classe —
+ * assim o :root sem atributo continua sendo o escuro (comportamento antigo
+ * preservado pra quem ainda não tem o atributo). Todas as cores em oklch.
  */
 
 @theme inline {
@@ -59,7 +62,8 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-:root {
+:root,
+:root[data-theme="dark"] {
   --radius: 0.75rem;
   --background: oklch(0.145 0.005 285);
   --foreground: oklch(0.97 0.002 285);
@@ -99,9 +103,57 @@
   --sidebar-primary: oklch(0.62 0.21 295);
   --sidebar-primary-foreground: oklch(0.99 0.002 285);
   --sidebar-accent: oklch(0.25 0.02 295);
-  --sidebar-accent-foreground: oklch(0.98 0.002 285);
+  --sidebar-accent-foreground: oklch(0.98 0.002 295);
   --sidebar-border: oklch(0.24 0.008 285);
   --sidebar-ring: oklch(0.62 0.21 295);
+}
+
+/* Variante clara: mesmo matiz de cada token, luminosidade invertida e croma
+   ajustado pra continuar legível em fundo claro (os tons semânticos, usados
+   como texto sobre fundo tingido a 15%, ficam mais escuros aqui — a versão
+   clara do warning original seria amarelo-claro em texto sobre fundo quase
+   branco, ilegível). */
+:root[data-theme="light"] {
+  --radius: 0.75rem;
+  --background: oklch(0.98 0.003 285);
+  --foreground: oklch(0.2 0.006 285);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.006 285);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.006 285);
+  --primary: oklch(0.56 0.21 295);
+  --primary-foreground: oklch(0.99 0.002 285);
+  --secondary: oklch(0.95 0.004 285);
+  --secondary-foreground: oklch(0.22 0.006 285);
+  --muted: oklch(0.95 0.004 285);
+  --muted-foreground: oklch(0.48 0.012 285);
+  --accent: oklch(0.94 0.025 295);
+  --accent-foreground: oklch(0.28 0.03 295);
+  --destructive: oklch(0.52 0.2 22);
+  --destructive-foreground: oklch(0.99 0.002 285);
+  --success: oklch(0.42 0.13 155);
+  --success-foreground: oklch(0.99 0.002 285);
+  --warning: oklch(0.5 0.15 78);
+  --warning-foreground: oklch(0.99 0.002 285);
+  --cyan: oklch(0.5 0.12 205);
+  --lime: oklch(0.5 0.16 118);
+  --orange: oklch(0.55 0.19 43);
+  --border: oklch(0.9 0.005 285);
+  --input: oklch(0.89 0.006 285);
+  --ring: oklch(0.56 0.21 295);
+  --chart-1: oklch(0.56 0.21 295);
+  --chart-2: oklch(0.5 0.12 205);
+  --chart-3: oklch(0.42 0.13 155);
+  --chart-4: oklch(0.5 0.15 78);
+  --chart-5: oklch(0.52 0.2 22);
+  --sidebar: oklch(0.97 0.004 285);
+  --sidebar-foreground: oklch(0.25 0.006 285);
+  --sidebar-primary: oklch(0.56 0.21 295);
+  --sidebar-primary-foreground: oklch(0.99 0.002 285);
+  --sidebar-accent: oklch(0.93 0.02 295);
+  --sidebar-accent-foreground: oklch(0.28 0.03 295);
+  --sidebar-border: oklch(0.89 0.005 285);
+  --sidebar-ring: oklch(0.56 0.21 295);
 }
 
 @layer base {
