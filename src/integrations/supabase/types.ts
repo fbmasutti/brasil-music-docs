@@ -204,7 +204,6 @@ export type Database = {
           fee_total: number
           formation_id: string | null
           full_address: string | null
-          google_calendar_event_id: string | null
           id: string
           notes: string | null
           soundcheck_time: string | null
@@ -229,7 +228,6 @@ export type Database = {
           fee_total?: number
           formation_id?: string | null
           full_address?: string | null
-          google_calendar_event_id?: string | null
           id?: string
           notes?: string | null
           soundcheck_time?: string | null
@@ -254,7 +252,6 @@ export type Database = {
           fee_total?: number
           formation_id?: string | null
           full_address?: string | null
-          google_calendar_event_id?: string | null
           id?: string
           notes?: string | null
           soundcheck_time?: string | null
@@ -584,8 +581,6 @@ export type Database = {
           ecad_client_number: string | null
           email: string | null
           entity_type: string
-          google_calendar_email: string | null
-          google_calendar_refresh_token: string | null
           id: string
           inscricao_estadual: string | null
           inscricao_municipal: string | null
@@ -617,8 +612,6 @@ export type Database = {
           ecad_client_number?: string | null
           email?: string | null
           entity_type?: string
-          google_calendar_email?: string | null
-          google_calendar_refresh_token?: string | null
           id?: string
           inscricao_estadual?: string | null
           inscricao_municipal?: string | null
@@ -650,8 +643,6 @@ export type Database = {
           ecad_client_number?: string | null
           email?: string | null
           entity_type?: string
-          google_calendar_email?: string | null
-          google_calendar_refresh_token?: string | null
           id?: string
           inscricao_estadual?: string | null
           inscricao_municipal?: string | null
