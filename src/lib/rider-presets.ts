@@ -1,4 +1,4 @@
-import type { StageItem, StageKind } from "@/components/StagePlot";
+import { COLS, ROWS, spanOf, type StageItem, type StageKind } from "@/components/StagePlot";
 
 export type RiderPreset = {
   id: string;
@@ -176,6 +176,13 @@ export const RIDER_PRESETS: RiderPreset[] = [
   },
 ];
 
+/** Os presets são descritos numa grade compacta (5x3); aqui eles são
+ * reposicionados na grade real do mapa (9x6), mantendo frente/fundo. */
 export function presetToStageItems(preset: RiderPreset): StageItem[] {
-  return preset.stage.map((s) => ({ ...s, id: crypto.randomUUID() }));
+  return preset.stage.map((s) => ({
+    ...s,
+    id: crypto.randomUUID(),
+    col: Math.min(COLS - spanOf(s.kind).w, s.col * 2),
+    row: Math.min(ROWS - spanOf(s.kind).h, s.row * 2),
+  }));
 }
