@@ -1,5 +1,5 @@
 export type BrandFontFamily = "sans" | "serif" | "display" | "mono" | "rounded" | "condensed";
-export type BrandPattern = "none" | "grid" | "diagonal" | "dots" | "waves" | "cross";
+export type BrandPattern = "none" | "grid" | "diagonal" | "dots" | "waves" | "cross" | "sunburst";
 
 export type BrandPalette = {
   bg: string;
@@ -22,10 +22,13 @@ export type BrandPreset = {
 export const FONT_STACKS: Record<BrandFontFamily, string> = {
   sans: '"Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif',
   serif: '"Fraunces", ui-serif, Georgia, serif',
-  display: '"Bebas Neue", ui-sans-serif, system-ui, sans-serif',
+  // Western/circus vintage (referência: cartazes tipo "Country Blues" e "West End").
+  display: '"Rye", ui-sans-serif, system-ui, sans-serif',
   mono: '"Space Mono", ui-monospace, "SF Mono", monospace',
-  rounded: '"Baloo 2", ui-rounded, ui-sans-serif, system-ui, sans-serif',
-  condensed: '"Oswald", ui-sans-serif, system-ui, sans-serif',
+  // Manuscrita/pincel (referência: adesivos e placas pintadas à mão).
+  rounded: '"Permanent Marker", ui-rounded, ui-sans-serif, system-ui, sans-serif',
+  // Condensada ultra-bold de cartaz colado no poste (mais impacto que Oswald).
+  condensed: '"Anton", ui-sans-serif, system-ui, sans-serif',
 };
 
 export const BRAND_PRESETS: BrandPreset[] = [
@@ -58,14 +61,15 @@ export const BRAND_PRESETS: BrandPreset[] = [
   {
     id: "vintage_poster",
     label: "Vintage Poster",
-    description: "Alto contraste retrô com tipografia bold — clima de cartaz de show antigo.",
+    description:
+      "Alto contraste retrô com tipografia western e grafismo art déco — clima de cartaz de show antigo.",
     palette: {
       bg: "#1A1400",
       card: "#2B2100",
       accent: "#E8B923",
       text: "#FFF6E0",
       fontFamily: "display",
-      pattern: "dots",
+      pattern: "sunburst",
     },
   },
   {
@@ -84,7 +88,8 @@ export const BRAND_PRESETS: BrandPreset[] = [
   {
     id: "tropical_bloom",
     label: "Tropical Bloom",
-    description: "Verde e coral vibrantes, tipografia arredondada — clima de show ao ar livre.",
+    description:
+      "Verde e coral vibrantes, tipografia manuscrita — clima de placa de praia pintada à mão.",
     palette: {
       bg: "#0F3D2E",
       card: "#154A38",
@@ -98,7 +103,7 @@ export const BRAND_PRESETS: BrandPreset[] = [
     id: "punk_zine",
     label: "Punk Zine",
     description:
-      "Preto, branco e vermelho crus, tipografia condensada — clima de fanzine e cartaz colado no poste.",
+      "Preto, branco e vermelho crus, tipografia condensada ultra-bold — clima de fanzine e cartaz colado no poste.",
     palette: {
       bg: "#0A0A0A",
       card: "#000000",
@@ -168,6 +173,13 @@ export function patternStyle(
       return {
         backgroundImage: svg(20, "%3Cpath d='M0 20L20 0M0 0L20 20'/%3E"),
         backgroundSize: "20px 20px",
+      };
+    case "sunburst":
+      // Losangos entrelaçados — motivo geométrico art déco (referência:
+      // formas triangulares/circulares soltas de cartazes déco).
+      return {
+        backgroundImage: svg(32, "%3Cpath d='M0 16L16 0L32 16L16 32Z M16 0V32M0 16H32'/%3E"),
+        backgroundSize: "32px 32px",
       };
     default:
       return {};

@@ -107,7 +107,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         // Uma fonte por categoria de Brand Kit (sans/serif/display/mono/
         // rounded/condensed) — ver src/lib/brand-presets.ts.
-        href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:wght@400;600;700&family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Baloo+2:wght@500;700;800&family=Oswald:wght@400;500;600;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:wght@400;600;700&family=Rye&family=Space+Mono:wght@400;700&family=Permanent+Marker&family=Anton&display=swap",
       },
     ],
   }),
