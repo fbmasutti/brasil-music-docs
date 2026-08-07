@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Pedalboard: régua com dois pedais e cabo de saída. -->
+  <rect x="120" y="300" width="784" height="424" rx="34" fill="#121214"/>
+  <rect x="180" y="360" width="290" height="304" rx="22" fill="#3a3a40"/>
+  <rect x="554" y="360" width="290" height="304" rx="22" fill="#3a3a40"/>
+  <circle cx="325" cy="440" r="34" fill="#06B6D4"/>
+  <circle cx="699" cy="440" r="34" fill="#06B6D4"/>
+  <circle cx="325" cy="580" r="52" fill="#121214"/>
+  <circle cx="699" cy="580" r="52" fill="#121214"/>
+  <circle cx="325" cy="580" r="24" fill="#06B6D4"/>
+  <circle cx="699" cy="580" r="24" fill="#06B6D4"/>
+  <rect x="470" y="470" width="84" height="26" rx="13" fill="#06B6D4"/>
+</svg>
