@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/dialog";
 import { FieldGrid, TextField, TextAreaField, TimeField } from "@/components/ui-kit";
 import { QuickAddClientDialog } from "@/components/QuickAddClientDialog";
+import { AddressSearchField } from "@/components/AddressSearchField";
+import type { PlaceSuggestion } from "@/lib/geocoding";
 import { useList, useInsert, useUpdate, useProfile } from "@/lib/queries";
 import { EVENT_STATUS } from "@/lib/format";
 import { DEFAULT_CHECKLIST } from "@/lib/event-defaults";
@@ -274,11 +276,17 @@ export function EventFormDialog({
           <TextField label="Cidade" value={form.city} onChange={set("city")} />
           <TextField label="UF" value={form.state} onChange={set("state")} />
           <div className="sm:col-span-2">
-            <TextField
-              label="Endereço completo"
+            <AddressSearchField
               value={form.full_address}
               onChange={set("full_address")}
-              placeholder="Rua, número, bairro — usado para abrir a rota no mapa"
+              onSelect={(place: PlaceSuggestion) =>
+                setForm((f) => ({
+                  ...f,
+                  full_address: place.fullAddress,
+                  city: place.city || f.city,
+                  state: place.state || f.state,
+                }))
+              }
             />
           </div>
           <TextField
