@@ -13,6 +13,8 @@ export type PdfBlock =
   | { type: "note"; text: string }
   | { type: "signatures"; names: string[] };
 
+export type PdfOrientation = "retrato" | "paisagem";
+
 export type PdfDoc = {
   title: string;
   subtitle?: string;
@@ -22,13 +24,13 @@ export type PdfDoc = {
   /** Cor de destaque do Brand Kit da formação ativa (hex). Sem isso, cai no
    * violeta padrão do StageKit — mesma aparência de sempre. */
   accent?: string | undefined;
+  /** Paisagem é necessária para mapas de palco de formações complexas, que
+   * ficam ilegíveis na largura de uma folha em retrato. */
+  orientation?: PdfOrientation;
   blocks: PdfBlock[];
 };
 
 const M = 18;
-const W = 210;
-const H = 297;
-const CONTENT = W - M * 2;
 
 const DEFAULT_ACCENT: [number, number, number] = [139, 92, 246];
 
@@ -61,12 +63,20 @@ function accentColors(accentHex: string | undefined) {
   return { line: raw, fill, text, tint, subtitle };
 }
 
-function newDoc() {
-  return new jsPDF({ unit: "mm", format: "a4" });
+function newDoc(orientation: PdfOrientation) {
+  return new jsPDF({
+    unit: "mm",
+    format: "a4",
+    orientation: orientation === "paisagem" ? "landscape" : "portrait",
+  });
 }
 
 export function buildPdf(spec: PdfDoc): jsPDF {
-  const doc = newDoc();
+  const orientation = spec.orientation ?? "retrato";
+  const doc = newDoc(orientation);
+  const W = orientation === "paisagem" ? 297 : 210;
+  const H = orientation === "paisagem" ? 210 : 297;
+  const CONTENT = W - M * 2;
   const {
     line: accentLine,
     fill: accentFill,
@@ -74,6 +84,7 @@ export function buildPdf(spec: PdfDoc): jsPDF {
     tint: accentTint,
     subtitle: accentSubtitle,
   } = accentColors(spec.accent);
+
   let y = M;
 
   const ensure = (needed: number) => {
