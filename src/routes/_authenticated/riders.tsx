@@ -458,7 +458,12 @@ function RidersPage() {
             </div>
           </FieldGrid>
 
-          <div className="mt-4 space-y-4">
+          <Tabs value={tab} onValueChange={(v) => setTab(v as "rider" | "mapa")} className="mt-4">
+            <TabsList>
+              <TabsTrigger value="rider">Rider</TabsTrigger>
+              <TabsTrigger value="mapa">Mapa de palco ({stage.length})</TabsTrigger>
+            </TabsList>
+            <TabsContent value="rider" className="space-y-4">
             <div className="space-y-2">
               <Label>Channel list</Label>
               {channels.length === 0 ? (
@@ -510,12 +515,6 @@ function RidersPage() {
                 <Plus className="mr-1 size-4" /> Adicionar canal
               </Button>
             </div>
-            <div className="space-y-3">
-              <p className="text-sm font-medium">Mapa de palco</p>
-              <StagePlot items={stage} onChange={setStage} />
-              <StageItemLabels items={stage} onChange={setStage} />
-            </div>
-
             <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
               <CollapsibleTrigger className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
                 <ChevronDown
@@ -567,7 +566,12 @@ function RidersPage() {
                 />
               </CollapsibleContent>
             </Collapsible>
-          </div>
+            </TabsContent>
+            <TabsContent value="mapa" className="space-y-3">
+              <StagePlot items={stage} onChange={setStage} />
+              <StageItemLabels items={stage} onChange={setStage} />
+            </TabsContent>
+          </Tabs>
 
           <Button className="mt-4" disabled={insert.isPending || update.isPending} onClick={save}>
             <Plus className="mr-1 size-4" /> {editingId ? "Salvar alterações" : "Salvar rider"}
