@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedCobrancasRouteImport } from './routes/_authenticated/cobrancas'
 import { Route as AuthenticatedComecarRouteImport } from './routes/_authenticated/comecar'
 import { Route as AuthenticatedContratantesRouteImport } from './routes/_authenticated/contratantes'
 import { Route as AuthenticatedContratoRouteImport } from './routes/_authenticated/contrato'
@@ -43,6 +44,11 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedCobrancasRoute = AuthenticatedCobrancasRouteImport.update({
+  id: '/cobrancas',
+  path: '/cobrancas',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedComecarRoute = AuthenticatedComecarRouteImport.update({
   id: '/comecar',
@@ -137,6 +143,7 @@ const AuthenticatedEventosEventIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/cobrancas': typeof AuthenticatedCobrancasRoute
   '/comecar': typeof AuthenticatedComecarRoute
   '/contratantes': typeof AuthenticatedContratantesRoute
   '/contrato': typeof AuthenticatedContratoRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/cobrancas': typeof AuthenticatedCobrancasRoute
   '/comecar': typeof AuthenticatedComecarRoute
   '/contratantes': typeof AuthenticatedContratantesRoute
   '/contrato': typeof AuthenticatedContratoRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/cobrancas': typeof AuthenticatedCobrancasRoute
   '/_authenticated/comecar': typeof AuthenticatedComecarRoute
   '/_authenticated/contratantes': typeof AuthenticatedContratantesRoute
   '/_authenticated/contrato': typeof AuthenticatedContratoRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/cobrancas'
     | '/comecar'
     | '/contratantes'
     | '/contrato'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/cobrancas'
     | '/comecar'
     | '/contratantes'
     | '/contrato'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/cobrancas'
     | '/_authenticated/comecar'
     | '/_authenticated/contratantes'
     | '/_authenticated/contrato'
@@ -294,6 +306,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/cobrancas': {
+      id: '/_authenticated/cobrancas'
+      path: '/cobrancas'
+      fullPath: '/cobrancas'
+      preLoaderRoute: typeof AuthenticatedCobrancasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/comecar': {
       id: '/_authenticated/comecar'
@@ -418,6 +437,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCobrancasRoute: typeof AuthenticatedCobrancasRoute
   AuthenticatedComecarRoute: typeof AuthenticatedComecarRoute
   AuthenticatedContratantesRoute: typeof AuthenticatedContratantesRoute
   AuthenticatedContratoRoute: typeof AuthenticatedContratoRoute
@@ -438,6 +458,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCobrancasRoute: AuthenticatedCobrancasRoute,
   AuthenticatedComecarRoute: AuthenticatedComecarRoute,
   AuthenticatedContratantesRoute: AuthenticatedContratantesRoute,
   AuthenticatedContratoRoute: AuthenticatedContratoRoute,

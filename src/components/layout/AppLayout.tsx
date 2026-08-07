@@ -19,6 +19,7 @@ import {
   Megaphone,
   Wand2,
   Wallet,
+  QrCode,
   ChevronDown,
   type LucideIcon,
 } from "lucide-react";
@@ -38,6 +39,7 @@ const NAV_TOP: NavItem[] = [
   { to: "/magic-paste", label: "Importar do WhatsApp", icon: Wand2 },
   { to: "/eventos", label: "Agenda de Shows", icon: CalendarDays },
   { to: "/financeiro", label: "Financeiro & Cachês", icon: Wallet },
+  { to: "/cobrancas", label: "Cobrança via PIX", icon: QrCode },
 ];
 
 // Nível 2: agrupado por intenção, para o menu não virar uma lista de 13 itens.

@@ -172,25 +172,25 @@ export function StagePlot({
                     const id = e.dataTransfer.getData("text/plain");
                     if (id) drop(col, row, id);
                   }}
-                  className="flex min-h-20 flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border/70 p-1.5"
+                  className="flex min-h-24 flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border/70 p-1.5"
                 >
                   {cell.map((item) => (
                     <div
                       key={item.id}
                       draggable
                       onDragStart={(e) => e.dataTransfer.setData("text/plain", item.id)}
-                      className="group flex w-full cursor-grab items-center gap-1 rounded bg-primary/15 px-1.5 py-1 text-[11px] text-primary"
+                      className="group relative flex w-full cursor-grab flex-col items-center gap-0.5 rounded bg-primary/15 px-1.5 py-1.5 text-primary"
                     >
-                      {iconFor(item.kind)}
-                      <span className="truncate">{item.label}</span>
                       <button
                         type="button"
                         aria-label={`Remover ${item.label}`}
-                        className="ml-auto opacity-60 hover:opacity-100"
+                        className="absolute right-0.5 top-0.5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
                         onClick={() => onChange(items.filter((i) => i.id !== item.id))}
                       >
                         <Trash2 className="size-3" />
                       </button>
+                      <StageIcon kind={item.kind} className="size-7" />
+                      <span className="w-full truncate text-center text-[10px]">{item.label}</span>
                     </div>
                   ))}
                 </div>
@@ -215,8 +215,8 @@ export function StagePlot({
  * com cores claras, já que o PDF é impresso em papel branco. Mantém a mesma
  * grade e os mesmos ícones da tela, então trocar os ícones melhora os dois.
  */
-export const PRINT_PLOT_WIDTH = 640;
-export const PRINT_PLOT_HEIGHT = 400;
+export const PRINT_PLOT_WIDTH = 720;
+export const PRINT_PLOT_HEIGHT = 460;
 
 export function StagePlotPrintable({ items }: { items: StageItem[] }) {
   return (
@@ -277,19 +277,29 @@ export function StagePlotPrintable({ items }: { items: StageItem[] }) {
                   key={item.id}
                   style={{
                     display: "flex",
+                    flexDirection: "column",
                     alignItems: "center",
-                    gap: 4,
+                    gap: 2,
                     background: "#ede9fe",
                     color: "#5b21b6",
-                    borderRadius: 4,
-                    padding: "3px 6px",
-                    fontSize: 11,
+                    borderRadius: 6,
+                    padding: "4px 6px",
+                    fontSize: 10,
                     fontWeight: 600,
                     maxWidth: "100%",
                   }}
                 >
-                  {iconFor(item.kind)}
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{item.label}</span>
+                  <StageIcon kind={item.kind} className="size-8" />
+                  <span
+                    style={{
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      textAlign: "center",
+                      maxWidth: "100%",
+                    }}
+                  >
+                    {item.label}
+                  </span>
                 </div>
               ))}
             </div>
