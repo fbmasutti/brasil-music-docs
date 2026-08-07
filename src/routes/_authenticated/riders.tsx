@@ -1,10 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Sliders, Plus, Download, Trash2, Wand2, Pencil, ChevronDown, X } from "lucide-react";
+import { Sliders, Plus, Download, Trash2, Wand2, Pencil, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -144,20 +151,27 @@ function RidersPage() {
     setChannels((rows) => rows.filter((r) => r.id !== id));
   }
 
-  /** 1 clique: o preset já vira um rider salvo, sem passar por formulário. */
+  /** O preset pré-preenche o formulário e abre o modal — o usuário revisa
+   * (ou ajusta o mapa de palco) antes de confirmar, em vez de o rider
+   * aparecer direto na lista sem ele perceber. */
   function createFromPreset(id: string) {
     const preset = RIDER_PRESETS.find((p) => p.id === id);
     if (!preset) return;
     const taken = riders.filter((r) => r.name.startsWith(preset.label)).length;
-    insert.mutate({
+    setEditingId(null);
+    setFormOpen(true);
+    setAdvancedOpen(false);
+    setForm({
+      ...empty,
       name: taken ? `${preset.label} (${taken + 1})` : preset.label,
-      channel_list: preset.channels,
-      stage_plot: presetToStageItems(preset),
+      formation_id: activeFormationId ?? "",
       sound_requirements: preset.sound,
       lighting_requirements: preset.lighting,
       backline: preset.backline,
       hospitality: preset.hospitality,
     });
+    setStage(presetToStageItems(preset));
+    setChannels(preset.channels.map(parseChannelLine));
   }
 
   useEffect(() => {
@@ -402,17 +416,12 @@ function RidersPage() {
         </div>
       </Section>
 
-      {formOpen ? (
-        <Section
-          title={editingId ? "Editar rider" : "Novo rider"}
-          description="Só o nome é necessário para salvar e gerar o PDF."
-          className="mb-5"
-          actions={
-            <Button variant="ghost" size="icon" onClick={closeForm} aria-label="Fechar">
-              <X className="size-4" />
-            </Button>
-          }
-        >
+      <Dialog open={formOpen} onOpenChange={(o) => !o && closeForm()}>
+        <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingId ? "Editar rider" : "Novo rider"}</DialogTitle>
+            <DialogDescription>Só o nome é necessário para salvar e gerar o PDF.</DialogDescription>
+          </DialogHeader>
           <FieldGrid>
             <TextField
               label="Nome do rider"
@@ -551,8 +560,8 @@ function RidersPage() {
           <Button className="mt-4" disabled={insert.isPending || update.isPending} onClick={save}>
             <Plus className="mr-1 size-4" /> {editingId ? "Salvar alterações" : "Salvar rider"}
           </Button>
-        </Section>
-      ) : null}
+        </DialogContent>
+      </Dialog>
 
       <Section title={`Riders salvos (${riders.length})`}>
         {riders.length === 0 ? (
