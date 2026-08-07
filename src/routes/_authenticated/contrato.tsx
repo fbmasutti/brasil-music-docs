@@ -24,6 +24,7 @@ import { PageHeader, Section, TextField, TimeField } from "@/components/ui-kit";
 import { QuickAddClientDialog } from "@/components/QuickAddClientDialog";
 import { useList, useInsert, useProfile } from "@/lib/queries";
 import { useDocumentAccent } from "@/lib/active-formation";
+import { pushEventToGoogleCalendar } from "@/lib/google-calendar";
 import { getTemplate, type EventRow } from "@/lib/documents";
 import { downloadPdf, pdfPreviewUrl, type PdfDoc } from "@/lib/pdf";
 import { dateBR, money } from "@/lib/format";
@@ -145,6 +146,9 @@ function ContractWizard() {
             event_id: (row as { id: string }).id,
             status: "RASCUNHO",
           });
+          if (profile?.google_calendar_refresh_token && date) {
+            void pushEventToGoogleCalendar((row as { id: string }).id);
+          }
         },
       },
     );

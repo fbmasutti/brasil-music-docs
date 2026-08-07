@@ -22,9 +22,10 @@ import {
 } from "@/components/ui/select";
 import { PageHeader, Section, FieldGrid, TextField, TimeField } from "@/components/ui-kit";
 import { QuickAddClientDialog } from "@/components/QuickAddClientDialog";
-import { useList, useInsert } from "@/lib/queries";
+import { useList, useInsert, useProfile } from "@/lib/queries";
 import { dateBR, money, EVENT_STATUS } from "@/lib/format";
 import { DEFAULT_CHECKLIST } from "@/lib/event-defaults";
+import { pushEventToGoogleCalendar } from "@/lib/google-calendar";
 import { parseWhatsAppText, type ParsedEvent } from "@/lib/magic-paste";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -63,6 +64,7 @@ const emptyForm = {
 };
 
 function MagicPastePage() {
+  const { data: profile } = useProfile();
   const { data: clients = [] } = useList("clients", { order: { column: "name" } });
   const { data: formations = [] } = useList("formations", { order: { column: "name" } });
   const { data: gearItems = [] } = useList("gear_checklist_items", {
@@ -141,6 +143,9 @@ function MagicPastePage() {
             }),
           );
           setSavedEvent(created);
+          if (profile?.google_calendar_refresh_token && form.event_date) {
+            void pushEventToGoogleCalendar(created.id);
+          }
         },
       },
     );

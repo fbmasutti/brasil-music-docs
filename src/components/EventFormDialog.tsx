@@ -20,9 +20,10 @@ import {
 } from "@/components/ui/dialog";
 import { FieldGrid, TextField, TextAreaField, TimeField } from "@/components/ui-kit";
 import { QuickAddClientDialog } from "@/components/QuickAddClientDialog";
-import { useList, useInsert, useUpdate } from "@/lib/queries";
+import { useList, useInsert, useUpdate, useProfile } from "@/lib/queries";
 import { EVENT_STATUS } from "@/lib/format";
 import { DEFAULT_CHECKLIST } from "@/lib/event-defaults";
+import { pushEventToGoogleCalendar } from "@/lib/google-calendar";
 import type { Tables } from "@/integrations/supabase/types";
 
 const EVENT_TYPES = ["SHOW", "WORKSHOP", "AULA", "GRAVACAO", "EDITAL"];
@@ -108,6 +109,7 @@ export function EventFormDialog({
   onSaved?: ((eventId: string) => void) | undefined;
 }) {
   const isEdit = Boolean(event);
+  const { data: profile } = useProfile();
   const { data: clients = [] } = useList("clients", { order: { column: "name" } });
   const { data: formations = [] } = useList("formations", { order: { column: "name" } });
   const { data: gearItems = [] } = useList("gear_checklist_items", {
@@ -144,6 +146,9 @@ export function EventFormDialog({
           onSuccess: () => {
             setOpen(false);
             onSaved?.(event.id);
+            if (profile?.google_calendar_refresh_token && form.event_date) {
+              void pushEventToGoogleCalendar(event.id);
+            }
           },
         },
       );
@@ -172,6 +177,9 @@ export function EventFormDialog({
         setForm(empty);
         setOpen(false);
         onSaved?.(created.id);
+        if (profile?.google_calendar_refresh_token && form.event_date) {
+          void pushEventToGoogleCalendar(created.id);
+        }
       },
     });
   }

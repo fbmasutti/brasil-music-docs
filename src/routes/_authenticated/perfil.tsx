@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Save } from "lucide-react";
+import { toast } from "sonner";
+import { Save, CalendarDays, Check, Unlink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -13,8 +14,13 @@ import {
 import { PageHeader, PageContainer, Section, FieldGrid, TextField } from "@/components/ui-kit";
 import { useProfile, useUpdate } from "@/lib/queries";
 import { maskCpfCnpj, maskCep, CNAE_OPTIONS, ECAD_ASSOCIATIONS } from "@/lib/format";
+import { connectGoogleCalendar } from "@/lib/google-calendar";
 
 export const Route = createFileRoute("/_authenticated/perfil")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    google_calendar:
+      typeof search["google_calendar"] === "string" ? search["google_calendar"] : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Dados do Artista — dados legais do artista" },
@@ -57,6 +63,9 @@ const FIELDS = [
 function ProfilePage() {
   const { data: profile } = useProfile();
   const update = useUpdate("profiles", "Cofre atualizado");
+  const disconnectCalendar = useUpdate("profiles", "Google Calendar desconectado");
+  const { google_calendar } = Route.useSearch();
+  const navigate = Route.useNavigate();
   const [form, setForm] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -69,6 +78,15 @@ function ProfilePage() {
     next["ecad_association"] = profile.ecad_association ?? "";
     setForm(next);
   }, [profile]);
+
+  // Volta do consent do Google com ?google_calendar=connected|error — o
+  // toast só deve aparecer uma vez, então limpa o parâmetro da URL em seguida.
+  useEffect(() => {
+    if (!google_calendar) return;
+    if (google_calendar === "connected") toast.success("Google Calendar conectado.");
+    else toast.error("Não foi possível conectar o Google Calendar. Tente novamente.");
+    navigate({ search: { google_calendar: undefined }, replace: true });
+  }, [google_calendar, navigate]);
 
   const set = (k: string) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -151,6 +169,42 @@ function ProfilePage() {
             </Select>
           </div>
         </FieldGrid>
+      </Section>
+
+      <Section title="Integrações" className="mb-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-4">
+          <div className="flex items-center gap-3">
+            <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <CalendarDays className="size-4.5" />
+            </span>
+            <div>
+              <p className="text-sm font-medium">Google Calendar</p>
+              <p className="text-xs text-muted-foreground">
+                {profile?.google_calendar_refresh_token
+                  ? `Conectado${profile.google_calendar_email ? ` — ${profile.google_calendar_email}` : ""}. Shows salvos entram automaticamente na sua agenda.`
+                  : "Ao salvar um show, ele é adicionado automaticamente ao seu Google Calendar."}
+              </p>
+            </div>
+          </div>
+          {profile?.google_calendar_refresh_token ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                disconnectCalendar.mutate({
+                  id: profile.id,
+                  values: { google_calendar_refresh_token: null, google_calendar_email: null },
+                })
+              }
+            >
+              <Unlink className="mr-1 size-4" /> Desconectar
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" onClick={() => void connectGoogleCalendar()}>
+              <Check className="mr-1 size-4" /> Conectar
+            </Button>
+          )}
+        </div>
       </Section>
 
       <Section title="Dados cadastrais, bancários e autorais">

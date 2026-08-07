@@ -133,7 +133,11 @@ function CobrancasPage() {
           <AlertTriangle className="mt-0.5 size-4 shrink-0" />
           <p>
             Complete a chave Pix, o nome e a cidade no{" "}
-            <Link to="/perfil" className="underline underline-offset-2">
+            <Link
+              to="/perfil"
+              search={{ google_calendar: undefined }}
+              className="underline underline-offset-2"
+            >
               seu perfil
             </Link>{" "}
             para gerar a cobrança.
