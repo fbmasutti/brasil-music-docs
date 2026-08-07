@@ -1,4 +1,4 @@
-import { Music2, Trash2, Plus } from "lucide-react";
+import { Music2, Trash2, Plus, Speaker } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -42,45 +42,77 @@ export type StageKind =
   | "outro";
 
 /** Ícone próprio em public/stage-icons (SVG desenhado), com fallback lucide para o
- * único elemento que ainda não tem arte dedicada ("outro", propositalmente genérico). */
-export const STAGE_KINDS: { kind: StageKind; label: string; iconSrc?: string; icon?: ReactNode }[] =
-  [
-    { kind: "voz", label: "Voz", iconSrc: "/stage-icons/microfone.svg" },
-    { kind: "guitarra", label: "Guitarra", iconSrc: "/stage-icons/guitarra.svg" },
-    { kind: "violao", label: "Violão", iconSrc: "/stage-icons/violao.svg" },
-    { kind: "cavaco", label: "Cavaco / Banjo", iconSrc: "/stage-icons/cavaco.svg" },
-    { kind: "baixo", label: "Baixo", iconSrc: "/stage-icons/baixo.svg" },
-    { kind: "violino", label: "Violino", iconSrc: "/stage-icons/violino.svg" },
-    { kind: "bateria", label: "Bateria / Percussão", iconSrc: "/stage-icons/bateria.svg" },
-    { kind: "conga", label: "Conga", iconSrc: "/stage-icons/conga.svg" },
-    { kind: "pandeiro", label: "Pandeiro", iconSrc: "/stage-icons/pandeiro.svg" },
-    { kind: "tantan", label: "Tantã", iconSrc: "/stage-icons/tantan.svg" },
-    { kind: "teclado", label: "Teclado", iconSrc: "/stage-icons/teclado.svg" },
-    {
-      kind: "sintetizador",
-      label: "Sintetizador / MIDI",
-      iconSrc: "/stage-icons/sintetizador.svg",
-    },
-    { kind: "monitor", label: "Monitor / Retorno", iconSrc: "/stage-icons/monitor.svg" },
-    { kind: "subwoofer", label: "Subwoofer", iconSrc: "/stage-icons/subwoofer.svg" },
-    { kind: "cubo_guitarra", label: "Cubo de guitarra", iconSrc: "/stage-icons/cubo-guitarra.svg" },
-    { kind: "cubo_baixo", label: "Cubo de baixo", iconSrc: "/stage-icons/cubo-baixo.svg" },
-    {
-      kind: "cabeca_amplificador",
-      label: "Cabeça de amplificador",
-      iconSrc: "/stage-icons/cabeca-amplificador.svg",
-    },
-    { kind: "sax", label: "Sax", iconSrc: "/stage-icons/sax.svg" },
-    { kind: "trombone", label: "Trombone", iconSrc: "/stage-icons/trombone.svg" },
-    { kind: "trompete", label: "Trompete", iconSrc: "/stage-icons/trompete.svg" },
-    { kind: "di_box", label: "DI box", iconSrc: "/stage-icons/di-box.svg" },
-    { kind: "ponto_energia", label: "Ponto de energia", iconSrc: "/stage-icons/ponto-energia.svg" },
-    { kind: "praticavel", label: "Praticável", iconSrc: "/stage-icons/praticavel.svg" },
-    { kind: "toca_discos", label: "Toca-discos", iconSrc: "/stage-icons/toca-discos.svg" },
-    { kind: "mpc", label: "MPC / Sampler", iconSrc: "/stage-icons/mpc.svg" },
-    { kind: "mesa_som", label: "Mesa de som", iconSrc: "/stage-icons/mesa-som.svg" },
-    { kind: "outro", label: "Outro", icon: <Music2 className="size-4" /> },
-  ];
+ * único elemento que ainda não tem arte dedicada ("outro", propositalmente genérico).
+ * `size` é uma escala relativa de porte físico real do equipamento (não a célula do
+ * grid, que continua 1x1 pra não reescrever o drag-and-drop) — bateria/cubos/mesa
+ * renderizam maiores que um pedal de DI ou um microfone. */
+export const STAGE_KINDS: {
+  kind: StageKind;
+  label: string;
+  iconSrc?: string;
+  icon?: ReactNode;
+  size?: "lg";
+}[] = [
+  { kind: "voz", label: "Voz", iconSrc: "/stage-icons/microfone.svg" },
+  { kind: "guitarra", label: "Guitarra", iconSrc: "/stage-icons/guitarra.svg" },
+  { kind: "violao", label: "Violão", iconSrc: "/stage-icons/violao.svg" },
+  { kind: "cavaco", label: "Cavaco / Banjo", iconSrc: "/stage-icons/cavaco.svg" },
+  { kind: "baixo", label: "Baixo", iconSrc: "/stage-icons/baixo.svg" },
+  { kind: "violino", label: "Violino", iconSrc: "/stage-icons/violino.svg" },
+  {
+    kind: "bateria",
+    label: "Bateria / Percussão",
+    iconSrc: "/stage-icons/bateria.svg",
+    size: "lg",
+  },
+  { kind: "conga", label: "Conga", iconSrc: "/stage-icons/conga.svg" },
+  { kind: "pandeiro", label: "Pandeiro", iconSrc: "/stage-icons/pandeiro.svg" },
+  { kind: "tantan", label: "Tantã", iconSrc: "/stage-icons/tantan.svg" },
+  { kind: "teclado", label: "Teclado", iconSrc: "/stage-icons/teclado.svg", size: "lg" },
+  {
+    kind: "sintetizador",
+    label: "Sintetizador / MIDI",
+    iconSrc: "/stage-icons/sintetizador.svg",
+  },
+  { kind: "monitor", label: "Monitor / Retorno", iconSrc: "/stage-icons/monitor.svg" },
+  { kind: "subwoofer", label: "Subwoofer", iconSrc: "/stage-icons/subwoofer.svg", size: "lg" },
+  {
+    kind: "cubo_guitarra",
+    label: "Cubo de guitarra",
+    iconSrc: "/stage-icons/cubo-guitarra.svg",
+    size: "lg",
+  },
+  {
+    kind: "cubo_baixo",
+    label: "Cubo de baixo",
+    iconSrc: "/stage-icons/cubo-baixo.svg",
+    size: "lg",
+  },
+  {
+    kind: "cabeca_amplificador",
+    label: "Cabeça de amplificador",
+    iconSrc: "/stage-icons/cabeca-amplificador.svg",
+  },
+  { kind: "sax", label: "Sax", iconSrc: "/stage-icons/sax.svg" },
+  { kind: "trombone", label: "Trombone", iconSrc: "/stage-icons/trombone.svg" },
+  { kind: "trompete", label: "Trompete", iconSrc: "/stage-icons/trompete.svg" },
+  { kind: "di_box", label: "DI box", iconSrc: "/stage-icons/di-box.svg" },
+  { kind: "ponto_energia", label: "Ponto de energia", iconSrc: "/stage-icons/ponto-energia.svg" },
+  {
+    kind: "praticavel",
+    label: "Praticável",
+    iconSrc: "/stage-icons/praticavel.svg",
+    size: "lg",
+  },
+  { kind: "toca_discos", label: "Toca-discos", iconSrc: "/stage-icons/toca-discos.svg" },
+  { kind: "mpc", label: "MPC / Sampler", iconSrc: "/stage-icons/mpc.svg" },
+  { kind: "mesa_som", label: "Mesa de som", iconSrc: "/stage-icons/mesa-som.svg", size: "lg" },
+  { kind: "outro", label: "Outro", icon: <Music2 className="size-4" /> },
+];
+
+function isLarge(kind: StageKind) {
+  return STAGE_KINDS.find((k) => k.kind === kind)?.size === "lg";
+}
 
 function StageIcon({ kind, className }: { kind: StageKind; className?: string }) {
   const def = STAGE_KINDS.find((k) => k.kind === kind);
@@ -92,7 +124,9 @@ function StageIcon({ kind, className }: { kind: StageKind; className?: string })
 
 const iconFor = (kind: StageKind) => <StageIcon kind={kind} className="size-4" />;
 
-export const COLS = 4;
+// Ímpar de propósito: com número par de colunas não existe centro real, e
+// bateria/voz principal (que vão no meio do palco) nunca ficam centralizadas.
+export const COLS = 5;
 export const ROWS = 3;
 
 export function parseStagePlot(raw: unknown): StageItem[] {
@@ -103,7 +137,7 @@ export function parseStagePlot(raw: unknown): StageItem[] {
   );
 }
 
-/** Mapa de palco em grade 4x3: adicionar, mover entre células e remover. */
+/** Mapa de palco em grade 5x3: adicionar, mover entre células e remover. */
 export function StagePlot({
   items,
   onChange,
@@ -113,15 +147,21 @@ export function StagePlot({
 }) {
   function add(kind: StageKind) {
     const taken = new Set(items.map((i) => `${i.col}-${i.row}`));
-    let col = 0;
+    const center = Math.floor(COLS / 2);
+    let col = center;
     let row = 0;
-    for (let r = ROWS - 1; r >= 0; r--) {
-      for (let c = 0; c < COLS; c++) {
+    outer: for (let r = ROWS - 1; r >= 0; r--) {
+      // Varre a partir do centro (bateria/voz principal moram no meio do
+      // palco) em vez de sempre da esquerda pra direita.
+      const order = [
+        center,
+        ...Array.from({ length: COLS }, (_, i) => i).filter((c) => c !== center),
+      ];
+      for (const c of order) {
         if (!taken.has(`${c}-${r}`)) {
           col = c;
           row = r;
-          r = -1;
-          break;
+          break outer;
         }
       }
     }
@@ -131,6 +171,30 @@ export function StagePlot({
 
   function drop(col: number, row: number, id: string) {
     onChange(items.map((i) => (i.id === id ? { ...i, col, row } : i)));
+  }
+
+  /** Um monitor por elemento da linha de frente que ainda não tem um na mesma célula —
+   * o palco quase sempre precisa de retorno pra cada músico voltado pra plateia. */
+  function suggestMonitors() {
+    const frontRow = ROWS - 1;
+    const additions: StageItem[] = [];
+    for (const item of items) {
+      if (item.row !== frontRow || item.kind === "monitor") continue;
+      const hasMonitor = items.some(
+        (i) => i.col === item.col && i.row === item.row && i.kind === "monitor",
+      );
+      const alreadyAdded = additions.some((i) => i.col === item.col && i.row === item.row);
+      if (!hasMonitor && !alreadyAdded) {
+        additions.push({
+          id: crypto.randomUUID(),
+          kind: "monitor",
+          label: `Monitor — ${item.label}`,
+          col: item.col,
+          row: item.row,
+        });
+      }
+    }
+    if (additions.length) onChange([...items, ...additions]);
   }
 
   return (
@@ -149,6 +213,9 @@ export function StagePlot({
             <span className="ml-1 text-xs">{k.label}</span>
           </Button>
         ))}
+        <Button type="button" variant="outline" size="sm" onClick={suggestMonitors}>
+          <Speaker className="mr-1 size-4" /> Sugerir monitores
+        </Button>
       </div>
 
       <div className="rounded-lg border border-border bg-muted/20 p-3">
@@ -156,9 +223,10 @@ export function StagePlot({
           Fundo do palco
         </p>
         {/* A grade é espacial (representa o palco), então não pode empilhar no
-            celular — rola horizontalmente mantendo a proporção. */}
+            celular — rola horizontalmente mantendo a proporção. Colunas ímpares
+            (COLS) garantem uma célula central de verdade. */}
         <div className="overflow-x-auto">
-          <div className="grid min-w-[420px] grid-cols-4 gap-2">
+          <div className="grid min-w-[560px] grid-cols-5 gap-2">
             {Array.from({ length: ROWS * COLS }).map((_, index) => {
               const col = index % COLS;
               const row = Math.floor(index / COLS);
@@ -189,7 +257,10 @@ export function StagePlot({
                       >
                         <Trash2 className="size-3" />
                       </button>
-                      <StageIcon kind={item.kind} className="size-7" />
+                      <StageIcon
+                        kind={item.kind}
+                        className={isLarge(item.kind) ? "size-12" : "size-8"}
+                      />
                       <span className="w-full truncate text-center text-[10px]">{item.label}</span>
                     </div>
                   ))}
@@ -215,7 +286,7 @@ export function StagePlot({
  * com cores claras, já que o PDF é impresso em papel branco. Mantém a mesma
  * grade e os mesmos ícones da tela, então trocar os ícones melhora os dois.
  */
-export const PRINT_PLOT_WIDTH = 720;
+export const PRINT_PLOT_WIDTH = 840;
 export const PRINT_PLOT_HEIGHT = 460;
 
 export function StagePlotPrintable({ items }: { items: StageItem[] }) {
@@ -289,7 +360,10 @@ export function StagePlotPrintable({ items }: { items: StageItem[] }) {
                     maxWidth: "100%",
                   }}
                 >
-                  <StageIcon kind={item.kind} className="size-8" />
+                  <StageIcon
+                    kind={item.kind}
+                    className={isLarge(item.kind) ? "size-14" : "size-9"}
+                  />
                   <span
                     style={{
                       overflow: "hidden",
