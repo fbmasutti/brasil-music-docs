@@ -150,6 +150,7 @@ export type Database = {
           event_id: string
           id: string
           notes: string | null
+          team_member_id: string | null
           user_id: string
         }
         Insert: {
@@ -159,6 +160,7 @@ export type Database = {
           event_id: string
           id?: string
           notes?: string | null
+          team_member_id?: string | null
           user_id: string
         }
         Update: {
@@ -168,6 +170,7 @@ export type Database = {
           event_id?: string
           id?: string
           notes?: string | null
+          team_member_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -176,6 +179,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_expenses_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
             referencedColumns: ["id"]
           },
         ]
@@ -773,11 +783,14 @@ export type Database = {
         Row: {
           created_at: string
           duration_seconds: number
+          external_link: string | null
           genre: string | null
           id: string
           isrc: string | null
           iswc: string | null
           notes: string | null
+          origin: string
+          original_authors: string | null
           performers: string | null
           producer: string | null
           publisher: string | null
@@ -788,11 +801,14 @@ export type Database = {
         Insert: {
           created_at?: string
           duration_seconds?: number
+          external_link?: string | null
           genre?: string | null
           id?: string
           isrc?: string | null
           iswc?: string | null
           notes?: string | null
+          origin?: string
+          original_authors?: string | null
           performers?: string | null
           producer?: string | null
           publisher?: string | null
@@ -803,11 +819,14 @@ export type Database = {
         Update: {
           created_at?: string
           duration_seconds?: number
+          external_link?: string | null
           genre?: string | null
           id?: string
           isrc?: string | null
           iswc?: string | null
           notes?: string | null
+          origin?: string
+          original_authors?: string | null
           performers?: string | null
           producer?: string | null
           publisher?: string | null
@@ -872,13 +891,16 @@ export type Database = {
         Row: {
           backline: string | null
           channel_list: Json
+          console_specs: string | null
           created_at: string
           event_id: string | null
           formation_id: string | null
           hospitality: string | null
           id: string
           lighting_requirements: string | null
+          monitor_specs: string | null
           name: string
+          pa_specs: string | null
           rooming_list: string | null
           sound_requirements: string | null
           stage_plot: Json
@@ -888,13 +910,16 @@ export type Database = {
         Insert: {
           backline?: string | null
           channel_list?: Json
+          console_specs?: string | null
           created_at?: string
           event_id?: string | null
           formation_id?: string | null
           hospitality?: string | null
           id?: string
           lighting_requirements?: string | null
+          monitor_specs?: string | null
           name?: string
+          pa_specs?: string | null
           rooming_list?: string | null
           sound_requirements?: string | null
           stage_plot?: Json
@@ -904,13 +929,16 @@ export type Database = {
         Update: {
           backline?: string | null
           channel_list?: Json
+          console_specs?: string | null
           created_at?: string
           event_id?: string | null
           formation_id?: string | null
           hospitality?: string | null
           id?: string
           lighting_requirements?: string | null
+          monitor_specs?: string | null
           name?: string
+          pa_specs?: string | null
           rooming_list?: string | null
           sound_requirements?: string | null
           stage_plot?: Json
