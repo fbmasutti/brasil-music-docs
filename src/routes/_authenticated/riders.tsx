@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Sliders, Plus, Download, Trash2, Wand2, Pencil, ChevronDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
@@ -61,17 +62,48 @@ type RiderRow = {
   channel_list: unknown;
   stage_plot?: unknown;
   sound_requirements: string | null;
+  console_specs?: string | null;
+  pa_specs?: string | null;
+  monitor_specs?: string | null;
   lighting_requirements: string | null;
   backline: string | null;
   hospitality: string | null;
   rooming_list: string | null;
 };
 
+type ChannelRow = { id: string; instrument: string; mic: string };
+
+// Curada de propósito — cobre o que a maioria dos riders realmente usa, sem
+// virar um catálogo de microfones. "Outro" cobre o resto por texto livre.
+const MIC_OPTIONS = [
+  "SM58 (dinâmico vocal)",
+  "SM57 (dinâmico instrumental)",
+  "Beta 52 (bumbo/grave)",
+  "Condensador cardioide",
+  "Sem fio de mão",
+  "Lapela/Headset sem fio",
+  "DI (ativo/passivo)",
+];
+
+/** "Instrumento — Microfone" -> linha estruturada; sem separador, tudo vira instrumento. */
+function parseChannelLine(line: string): ChannelRow {
+  const [instrument, ...rest] = line.split(" — ");
+  return { id: crypto.randomUUID(), instrument: instrument ?? "", mic: rest.join(" — ") };
+}
+
+function channelRowsToList(rows: ChannelRow[]): string[] {
+  return rows
+    .filter((r) => r.instrument.trim() || r.mic.trim())
+    .map((r) => (r.mic.trim() ? `${r.instrument.trim()} — ${r.mic.trim()}` : r.instrument.trim()));
+}
+
 const empty = {
   name: "",
   formation_id: "",
-  channel_list: "",
   sound_requirements: "",
+  console_specs: "",
+  pa_specs: "",
+  monitor_specs: "",
   lighting_requirements: "",
   backline: "",
   hospitality: "",
@@ -95,7 +127,18 @@ function RidersPage() {
   const [pendingExport, setPendingExport] = useState<RiderRow | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
   const [stage, setStage] = useState<StageItem[]>([]);
+  const [channels, setChannels] = useState<ChannelRow[]>([]);
   const set = (k: keyof typeof empty) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  function addChannelRow() {
+    setChannels((rows) => [...rows, { id: crypto.randomUUID(), instrument: "", mic: "" }]);
+  }
+  function updateChannelRow(id: string, patch: Partial<ChannelRow>) {
+    setChannels((rows) => rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  }
+  function removeChannelRow(id: string) {
+    setChannels((rows) => rows.filter((r) => r.id !== id));
+  }
 
   /** 1 clique: o preset já vira um rider salvo, sem passar por formulário. */
   function createFromPreset(id: string) {
@@ -154,16 +197,21 @@ function RidersPage() {
     setForm({
       name: rider.name,
       formation_id: rider.formation_id ?? "",
-      channel_list: Array.isArray(rider.channel_list)
-        ? (rider.channel_list as string[]).join("\n")
-        : "",
       sound_requirements: rider.sound_requirements ?? "",
+      console_specs: rider.console_specs ?? "",
+      pa_specs: rider.pa_specs ?? "",
+      monitor_specs: rider.monitor_specs ?? "",
       lighting_requirements: rider.lighting_requirements ?? "",
       backline: rider.backline ?? "",
       hospitality: rider.hospitality ?? "",
       rooming_list: rider.rooming_list ?? "",
     });
     setStage(parseStagePlot(rider.stage_plot));
+    setChannels(
+      Array.isArray(rider.channel_list)
+        ? (rider.channel_list as string[]).map(parseChannelLine)
+        : [],
+    );
   }
 
   function startBlank() {
@@ -172,6 +220,7 @@ function RidersPage() {
     setAdvancedOpen(false);
     setForm(empty);
     setStage([]);
+    setChannels([]);
   }
 
   function closeForm() {
@@ -179,15 +228,19 @@ function RidersPage() {
     setEditingId(null);
     setForm(empty);
     setStage([]);
+    setChannels([]);
   }
 
   function save() {
     const values = {
       name: form.name.trim() || "Rider técnico",
       formation_id: form.formation_id || null,
-      channel_list: form.channel_list.split("\n").filter(Boolean),
+      channel_list: channelRowsToList(channels),
       stage_plot: stage,
       sound_requirements: form.sound_requirements || null,
+      console_specs: form.console_specs || null,
+      pa_specs: form.pa_specs || null,
+      monitor_specs: form.monitor_specs || null,
       lighting_requirements: form.lighting_requirements || null,
       backline: form.backline || null,
       hospitality: form.hospitality || null,
@@ -244,10 +297,23 @@ function RidersPage() {
                     ] as PdfBlock[])),
               ] as PdfBlock[])
             : []),
-          ...(rider.sound_requirements
+          ...(rider.console_specs ||
+          rider.pa_specs ||
+          rider.monitor_specs ||
+          rider.sound_requirements
             ? ([
-                { type: "heading", text: "Sonorização (P.A.)" },
-                { type: "para", text: rider.sound_requirements },
+                { type: "heading", text: "Sonorização" },
+                {
+                  type: "kv",
+                  rows: [
+                    ["Mesa / Console", rider.console_specs ?? ""],
+                    ["P.A.", rider.pa_specs ?? ""],
+                    ["Monitores", rider.monitor_specs ?? ""],
+                  ],
+                },
+                ...(rider.sound_requirements
+                  ? ([{ type: "para", text: rider.sound_requirements }] as PdfBlock[])
+                  : []),
               ] as PdfBlock[])
             : []),
           ...(rider.lighting_requirements
@@ -355,12 +421,57 @@ function RidersPage() {
           </FieldGrid>
 
           <div className="mt-4 space-y-4">
-            <TextAreaField
-              label="Channel list (um canal por linha)"
-              value={form.channel_list}
-              onChange={set("channel_list")}
-              placeholder={"Bumbo — Shure Beta 52\nVoz principal — SM58"}
-            />
+            <div className="space-y-2">
+              <Label>Channel list</Label>
+              {channels.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Nenhum canal ainda.</p>
+              ) : (
+                <div className="space-y-2">
+                  {channels.map((row) => (
+                    <div key={row.id} className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+                      <Input
+                        value={row.instrument}
+                        onChange={(e) => updateChannelRow(row.id, { instrument: e.target.value })}
+                        placeholder="Instrumento (ex.: Bumbo)"
+                        className="flex-1"
+                      />
+                      <Select
+                        value={MIC_OPTIONS.includes(row.mic) ? row.mic : ""}
+                        onValueChange={(v) => updateChannelRow(row.id, { mic: v })}
+                      >
+                        <SelectTrigger className="w-44 shrink-0">
+                          <SelectValue placeholder="Microfone" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MIC_OPTIONS.map((m) => (
+                            <SelectItem key={m} value={m}>
+                              {m}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        value={row.mic}
+                        onChange={(e) => updateChannelRow(row.id, { mic: e.target.value })}
+                        placeholder="Ou digite (ex.: Beta 91 sob o bumbo)"
+                        className="flex-1"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Remover canal"
+                        onClick={() => removeChannelRow(row.id)}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Button type="button" variant="outline" size="sm" onClick={addChannelRow}>
+                <Plus className="mr-1 size-4" /> Adicionar canal
+              </Button>
+            </div>
             <div className="space-y-3">
               <p className="text-sm font-medium">Mapa de palco</p>
               <StagePlot items={stage} onChange={setStage} />
@@ -375,8 +486,28 @@ function RidersPage() {
                 {advancedOpen ? "Ocultar" : "+ Adicionar"} detalhes avançados (opcional)
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-3 space-y-4">
+                <FieldGrid>
+                  <TextField
+                    label="Mesa / Console"
+                    value={form.console_specs}
+                    onChange={set("console_specs")}
+                    placeholder="Digital, mínimo 16 canais"
+                  />
+                  <TextField
+                    label="P.A."
+                    value={form.pa_specs}
+                    onChange={set("pa_specs")}
+                    placeholder="Line array, compatível com o público"
+                  />
+                  <TextField
+                    label="Monitores"
+                    value={form.monitor_specs}
+                    onChange={set("monitor_specs")}
+                    placeholder="4 vias independentes ou in-ear"
+                  />
+                </FieldGrid>
                 <TextAreaField
-                  label="Sonorização (P.A.)"
+                  label="Observações gerais de som"
                   value={form.sound_requirements}
                   onChange={set("sound_requirements")}
                 />

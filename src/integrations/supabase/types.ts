@@ -878,13 +878,16 @@ export type Database = {
         Row: {
           backline: string | null
           channel_list: Json
+          console_specs: string | null
           created_at: string
           event_id: string | null
           formation_id: string | null
           hospitality: string | null
           id: string
           lighting_requirements: string | null
+          monitor_specs: string | null
           name: string
+          pa_specs: string | null
           rooming_list: string | null
           sound_requirements: string | null
           stage_plot: Json
@@ -894,13 +897,16 @@ export type Database = {
         Insert: {
           backline?: string | null
           channel_list?: Json
+          console_specs?: string | null
           created_at?: string
           event_id?: string | null
           formation_id?: string | null
           hospitality?: string | null
           id?: string
           lighting_requirements?: string | null
+          monitor_specs?: string | null
           name?: string
+          pa_specs?: string | null
           rooming_list?: string | null
           sound_requirements?: string | null
           stage_plot?: Json
@@ -910,13 +916,16 @@ export type Database = {
         Update: {
           backline?: string | null
           channel_list?: Json
+          console_specs?: string | null
           created_at?: string
           event_id?: string | null
           formation_id?: string | null
           hospitality?: string | null
           id?: string
           lighting_requirements?: string | null
+          monitor_specs?: string | null
           name?: string
+          pa_specs?: string | null
           rooming_list?: string | null
           sound_requirements?: string | null
           stage_plot?: Json
