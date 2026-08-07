@@ -46,6 +46,13 @@ export function buildGoogleCalendarUrl(ev: CalendarEventInput): string | null {
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
+/** Link "abrir no Maps" com o endereço do show — sem geolocalização, sem distância. */
+export function buildMapsUrl(ev: CalendarEventInput): string | null {
+  const location = eventLocation(ev);
+  if (!location) return null;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
+}
+
 function escapeICS(text: string) {
   return text.replace(/[\\,;]/g, (m) => `\\${m}`).replace(/\n/g, "\\n");
 }

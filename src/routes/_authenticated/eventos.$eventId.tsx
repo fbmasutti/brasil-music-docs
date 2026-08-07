@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Circle,
   FileText,
+  MapPin,
   Megaphone,
   Pencil,
   Sliders,
@@ -29,7 +30,7 @@ import { PageHeader, PageContainer, Section, StatCard } from "@/components/ui-ki
 import { EventFormDialog } from "@/components/EventFormDialog";
 import { useList, useUpdate } from "@/lib/queries";
 import { dateBR, money, EVENT_STATUS, NEUTRAL_TONE } from "@/lib/format";
-import { buildGoogleCalendarUrl, downloadICS } from "@/lib/calendar-link";
+import { buildGoogleCalendarUrl, buildMapsUrl, downloadICS } from "@/lib/calendar-link";
 
 export const Route = createFileRoute("/_authenticated/eventos/$eventId")({
   head: () => ({
@@ -94,6 +95,7 @@ function EventDetail() {
   const done = tasks.filter((t) => t.done).length;
   const status = EVENT_STATUS[event.status] ?? { label: event.status, tone: "" };
   const googleCalendarUrl = buildGoogleCalendarUrl(event);
+  const mapsUrl = buildMapsUrl(event);
 
   return (
     <PageContainer>
@@ -156,6 +158,13 @@ function EventDetail() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            ) : null}
+            {mapsUrl ? (
+              <Button asChild size="sm" variant="outline">
+                <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
+                  <MapPin className="mr-1 size-4" /> Abrir no Maps
+                </a>
+              </Button>
             ) : null}
             <Button asChild size="sm" variant="outline">
               <Link to="/documentos">

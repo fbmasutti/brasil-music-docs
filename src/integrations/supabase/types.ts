@@ -783,6 +783,7 @@ export type Database = {
         Row: {
           created_at: string
           duration_seconds: number
+          external_link: string | null
           genre: string | null
           id: string
           isrc: string | null
@@ -800,6 +801,7 @@ export type Database = {
         Insert: {
           created_at?: string
           duration_seconds?: number
+          external_link?: string | null
           genre?: string | null
           id?: string
           isrc?: string | null
@@ -817,6 +819,7 @@ export type Database = {
         Update: {
           created_at?: string
           duration_seconds?: number
+          external_link?: string | null
           genre?: string | null
           id?: string
           isrc?: string | null

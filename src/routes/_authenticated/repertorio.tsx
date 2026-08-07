@@ -1,6 +1,15 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Music4, Plus, Trash2, Download, Users, Pencil, FileBadge } from "lucide-react";
+import {
+  Music4,
+  Plus,
+  Trash2,
+  Download,
+  Users,
+  Pencil,
+  FileBadge,
+  ExternalLink,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -67,6 +76,7 @@ const emptySong = {
   producer: "",
   studio: "",
   performers: "",
+  external_link: "",
 };
 
 const emptyWriter = { name: "", role: "", share_percent: "", cae_ipi: "", association: "" };
@@ -261,6 +271,17 @@ function RepertoirePage() {
                           <Badge variant="outline" className="text-[10px] uppercase">
                             {isOwn ? "Autoral" : "Cover"}
                           </Badge>
+                          {s.external_link ? (
+                            <a
+                              href={s.external_link}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label={`Abrir link de ${s.title}`}
+                              className="text-muted-foreground hover:text-primary"
+                            >
+                              <ExternalLink className="size-3.5" />
+                            </a>
+                          ) : null}
                         </div>
                         <p className="text-xs text-muted-foreground">
                           {[
@@ -524,6 +545,7 @@ function SongFormDialog({
             producer: song.producer ?? "",
             studio: song.studio ?? "",
             performers: song.performers ?? "",
+            external_link: song.external_link ?? "",
           }
         : emptySong,
     );
@@ -545,6 +567,7 @@ function SongFormDialog({
           producer: form.producer || null,
           studio: form.studio || null,
           performers: form.performers || null,
+          external_link: form.external_link || null,
         }
       : {
           origin: form.origin,
@@ -558,6 +581,7 @@ function SongFormDialog({
           producer: null,
           studio: null,
           performers: form.performers || null,
+          external_link: form.external_link || null,
         };
     if (isEdit && song) {
       update.mutate({ id: song.id, values }, { onSuccess: () => setOpen(false) });
@@ -618,6 +642,14 @@ function SongFormDialog({
             </>
           )}
           <TextField label="Intérpretes" value={form.performers} onChange={set("performers")} />
+          <div className="sm:col-span-2">
+            <TextField
+              label="Link (Spotify, YouTube, Deezer...)"
+              value={form.external_link}
+              onChange={set("external_link")}
+              placeholder="https://open.spotify.com/track/..."
+            />
+          </div>
         </FieldGrid>
         {isOwn ? (
           <p className="text-xs text-muted-foreground">
