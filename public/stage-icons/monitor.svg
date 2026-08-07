@@ -1,7 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-<path d="M160,300 L864,300 L750,860 L274,860 Z" fill="#121214"/>
-<circle cx="512" cy="420" r="55" fill="#06B6D4"/>
-<circle cx="512" cy="420" r="32" fill="#121214"/>
-<circle cx="512" cy="640" r="150" fill="#06B6D4"/>
-<circle cx="512" cy="640" r="110" fill="#121214"/>
+  <!-- Monitor / retorno visto de frente em cunha simétrica. -->
+  <path d="M110 760 L914 760 L820 320 L204 320 Z" fill="#121214"/>
+  <rect x="204" y="286" width="616" height="44" rx="18" fill="#3a3a40"/>
+  <circle cx="512" cy="600" r="130" fill="#06B6D4"/>
+  <circle cx="512" cy="600" r="88" fill="#121214"/>
+  <circle cx="512" cy="410" r="52" fill="#06B6D4"/>
+  <circle cx="512" cy="410" r="30" fill="#121214"/>
 </svg>

@@ -1,4 +1,4 @@
-import type { StageItem, StageKind } from "@/components/StagePlot";
+import { COLS, ROWS, spanOf, type StageItem, type StageKind } from "@/components/StagePlot";
 
 export type RiderPreset = {
   id: string;
@@ -76,14 +76,14 @@ export const RIDER_PRESETS: RiderPreset[] = [
       { kind: "guitarra", label: "Cavaco / banjo", col: 2, row: 1 },
       { kind: "violao", label: "Violão 7 cordas", col: 3, row: 1 },
       { kind: "voz", label: "Voz principal", col: 1, row: 2 },
-      { kind: "monitor", label: "Monitor mesa de samba", col: 2, row: 2 },
+      { kind: "mesa_som", label: "Console / Mesa de Som", col: 2, row: 2 },
     ],
     sound:
-      "Mesa digital de 16 canais, 4 mixes de monitor, P.A. compatível com o público, 6 pedestais girafa e 3 DIs ativos. Formato em roda com mesa central quando possível.",
+      "Mesa digital de 16 canais, 4 mixes de monitor, P.A. compatível com o público, 6 pedestais girafa e 3 DIs ativos. Disposição em roda com praticável central quando possível.",
     lighting:
       "Iluminação ambiente quente sobre a roda, 4 LED PARs e contraluz frontal para captação de vídeo.",
     backline:
-      "Mesa de samba central (ou praticável), 6 banquetas, apoio para instrumentos de percussão e amplificação para violão 7 cordas.",
+      "Praticável central, 6 banquetas, apoio para instrumentos de percussão e amplificação para violão 7 cordas.",
     hospitality:
       "Camarim para 6 pessoas, 12 garrafas de água, refrigerantes, cerveja gelada (quando aplicável) e refeição quente.",
   },
@@ -176,6 +176,13 @@ export const RIDER_PRESETS: RiderPreset[] = [
   },
 ];
 
+/** Os presets são descritos numa grade compacta (5x3); aqui eles são
+ * reposicionados na grade real do mapa (9x6), mantendo frente/fundo. */
 export function presetToStageItems(preset: RiderPreset): StageItem[] {
-  return preset.stage.map((s) => ({ ...s, id: crypto.randomUUID() }));
+  return preset.stage.map((s) => ({
+    ...s,
+    id: crypto.randomUUID(),
+    col: Math.min(COLS - spanOf(s.kind).w, s.col * 2),
+    row: Math.min(ROWS - spanOf(s.kind).h, s.row * 2),
+  }));
 }

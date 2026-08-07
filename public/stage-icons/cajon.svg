@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Cajón: caixa de madeira com tampo batente e boca traseira. -->
+  <rect x="230" y="180" width="564" height="680" rx="36" fill="#121214"/>
+  <rect x="272" y="222" width="480" height="596" rx="24" fill="#3a3a40"/>
+  <rect x="300" y="250" width="424" height="540" rx="18" fill="#121214"/>
+  <circle cx="512" cy="420" r="86" fill="#F59E0B"/>
+  <circle cx="512" cy="420" r="52" fill="#121214"/>
+  <rect x="360" y="700" width="304" height="26" rx="13" fill="#F59E0B"/>
+</svg>
