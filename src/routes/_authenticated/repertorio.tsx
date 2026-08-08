@@ -89,8 +89,10 @@ const emptyWriter = { name: "", role: "", share_percent: "", cae_ipi: "", associ
 function RepertoirePage() {
   const { data: profile } = useProfile();
   const songsQuery = useList("songs", { order: { column: "title" } });
-  const songs = songsQuery.data ?? [];
+  const allSongs = songsQuery.data ?? [];
   const { data: writers = [] } = useList("song_writers");
+  const { data: formations = [] } = useList("formations", { order: { column: "name" } });
+  const { data: formationSongs = [] } = useList("formation_songs");
   const { data: events = [] } = useList("events", {
     order: { column: "event_date", ascending: false },
   });
@@ -104,12 +106,28 @@ function RepertoirePage() {
   const [editingWriterId, setEditingWriterId] = useState<string | null>(null);
   const [writer, setWriter] = useState(emptyWriter);
   const [ecadEventId, setEcadEventId] = useState("");
+  // "" = todas as formações
+  const [formationFilter, setFormationFilter] = useState("");
   const accent = useDocumentAccent();
 
   const setWriterField = (k: keyof typeof emptyWriter) => (v: string) =>
     setWriter((w) => ({ ...w, [k]: v }));
 
+  const songs = formationFilter
+    ? allSongs.filter((s) =>
+        formationSongs.some((fs) => fs.song_id === s.id && fs.formation_id === formationFilter),
+      )
+    : allSongs;
+
+  function formationNamesFor(songId: string) {
+    return formationSongs
+      .filter((fs) => fs.song_id === songId)
+      .map((fs) => formations.find((f) => f.id === fs.formation_id)?.name)
+      .filter((name): name is string => Boolean(name));
+  }
+
   const ownSongs = songs.filter((s) => s.origin === "autoral");
+
 
   function authorsFor(s: Tables<"songs">) {
     if (s.origin === "cover") return s.original_authors || "—";
@@ -236,20 +254,43 @@ function RepertoirePage() {
         description="Escolha um evento para identificar o relatório de execução pública."
         className="mb-5"
       >
-        <div className="max-w-sm space-y-2">
-          <Label>Evento</Label>
-          <Select value={ecadEventId} onValueChange={setEcadEventId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Todos os eventos" />
-            </SelectTrigger>
-            <SelectContent>
-              {events.map((e) => (
-                <SelectItem key={e.id} value={e.id}>
-                  {e.title} — {dateBR(e.event_date)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label>Evento</Label>
+            <Select value={ecadEventId} onValueChange={setEcadEventId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todos os eventos" />
+              </SelectTrigger>
+              <SelectContent>
+                {events.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>
+                    {e.title} — {dateBR(e.event_date)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {formations.length ? (
+            <div className="space-y-2">
+              <Label>Formação</Label>
+              <Select
+                value={formationFilter || "all"}
+                onValueChange={(v) => setFormationFilter(v === "all" ? "" : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas as formações" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as formações</SelectItem>
+                  {formations.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
         </div>
       </Section>
 
@@ -264,9 +305,9 @@ function RepertoirePage() {
             />
           }
         >
-          {(songList) => (
+          {() => (
             <ul className="space-y-4">
-              {songList.map((s) => {
+              {songs.map((s) => {
                 const isOwn = s.origin === "autoral";
                 const list = writers.filter((w) => w.song_id === s.id);
                 const total = list.reduce((sum, w) => sum + Number(w.share_percent), 0);
@@ -291,6 +332,15 @@ function RepertoirePage() {
                             </a>
                           ) : null}
                         </div>
+                        {formationNamesFor(s.id).length ? (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {formationNamesFor(s.id).map((name) => (
+                              <Badge key={name} variant="secondary" className="text-[10px]">
+                                {name}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : null}
                         <p className="text-xs text-muted-foreground">
                           {[
                             s.genre,
@@ -529,14 +579,38 @@ function SongFormDialog({
   const isEdit = Boolean(song);
   const insert = useInsert("songs", "Obra cadastrada");
   const update = useUpdate("songs", "Obra atualizada");
+  const { data: formations = [] } = useList("formations", { order: { column: "name" } });
+  const { data: formationSongs = [] } = useList("formation_songs");
+  const linkFormation = useInsert("formation_songs", "");
+  const unlinkFormation = useRemove("formation_songs", "");
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptySong);
   const [fetchingLink, setFetchingLink] = useState(false);
+  const [selectedFormations, setSelectedFormations] = useState<string[]>([]);
   const set =
     <K extends keyof typeof emptySong>(k: K) =>
     (v: (typeof emptySong)[K]) =>
       setForm((f) => ({ ...f, [k]: v }));
+
+  const toggleFormation = (id: string) =>
+    setSelectedFormations((list) =>
+      list.includes(id) ? list.filter((x) => x !== id) : [...list, id],
+    );
+
+  /** Aplica no banco a diferença entre o que estava vinculado e o que ficou marcado. */
+  function syncFormations(songId: string) {
+    const current = formationSongs.filter((fs) => fs.song_id === songId);
+    current
+      .filter((fs) => !selectedFormations.includes(fs.formation_id))
+      .forEach((fs) => unlinkFormation.mutate(fs.id));
+    selectedFormations
+      .filter((id) => !current.some((fs) => fs.formation_id === id))
+      .forEach((id, index) =>
+        linkFormation.mutate({ song_id: songId, formation_id: id, position: index }),
+      );
+  }
+
 
   async function fetchFromLink() {
     if (!form.external_link.trim()) return;
@@ -560,6 +634,9 @@ function SongFormDialog({
 
   useEffect(() => {
     if (!open) return;
+    setSelectedFormations(
+      song ? formationSongs.filter((fs) => fs.song_id === song.id).map((fs) => fs.formation_id) : [],
+    );
     setForm(
       song
         ? {
@@ -578,7 +655,11 @@ function SongFormDialog({
           }
         : emptySong,
     );
+    // formationSongs entra de propósito fora das deps: só interessa o estado
+    // no momento em que o modal abre.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, song]);
+
 
   const isOwn = form.origin === "autoral";
 
@@ -613,12 +694,22 @@ function SongFormDialog({
           external_link: form.external_link || null,
         };
     if (isEdit && song) {
-      update.mutate({ id: song.id, values }, { onSuccess: () => setOpen(false) });
+      update.mutate(
+        { id: song.id, values },
+        {
+          onSuccess: () => {
+            syncFormations(song.id);
+            setOpen(false);
+          },
+        },
+      );
       return;
     }
     insert.mutate(values, {
-      onSuccess: () => {
+      onSuccess: (created) => {
+        syncFormations(created.id);
         setForm(emptySong);
+        setSelectedFormations([]);
         setOpen(false);
       },
     });
@@ -633,6 +724,35 @@ function SongFormDialog({
         </DialogHeader>
         <FieldGrid>
           <div className="space-y-2 sm:col-span-2">
+            <Label>Link (Spotify, YouTube...)</Label>
+            <div className="flex flex-wrap gap-2">
+              <input
+                className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm"
+                value={form.external_link}
+                onChange={(e) => set("external_link")(e.target.value)}
+                placeholder="https://open.spotify.com/track/..."
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!form.external_link.trim() || fetchingLink}
+                onClick={fetchFromLink}
+              >
+                {fetchingLink ? (
+                  <Loader2 className="mr-1 size-3.5 animate-spin" />
+                ) : (
+                  <Wand2 className="mr-1 size-3.5" />
+                )}
+                Buscar dados do link
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Cole o link primeiro: o título (e o autor, quando dá pra separar) vem preenchido.
+            </p>
+          </div>
+          <TextField label="Título" value={form.title} onChange={set("title")} />
+          <div className="space-y-2">
             <Label>Tipo</Label>
             <Select value={form.origin} onValueChange={(v) => set("origin")(v as SongOrigin)}>
               <SelectTrigger>
@@ -644,7 +764,6 @@ function SongFormDialog({
               </SelectContent>
             </Select>
           </div>
-          <TextField label="Título" value={form.title} onChange={set("title")} />
           <TextField label="Gênero" value={form.genre} onChange={set("genre")} />
           <TextField
             label="Duração (mm:ss)"
@@ -671,37 +790,31 @@ function SongFormDialog({
             </>
           )}
           <TextField label="Intérpretes" value={form.performers} onChange={set("performers")} />
-          <div className="space-y-2 sm:col-span-2">
-            <Label>Link (Spotify, YouTube...)</Label>
-            <div className="flex flex-wrap gap-2">
-              <input
-                className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm"
-                value={form.external_link}
-                onChange={(e) => set("external_link")(e.target.value)}
-                placeholder="https://open.spotify.com/track/..."
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={!form.external_link.trim() || fetchingLink}
-                onClick={fetchFromLink}
-              >
-                {fetchingLink ? (
-                  <Loader2 className="mr-1 size-3.5 animate-spin" />
-                ) : (
-                  <Wand2 className="mr-1 size-3.5" />
-                )}
-                Buscar dados do link
-              </Button>
-            </div>
-            {!isOwn ? (
+          {formations.length ? (
+            <div className="space-y-2 sm:col-span-2">
+              <Label>Formações que tocam esta obra</Label>
+              <div className="flex flex-wrap gap-2">
+                {formations.map((f) => {
+                  const on = selectedFormations.includes(f.id);
+                  return (
+                    <Button
+                      key={f.id}
+                      type="button"
+                      size="sm"
+                      variant={on ? "default" : "outline"}
+                      onClick={() => toggleFormation(f.id)}
+                    >
+                      {f.name}
+                    </Button>
+                  );
+                })}
+              </div>
               <p className="text-xs text-muted-foreground">
-                Preenche o título (e o autor, quando der pra separar) automaticamente — não traz
-                gênero, duração nem ISRC.
+                Serve para montar setlists e riders por formação — uma obra pode estar em mais de
+                uma.
               </p>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
         </FieldGrid>
         {isOwn ? (
           <p className="text-xs text-muted-foreground">

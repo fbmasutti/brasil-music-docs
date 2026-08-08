@@ -325,6 +325,48 @@ export type Database = {
           },
         ]
       }
+      formation_songs: {
+        Row: {
+          created_at: string
+          formation_id: string
+          id: string
+          position: number
+          song_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          formation_id: string
+          id?: string
+          position?: number
+          song_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          formation_id?: string
+          id?: string
+          position?: number
+          song_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "formation_songs_formation_id_fkey"
+            columns: ["formation_id"]
+            isOneToOne: false
+            referencedRelation: "formations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "formation_songs_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       formations: {
         Row: {
           base_fee: number

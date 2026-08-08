@@ -1,6 +1,16 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Images, Plus, Trash2, ExternalLink, Pencil } from "lucide-react";
+import {
+  Images,
+  Plus,
+  Trash2,
+  ExternalLink,
+  Pencil,
+  Wand2,
+  Loader2,
+} from "lucide-react";
+import { toast } from "sonner";
+import { fetchLinkMeta } from "@/lib/oembed";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -171,10 +181,36 @@ function ClippingFormDialog({
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(empty);
+  const [fetching, setFetching] = useState(false);
+  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const set = (k: keyof typeof empty) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  async function fetchFromLink() {
+    if (!form.link_url.trim()) return;
+    setFetching(true);
+    try {
+      const meta = await fetchLinkMeta(form.link_url);
+      if (!meta) {
+        toast.error("Não consegui ler esse link. Preencha os campos manualmente.");
+        return;
+      }
+      setForm((f) => ({
+        ...f,
+        title: meta.title || f.title,
+        event_name: f.event_name || meta.author || "",
+        happened_at: f.happened_at || meta.date || "",
+      }));
+      if (meta.thumbnail) setMediaUrl(meta.thumbnail);
+      toast.success("Dados preenchidos a partir do link.");
+    } finally {
+      setFetching(false);
+    }
+  }
+
 
   useEffect(() => {
     if (!open) return;
+    setMediaUrl(item?.media_url ?? null);
     setForm(
       item
         ? {
@@ -197,6 +233,7 @@ function ClippingFormDialog({
       happened_at: form.happened_at || null,
       year: form.happened_at ? Number(form.happened_at.slice(0, 4)) : null,
       link_url: form.link_url || null,
+      media_url: mediaUrl,
       description: form.description || null,
     };
     if (isEdit && item) {
@@ -206,6 +243,7 @@ function ClippingFormDialog({
     insert.mutate(values, {
       onSuccess: () => {
         setForm(empty);
+        setMediaUrl(null);
         setOpen(false);
       },
     });
@@ -219,6 +257,35 @@ function ClippingFormDialog({
           <DialogTitle>{isEdit ? "Editar registro" : "Novo registro"}</DialogTitle>
         </DialogHeader>
         <FieldGrid>
+          <div className="space-y-2 sm:col-span-2">
+            <Label>Link (matéria, YouTube, Instagram...)</Label>
+            <div className="flex flex-wrap gap-2">
+              <input
+                className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm"
+                value={form.link_url}
+                onChange={(e) => set("link_url")(e.target.value)}
+                placeholder="https://"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!form.link_url.trim() || fetching}
+                onClick={fetchFromLink}
+              >
+                {fetching ? (
+                  <Loader2 className="mr-1 size-3.5 animate-spin" />
+                ) : (
+                  <Wand2 className="mr-1 size-3.5" />
+                )}
+                Preencher pelo link
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Cole o link primeiro: título, veículo e data são preenchidos automaticamente quando o
+              site permite.
+            </p>
+          </div>
           <TextField label="Título" value={form.title} onChange={set("title")} />
           <div className="space-y-2">
             <Label>Categoria</Label>
@@ -246,14 +313,7 @@ function ClippingFormDialog({
             onChange={set("happened_at")}
             type="date"
           />
-          <div className="sm:col-span-2">
-            <TextField
-              label="Link"
-              value={form.link_url}
-              onChange={set("link_url")}
-              placeholder="https://"
-            />
-          </div>
+
           <div className="sm:col-span-2">
             <TextAreaField
               label="Descrição"

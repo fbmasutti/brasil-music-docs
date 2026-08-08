@@ -24,6 +24,7 @@ type TableName =
   | "event_checklists"
   | "formations"
   | "formation_members"
+  | "formation_songs"
   | "brand_kits"
   | "gear_checklist_items"
   | "event_expenses"

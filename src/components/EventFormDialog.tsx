@@ -18,6 +18,15 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { FieldGrid, TextField, TextAreaField, TimeField } from "@/components/ui-kit";
 import { QuickAddClientDialog } from "@/components/QuickAddClientDialog";
 import { AddressSearchField } from "@/components/AddressSearchField";
@@ -122,14 +131,29 @@ export function EventFormDialog({
   const insertTask = useInsert("event_checklists", "");
 
   const [open, setOpen] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
   const [form, setForm] = useState<FormValues>(event ? toFormValues(event) : empty);
   const set = (k: keyof FormValues) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  const baseline = event ? toFormValues(event) : empty;
+  const isDirty = JSON.stringify(form) !== JSON.stringify(baseline);
+
+  // Fechar sem querer não pode custar o que foi digitado: pede confirmação
+  // e oferece salvar na hora.
+  function handleOpenChange(next: boolean) {
+    if (!next && isDirty) {
+      setConfirmClose(true);
+      return;
+    }
+    setOpen(next);
+  }
 
   // Ao reabrir, parte sempre dos dados atuais do evento (que podem ter mudado
   // em outro lugar, ex.: status alterado no dossiê).
   useEffect(() => {
     if (open) setForm(event ? toFormValues(event) : empty);
   }, [open, event]);
+
 
   function selectFormation(formationId: string) {
     const formation = formations.find((f) => f.id === formationId);
@@ -189,7 +213,7 @@ export function EventFormDialog({
   const pending = insertEvent.isPending || updateEvent.isPending;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
@@ -337,6 +361,41 @@ export function EventFormDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <AlertDialog open={confirmClose} onOpenChange={setConfirmClose}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Salvar antes de fechar?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você tem alterações que ainda não foram salvas neste show.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-between">
+            <AlertDialogCancel>Continuar editando</AlertDialogCancel>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setConfirmClose(false);
+                  setForm(baseline);
+                  setOpen(false);
+                }}
+              >
+                Descartar
+              </Button>
+              <Button
+                disabled={!form.title || pending}
+                onClick={() => {
+                  setConfirmClose(false);
+                  save();
+                }}
+              >
+                Salvar
+              </Button>
+            </div>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
