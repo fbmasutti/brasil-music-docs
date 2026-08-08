@@ -181,7 +181,32 @@ function ClippingFormDialog({
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(empty);
+  const [fetching, setFetching] = useState(false);
+  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const set = (k: keyof typeof empty) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  async function fetchFromLink() {
+    if (!form.link_url.trim()) return;
+    setFetching(true);
+    try {
+      const meta = await fetchLinkMeta(form.link_url);
+      if (!meta) {
+        toast.error("Não consegui ler esse link. Preencha os campos manualmente.");
+        return;
+      }
+      setForm((f) => ({
+        ...f,
+        title: meta.title || f.title,
+        event_name: f.event_name || meta.author || "",
+        happened_at: f.happened_at || meta.date || "",
+      }));
+      if (meta.thumbnail) setMediaUrl(meta.thumbnail);
+      toast.success("Dados preenchidos a partir do link.");
+    } finally {
+      setFetching(false);
+    }
+  }
+
 
   useEffect(() => {
     if (!open) return;
