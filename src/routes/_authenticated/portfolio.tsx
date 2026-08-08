@@ -243,6 +243,7 @@ function ClippingFormDialog({
     insert.mutate(values, {
       onSuccess: () => {
         setForm(empty);
+        setMediaUrl(null);
         setOpen(false);
       },
     });
