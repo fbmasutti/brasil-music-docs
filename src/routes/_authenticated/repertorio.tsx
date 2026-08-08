@@ -529,14 +529,38 @@ function SongFormDialog({
   const isEdit = Boolean(song);
   const insert = useInsert("songs", "Obra cadastrada");
   const update = useUpdate("songs", "Obra atualizada");
+  const { data: formations = [] } = useList("formations", { order: { column: "name" } });
+  const { data: formationSongs = [] } = useList("formation_songs");
+  const linkFormation = useInsert("formation_songs", "");
+  const unlinkFormation = useRemove("formation_songs", "");
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptySong);
   const [fetchingLink, setFetchingLink] = useState(false);
+  const [selectedFormations, setSelectedFormations] = useState<string[]>([]);
   const set =
     <K extends keyof typeof emptySong>(k: K) =>
     (v: (typeof emptySong)[K]) =>
       setForm((f) => ({ ...f, [k]: v }));
+
+  const toggleFormation = (id: string) =>
+    setSelectedFormations((list) =>
+      list.includes(id) ? list.filter((x) => x !== id) : [...list, id],
+    );
+
+  /** Aplica no banco a diferença entre o que estava vinculado e o que ficou marcado. */
+  function syncFormations(songId: string) {
+    const current = formationSongs.filter((fs) => fs.song_id === songId);
+    current
+      .filter((fs) => !selectedFormations.includes(fs.formation_id))
+      .forEach((fs) => unlinkFormation.mutate(fs.id));
+    selectedFormations
+      .filter((id) => !current.some((fs) => fs.formation_id === id))
+      .forEach((id, index) =>
+        linkFormation.mutate({ song_id: songId, formation_id: id, position: index }),
+      );
+  }
+
 
   async function fetchFromLink() {
     if (!form.external_link.trim()) return;
