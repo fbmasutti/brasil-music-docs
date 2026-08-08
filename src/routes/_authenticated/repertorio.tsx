@@ -584,6 +584,9 @@ function SongFormDialog({
 
   useEffect(() => {
     if (!open) return;
+    setSelectedFormations(
+      song ? formationSongs.filter((fs) => fs.song_id === song.id).map((fs) => fs.formation_id) : [],
+    );
     setForm(
       song
         ? {
@@ -602,7 +605,11 @@ function SongFormDialog({
           }
         : emptySong,
     );
+    // formationSongs entra de propósito fora das deps: só interessa o estado
+    // no momento em que o modal abre.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, song]);
+
 
   const isOwn = form.origin === "autoral";
 
