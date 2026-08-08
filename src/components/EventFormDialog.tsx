@@ -122,14 +122,29 @@ export function EventFormDialog({
   const insertTask = useInsert("event_checklists", "");
 
   const [open, setOpen] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
   const [form, setForm] = useState<FormValues>(event ? toFormValues(event) : empty);
   const set = (k: keyof FormValues) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  const baseline = event ? toFormValues(event) : empty;
+  const isDirty = JSON.stringify(form) !== JSON.stringify(baseline);
+
+  // Fechar sem querer não pode custar o que foi digitado: pede confirmação
+  // e oferece salvar na hora.
+  function handleOpenChange(next: boolean) {
+    if (!next && isDirty) {
+      setConfirmClose(true);
+      return;
+    }
+    setOpen(next);
+  }
 
   // Ao reabrir, parte sempre dos dados atuais do evento (que podem ter mudado
   // em outro lugar, ex.: status alterado no dossiê).
   useEffect(() => {
     if (open) setForm(event ? toFormValues(event) : empty);
   }, [open, event]);
+
 
   function selectFormation(formationId: string) {
     const formation = formations.find((f) => f.id === formationId);
