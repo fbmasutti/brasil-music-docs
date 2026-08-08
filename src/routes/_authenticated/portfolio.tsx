@@ -219,6 +219,35 @@ function ClippingFormDialog({
           <DialogTitle>{isEdit ? "Editar registro" : "Novo registro"}</DialogTitle>
         </DialogHeader>
         <FieldGrid>
+          <div className="space-y-2 sm:col-span-2">
+            <Label>Link (matéria, YouTube, Instagram...)</Label>
+            <div className="flex flex-wrap gap-2">
+              <input
+                className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm"
+                value={form.link_url}
+                onChange={(e) => set("link_url")(e.target.value)}
+                placeholder="https://"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!form.link_url.trim() || fetching}
+                onClick={fetchFromLink}
+              >
+                {fetching ? (
+                  <Loader2 className="mr-1 size-3.5 animate-spin" />
+                ) : (
+                  <Wand2 className="mr-1 size-3.5" />
+                )}
+                Preencher pelo link
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Cole o link primeiro: título, veículo e data são preenchidos automaticamente quando o
+              site permite.
+            </p>
+          </div>
           <TextField label="Título" value={form.title} onChange={set("title")} />
           <div className="space-y-2">
             <Label>Categoria</Label>
@@ -246,14 +275,7 @@ function ClippingFormDialog({
             onChange={set("happened_at")}
             type="date"
           />
-          <div className="sm:col-span-2">
-            <TextField
-              label="Link"
-              value={form.link_url}
-              onChange={set("link_url")}
-              placeholder="https://"
-            />
-          </div>
+
           <div className="sm:col-span-2">
             <TextAreaField
               label="Descrição"
