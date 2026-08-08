@@ -633,6 +633,35 @@ function SongFormDialog({
         </DialogHeader>
         <FieldGrid>
           <div className="space-y-2 sm:col-span-2">
+            <Label>Link (Spotify, YouTube...)</Label>
+            <div className="flex flex-wrap gap-2">
+              <input
+                className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm"
+                value={form.external_link}
+                onChange={(e) => set("external_link")(e.target.value)}
+                placeholder="https://open.spotify.com/track/..."
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!form.external_link.trim() || fetchingLink}
+                onClick={fetchFromLink}
+              >
+                {fetchingLink ? (
+                  <Loader2 className="mr-1 size-3.5 animate-spin" />
+                ) : (
+                  <Wand2 className="mr-1 size-3.5" />
+                )}
+                Buscar dados do link
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Cole o link primeiro: o título (e o autor, quando dá pra separar) vem preenchido.
+            </p>
+          </div>
+          <TextField label="Título" value={form.title} onChange={set("title")} />
+          <div className="space-y-2">
             <Label>Tipo</Label>
             <Select value={form.origin} onValueChange={(v) => set("origin")(v as SongOrigin)}>
               <SelectTrigger>
@@ -644,7 +673,6 @@ function SongFormDialog({
               </SelectContent>
             </Select>
           </div>
-          <TextField label="Título" value={form.title} onChange={set("title")} />
           <TextField label="Gênero" value={form.genre} onChange={set("genre")} />
           <TextField
             label="Duração (mm:ss)"
@@ -671,37 +699,31 @@ function SongFormDialog({
             </>
           )}
           <TextField label="Intérpretes" value={form.performers} onChange={set("performers")} />
-          <div className="space-y-2 sm:col-span-2">
-            <Label>Link (Spotify, YouTube...)</Label>
-            <div className="flex flex-wrap gap-2">
-              <input
-                className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm"
-                value={form.external_link}
-                onChange={(e) => set("external_link")(e.target.value)}
-                placeholder="https://open.spotify.com/track/..."
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={!form.external_link.trim() || fetchingLink}
-                onClick={fetchFromLink}
-              >
-                {fetchingLink ? (
-                  <Loader2 className="mr-1 size-3.5 animate-spin" />
-                ) : (
-                  <Wand2 className="mr-1 size-3.5" />
-                )}
-                Buscar dados do link
-              </Button>
-            </div>
-            {!isOwn ? (
+          {formations.length ? (
+            <div className="space-y-2 sm:col-span-2">
+              <Label>Formações que tocam esta obra</Label>
+              <div className="flex flex-wrap gap-2">
+                {formations.map((f) => {
+                  const on = selectedFormations.includes(f.id);
+                  return (
+                    <Button
+                      key={f.id}
+                      type="button"
+                      size="sm"
+                      variant={on ? "default" : "outline"}
+                      onClick={() => toggleFormation(f.id)}
+                    >
+                      {f.name}
+                    </Button>
+                  );
+                })}
+              </div>
               <p className="text-xs text-muted-foreground">
-                Preenche o título (e o autor, quando der pra separar) automaticamente — não traz
-                gênero, duração nem ISRC.
+                Serve para montar setlists e riders por formação — uma obra pode estar em mais de
+                uma.
               </p>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
         </FieldGrid>
         {isOwn ? (
           <p className="text-xs text-muted-foreground">
