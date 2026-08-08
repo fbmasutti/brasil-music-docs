@@ -210,6 +210,7 @@ function ClippingFormDialog({
 
   useEffect(() => {
     if (!open) return;
+    setMediaUrl(item?.media_url ?? null);
     setForm(
       item
         ? {
@@ -232,6 +233,7 @@ function ClippingFormDialog({
       happened_at: form.happened_at || null,
       year: form.happened_at ? Number(form.happened_at.slice(0, 4)) : null,
       link_url: form.link_url || null,
+      media_url: mediaUrl,
       description: form.description || null,
     };
     if (isEdit && item) {
