@@ -332,6 +332,15 @@ function RepertoirePage() {
                             </a>
                           ) : null}
                         </div>
+                        {formationNamesFor(s.id).length ? (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {formationNamesFor(s.id).map((name) => (
+                              <Badge key={name} variant="secondary" className="text-[10px]">
+                                {name}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : null}
                         <p className="text-xs text-muted-foreground">
                           {[
                             s.genre,
