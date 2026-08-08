@@ -254,20 +254,43 @@ function RepertoirePage() {
         description="Escolha um evento para identificar o relatório de execução pública."
         className="mb-5"
       >
-        <div className="max-w-sm space-y-2">
-          <Label>Evento</Label>
-          <Select value={ecadEventId} onValueChange={setEcadEventId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Todos os eventos" />
-            </SelectTrigger>
-            <SelectContent>
-              {events.map((e) => (
-                <SelectItem key={e.id} value={e.id}>
-                  {e.title} — {dateBR(e.event_date)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label>Evento</Label>
+            <Select value={ecadEventId} onValueChange={setEcadEventId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todos os eventos" />
+              </SelectTrigger>
+              <SelectContent>
+                {events.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>
+                    {e.title} — {dateBR(e.event_date)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {formations.length ? (
+            <div className="space-y-2">
+              <Label>Formação</Label>
+              <Select
+                value={formationFilter || "all"}
+                onValueChange={(v) => setFormationFilter(v === "all" ? "" : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas as formações" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as formações</SelectItem>
+                  {formations.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
         </div>
       </Section>
 
@@ -282,9 +305,9 @@ function RepertoirePage() {
             />
           }
         >
-          {(songList) => (
+          {() => (
             <ul className="space-y-4">
-              {songList.map((s) => {
+              {songs.map((s) => {
                 const isOwn = s.origin === "autoral";
                 const list = writers.filter((w) => w.song_id === s.id);
                 const total = list.reduce((sum, w) => sum + Number(w.share_percent), 0);
