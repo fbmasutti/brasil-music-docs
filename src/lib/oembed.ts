@@ -53,3 +53,47 @@ export async function fetchTrackMeta(url: string): Promise<TrackMeta | null> {
     return null;
   }
 }
+
+/**
+ * Metadados genéricos de qualquer link (matéria, YouTube, Instagram) para o
+ * portfólio. YouTube tem oEmbed próprio com CORS; para o resto usamos o
+ * noembed, que cobre Instagram, Vimeo, SoundCloud e afins.
+ */
+export type LinkMeta = {
+  title: string;
+  author?: string | undefined;
+  thumbnail?: string | undefined;
+  date?: string | undefined;
+};
+
+export async function fetchLinkMeta(url: string): Promise<LinkMeta | null> {
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+  const endpoints = isYouTube(trimmed)
+    ? [`https://www.youtube.com/oembed?url=${encodeURIComponent(trimmed)}&format=json`]
+    : [`https://noembed.com/embed?url=${encodeURIComponent(trimmed)}`];
+  for (const endpoint of endpoints) {
+    try {
+      const res = await fetch(endpoint);
+      if (!res.ok) continue;
+      const data = (await res.json()) as {
+        title?: string;
+        author_name?: string;
+        provider_name?: string;
+        thumbnail_url?: string;
+        upload_date?: string;
+        error?: string;
+      };
+      if (data.error || !data.title) continue;
+      return {
+        title: data.title,
+        author: data.author_name || data.provider_name,
+        thumbnail: data.thumbnail_url,
+        date: data.upload_date?.slice(0, 10),
+      };
+    } catch {
+      // tenta o próximo endpoint
+    }
+  }
+  return null;
+}
