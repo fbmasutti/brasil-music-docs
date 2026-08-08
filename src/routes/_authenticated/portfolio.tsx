@@ -1,6 +1,16 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Images, Plus, Trash2, ExternalLink, Pencil } from "lucide-react";
+import {
+  Images,
+  Plus,
+  Trash2,
+  ExternalLink,
+  Pencil,
+  Wand2,
+  Loader2,
+} from "lucide-react";
+import { toast } from "sonner";
+import { fetchLinkMeta } from "@/lib/oembed";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
