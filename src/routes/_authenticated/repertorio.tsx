@@ -644,12 +644,22 @@ function SongFormDialog({
           external_link: form.external_link || null,
         };
     if (isEdit && song) {
-      update.mutate({ id: song.id, values }, { onSuccess: () => setOpen(false) });
+      update.mutate(
+        { id: song.id, values },
+        {
+          onSuccess: () => {
+            syncFormations(song.id);
+            setOpen(false);
+          },
+        },
+      );
       return;
     }
     insert.mutate(values, {
-      onSuccess: () => {
+      onSuccess: (created) => {
+        syncFormations(created.id);
         setForm(emptySong);
+        setSelectedFormations([]);
         setOpen(false);
       },
     });
