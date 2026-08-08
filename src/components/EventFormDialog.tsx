@@ -352,6 +352,41 @@ export function EventFormDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <AlertDialog open={confirmClose} onOpenChange={setConfirmClose}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Salvar antes de fechar?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você tem alterações que ainda não foram salvas neste show.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-between">
+            <AlertDialogCancel>Continuar editando</AlertDialogCancel>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setConfirmClose(false);
+                  setForm(baseline);
+                  setOpen(false);
+                }}
+              >
+                Descartar
+              </Button>
+              <Button
+                disabled={!form.title || pending}
+                onClick={() => {
+                  setConfirmClose(false);
+                  save();
+                }}
+              >
+                Salvar
+              </Button>
+            </div>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
