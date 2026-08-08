@@ -89,8 +89,10 @@ const emptyWriter = { name: "", role: "", share_percent: "", cae_ipi: "", associ
 function RepertoirePage() {
   const { data: profile } = useProfile();
   const songsQuery = useList("songs", { order: { column: "title" } });
-  const songs = songsQuery.data ?? [];
+  const allSongs = songsQuery.data ?? [];
   const { data: writers = [] } = useList("song_writers");
+  const { data: formations = [] } = useList("formations", { order: { column: "name" } });
+  const { data: formationSongs = [] } = useList("formation_songs");
   const { data: events = [] } = useList("events", {
     order: { column: "event_date", ascending: false },
   });
@@ -104,12 +106,28 @@ function RepertoirePage() {
   const [editingWriterId, setEditingWriterId] = useState<string | null>(null);
   const [writer, setWriter] = useState(emptyWriter);
   const [ecadEventId, setEcadEventId] = useState("");
+  // "" = todas as formações
+  const [formationFilter, setFormationFilter] = useState("");
   const accent = useDocumentAccent();
 
   const setWriterField = (k: keyof typeof emptyWriter) => (v: string) =>
     setWriter((w) => ({ ...w, [k]: v }));
 
+  const songs = formationFilter
+    ? allSongs.filter((s) =>
+        formationSongs.some((fs) => fs.song_id === s.id && fs.formation_id === formationFilter),
+      )
+    : allSongs;
+
+  function formationNamesFor(songId: string) {
+    return formationSongs
+      .filter((fs) => fs.song_id === songId)
+      .map((fs) => formations.find((f) => f.id === fs.formation_id)?.name)
+      .filter((name): name is string => Boolean(name));
+  }
+
   const ownSongs = songs.filter((s) => s.origin === "autoral");
+
 
   function authorsFor(s: Tables<"songs">) {
     if (s.origin === "cover") return s.original_authors || "—";
