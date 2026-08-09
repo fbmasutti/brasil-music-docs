@@ -52,8 +52,7 @@ export const Route = createFileRoute("/.lovable/oauth/consent")({
   errorComponent: ({ error }) => (
     <main className="flex min-h-screen items-center justify-center px-4">
       <div className="panel max-w-md p-6 text-center text-sm text-muted-foreground">
-        Não foi possível carregar esta autorização:{" "}
-        {String((error as Error)?.message ?? error)}
+        Não foi possível carregar esta autorização: {String((error as Error)?.message ?? error)}
       </div>
     </main>
   ),
@@ -97,9 +96,7 @@ function Consent() {
           <span className="text-lg font-extrabold tracking-tight">StageKit</span>
         </div>
 
-        <h1 className="text-xl font-semibold text-foreground">
-          Conectar {clientName} à sua conta
-        </h1>
+        <h1 className="text-xl font-semibold text-foreground">Conectar {clientName} à sua conta</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {clientName} poderá ler e criar dados no StageKit em seu nome: agenda de shows,
           contratantes, repertório e dados do artista. Você pode revogar o acesso a qualquer

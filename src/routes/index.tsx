@@ -33,7 +33,7 @@ export const Route = createFileRoute("/")({
 const FEATURES = [
   {
     icon: FileSignature,
-    title: "Contratos & Recibos",
+    title: "Contratos e Documentos",
     text: "Contratos de show, RPA, carta de anuência, cessão de imagem e declarações de não vínculo com cláusulas de multa por cancelamento, hora extra e ECAD.",
   },
   {

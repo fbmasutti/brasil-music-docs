@@ -1,6 +1,7 @@
 # Diretrizes de Colaboração Multi-AI (Lovable + Claude Code + Antigravity)
 
 Este repositório (**brasil-music-docs / StageKit**) é mantido em colaboração entre três agentes de IA e o desenvolvedor:
+
 1. **Lovable**: Plataforma de prototipagem e desenvolvimento de interface rápida conectada via Git.
 2. **Claude Code**: Assistente CLI para edições e automações de código via terminal.
 3. **Antigravity**: Agente de IA para arquitetura, auditoria visual, análises complexas, testes e geração de assets/código.

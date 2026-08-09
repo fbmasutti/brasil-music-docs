@@ -48,15 +48,18 @@ Cada grupo abre/fecha, abre sozinho quando a rota ativa está dentro dele, e o e
 ## 4. Fricção zero nos fluxos
 
 **Rider & Mapa de Palco (prioridade alta)**
+
 - Entrada por presets: escolher "Voz + Violão", "Trio", "Banda Completa" ou "Samba/Pagode" já cria um rider pronto, com nome automático, e gera PDF em um clique — sem passar por formulário.
 - Único campo obrigatório vira o nome (com sugestão automática). Som, luz, backline, hospitality e rooming list vão para um bloco recolhido "Detalhes avançados (opcional)".
 - Editar um rider existente passa a ser possível na própria tela (hoje só cria e remove).
 
 **Reserva financeira / Fundo de manutenção**
+
 - Substituir o formulário atual por uma linha única: valor + botão "Guardar". Motivo e vínculo com evento ficam opcionais atrás de um toggle.
 - Botões de atalho de percentual (5% / 10% do cachê) e um card único com saldo atual + histórico enxuto.
 
 **Regra geral de formulários**
+
 - Todo formulário de cadastro (contratante, integrante, obra, formação, evento) mostra apenas o mínimo para salvar; o resto vai para "+ Adicionar dados avançados (opcional)".
 - Nenhuma ação é bloqueada por campo secundário vazio; o PDF já omite dados ausentes com elegância.
 

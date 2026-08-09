@@ -31,13 +31,13 @@ import { dateBR, NEUTRAL_TONE } from "@/lib/format";
 export const Route = createFileRoute("/_authenticated/documentos")({
   head: () => ({
     meta: [
-      { title: "Contratos & Recibos — StageKit" },
+      { title: "Contratos e Documentos — StageKit" },
       {
         name: "description",
         content:
           "Gere contratos de show, RPA, cartas de anuência, cessão de imagem, split sheets e declarações em PDF.",
       },
-      { property: "og:title", content: "Contratos & Recibos — StageKit" },
+      { property: "og:title", content: "Contratos e Documentos — StageKit" },
       {
         property: "og:description",
         content: "Modelos jurídicos prontos para a realidade da música brasileira.",
@@ -99,7 +99,7 @@ function DocumentsPage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Contratos & Recibos"
+        title="Contratos e Documentos"
         subtitle="Escolha um modelo, complete os campos e exporte o PDF. Seus dados do Dados do Artista entram automaticamente."
         actions={
           <>

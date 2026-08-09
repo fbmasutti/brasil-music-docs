@@ -148,7 +148,7 @@ function Dashboard() {
           <ToolCard
             to="/documentos"
             icon={<Receipt className="size-5" />}
-            title="Recibo, RPA & anuência"
+            title="Contratos e Documentos"
             hint="Kit de documentos"
           />
           <ToolCard

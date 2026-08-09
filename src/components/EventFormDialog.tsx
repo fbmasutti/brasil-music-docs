@@ -154,7 +154,6 @@ export function EventFormDialog({
     if (open) setForm(event ? toFormValues(event) : empty);
   }, [open, event]);
 
-
   function selectFormation(formationId: string) {
     const formation = formations.find((f) => f.id === formationId);
     setForm((f) => ({

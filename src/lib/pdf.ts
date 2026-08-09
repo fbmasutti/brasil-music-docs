@@ -251,7 +251,6 @@ export function buildPdf(spec: PdfDoc): jsPDF {
         try {
           doc.addImage(block.dataUrl, "PNG", M + (CONTENT - imgW) / 2, y - 2, imgW, imgH);
           y += imgH + 2;
-
         } catch {
           // Se a captura falhar, o documento segue sem o desenho em vez de
           // quebrar a geração inteira.

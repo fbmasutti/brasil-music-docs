@@ -121,27 +121,56 @@ function foroClause(profile: Partial<ProfileRow>, title: string): PdfBlock {
 
 const place = (profile: Partial<ProfileRow>, values: Record<string, string>) => {
   const city = values["city"] || profile.city;
-  return phrase(city ? `${city},` : "", longDateBR(values["signature_date"] || new Date().toISOString().slice(0, 10)) + ".");
+  return phrase(
+    city ? `${city},` : "",
+    longDateBR(values["signature_date"] || new Date().toISOString().slice(0, 10)) + ".",
+  );
 };
-
 
 export const DOC_TEMPLATES: DocTemplate[] = [
   {
     id: "CONTRATO_SHOW",
     label: "Contrato de Performance / Show",
     category: "Shows & Eventos",
-    description: "Contrato de apresentação artística com cachê, sinal, multa por cancelamento, hora extra e responsabilidade de ECAD.",
+    description:
+      "Contrato de apresentação artística com cachê, sinal, multa por cancelamento, hora extra e responsabilidade de ECAD.",
     useClient: true,
     useEvent: true,
     fields: [
       { name: "signature_date", label: "Data de assinatura", type: "date" },
       { name: "city", label: "Cidade de assinatura", type: "text" },
-      { name: "duration_minutes", label: "Duração da apresentação (min)", type: "number", placeholder: "90" },
-      { name: "soundcheck_limit", label: "Limite de passagem de som", type: "text", placeholder: "até 90 minutos, encerrando 1h antes da abertura" },
+      {
+        name: "duration_minutes",
+        label: "Duração da apresentação (min)",
+        type: "number",
+        placeholder: "90",
+      },
+      {
+        name: "soundcheck_limit",
+        label: "Limite de passagem de som",
+        type: "text",
+        placeholder: "até 90 minutos, encerrando 1h antes da abertura",
+      },
       { name: "overtime_rate", label: "Valor da hora extra", type: "money" },
-      { name: "ecad_responsible", label: "Responsável pelo ECAD", type: "select", options: ["CONTRATANTE", "CONTRATADO"] },
-      { name: "tax_responsible", label: "Responsável por tributos/retenções", type: "select", options: ["CONTRATANTE", "CONTRATADO"] },
-      { name: "cancellation_policy", label: "Política de cancelamento pelo contratante", type: "textarea", wide: true, placeholder: "Cancelamento com menos de 72h mantém 100% do cachê como multa compensatória." },
+      {
+        name: "ecad_responsible",
+        label: "Responsável pelo ECAD",
+        type: "select",
+        options: ["CONTRATANTE", "CONTRATADO"],
+      },
+      {
+        name: "tax_responsible",
+        label: "Responsável por tributos/retenções",
+        type: "select",
+        options: ["CONTRATANTE", "CONTRATADO"],
+      },
+      {
+        name: "cancellation_policy",
+        label: "Política de cancelamento pelo contratante",
+        type: "textarea",
+        wide: true,
+        placeholder: "Cancelamento com menos de 72h mantém 100% do cachê como multa compensatória.",
+      },
       { name: "extra_clauses", label: "Cláusulas adicionais", type: "textarea", wide: true },
     ],
     build: ({ values, profile, client, event }) => {
@@ -156,7 +185,9 @@ export const DOC_TEMPLATES: DocTemplate[] = [
             "CONTRATANTE:",
             client?.legal_name || client?.name || "a parte contratante qualificada abaixo",
             client?.doc ? `, inscrito(a) sob nº ${client.doc}` : "",
-            client?.address || client?.city ? `, com endereço em ${join([client?.address, client?.city, client?.state])}` : "",
+            client?.address || client?.city
+              ? `, com endereço em ${join([client?.address, client?.city, client?.state])}`
+              : "",
             client?.contact_name ? `, representado(a) por ${client.contact_name}` : "",
             ".",
           ),
@@ -167,8 +198,12 @@ export const DOC_TEMPLATES: DocTemplate[] = [
             "CONTRATADO:",
             profile.legal_name || profile.stage_name || "o(a) artista contratado(a)",
             profile.cpf_cnpj ? `, inscrito(a) no ${docLabel(profile)} nº ${profile.cpf_cnpj}` : "",
-            profile.stage_name && profile.legal_name ? `, atuando artisticamente como "${profile.stage_name}"` : "",
-            profile.address || profile.city ? `, com endereço em ${join([profile.address, profile.city, profile.state])}` : "",
+            profile.stage_name && profile.legal_name
+              ? `, atuando artisticamente como "${profile.stage_name}"`
+              : "",
+            profile.address || profile.city
+              ? `, com endereço em ${join([profile.address, profile.city, profile.state])}`
+              : "",
             ".",
           ),
         },
@@ -176,14 +211,19 @@ export const DOC_TEMPLATES: DocTemplate[] = [
           ? [{ type: "kv" as const, rows: [...clientBlock(client), ...artistBlock(profile)] }]
           : []),
         ...(eventBlock(event).length
-          ? ([{ type: "heading", text: "Do objeto" }, { type: "kv", rows: eventBlock(event) }] as PdfBlock[])
+          ? ([
+              { type: "heading", text: "Do objeto" },
+              { type: "kv", rows: eventBlock(event) },
+            ] as PdfBlock[])
           : []),
         {
           type: "clause",
           title: "CLÁUSULA 1ª — OBJETO",
           text: phrase(
             "O CONTRATADO se obriga a realizar apresentação musical no evento acima descrito",
-            values["duration_minutes"] ? `, com duração aproximada de ${values["duration_minutes"]} minutos` : "",
+            values["duration_minutes"]
+              ? `, com duração aproximada de ${values["duration_minutes"]} minutos`
+              : "",
             ", em repertório de sua livre escolha, salvo acordo expresso entre as partes.",
           ),
         },
@@ -212,7 +252,9 @@ export const DOC_TEMPLATES: DocTemplate[] = [
               ? `A passagem de som observará o limite de ${values["soundcheck_limit"]}.`
               : "A passagem de som observará o limite acordado entre as partes.",
             "Prorrogação da apresentação por solicitação do CONTRATANTE será remunerada",
-            values["overtime_rate"] ? `a ${values["overtime_rate"]}` : "em valor a ser previamente acordado",
+            values["overtime_rate"]
+              ? `a ${values["overtime_rate"]}`
+              : "em valor a ser previamente acordado",
             "por hora adicional iniciada.",
           ),
         },
@@ -245,33 +287,62 @@ export const DOC_TEMPLATES: DocTemplate[] = [
         },
         foroClause(profile, "CLÁUSULA 9ª — FORO"),
         ...(values["extra_clauses"]
-          ? [{ type: "clause" as const, title: "CLÁUSULA 10ª — DISPOSIÇÕES ADICIONAIS", text: values["extra_clauses"] }]
+          ? [
+              {
+                type: "clause" as const,
+                title: "CLÁUSULA 10ª — DISPOSIÇÕES ADICIONAIS",
+                text: values["extra_clauses"],
+              },
+            ]
           : []),
         { type: "para", text: place(profile, values) },
         {
           type: "signatures",
           names: [
             client?.name || "CONTRATANTE",
-            phrase(profile.stage_name || "CONTRATADO", profile.legal_name ? `— ${profile.legal_name}` : ""),
+            phrase(
+              profile.stage_name || "CONTRATADO",
+              profile.legal_name ? `— ${profile.legal_name}` : "",
+            ),
           ],
         },
-        { type: "note", text: "Espaço reservado para assinatura digital (Gov.br / Clicksign / ZapSign) ou reconhecimento de firma." },
+        {
+          type: "note",
+          text: "Espaço reservado para assinatura digital (Gov.br / Clicksign / ZapSign) ou reconhecimento de firma.",
+        },
       ];
     },
-
   },
   {
     id: "CARTA_ANUENCIA",
     label: "Carta de Anuência / Exclusividade",
     category: "Fomento & Editais",
-    description: "Declaração formal autorizando produtor ou gestor a representar o artista em projeto ou edital.",
+    description:
+      "Declaração formal autorizando produtor ou gestor a representar o artista em projeto ou edital.",
     fields: [
       { name: "producer_name", label: "Produtor / Proponente", type: "text" },
       { name: "producer_doc", label: "CPF/CNPJ do proponente", type: "text" },
       { name: "project_name", label: "Nome do projeto", type: "text", wide: true },
-      { name: "edital", label: "Edital / Programa", type: "select", options: ["Lei Rouanet", "PNAB", "LPG (Lei Paulo Gustavo)", "ProAC", "Edital municipal", "Outro"] },
+      {
+        name: "edital",
+        label: "Edital / Programa",
+        type: "select",
+        options: [
+          "Lei Rouanet",
+          "PNAB",
+          "LPG (Lei Paulo Gustavo)",
+          "ProAC",
+          "Edital municipal",
+          "Outro",
+        ],
+      },
       { name: "dates", label: "Datas / período de vigência", type: "text", wide: true },
-      { name: "exclusive", label: "Exclusividade", type: "select", options: ["Sim, exclusiva para o projeto", "Não exclusiva"] },
+      {
+        name: "exclusive",
+        label: "Exclusividade",
+        type: "select",
+        options: ["Sim, exclusiva para o projeto", "Não exclusiva"],
+      },
       { name: "city", label: "Cidade de assinatura", type: "text" },
       { name: "signature_date", label: "Data de assinatura", type: "date" },
     ],
@@ -281,11 +352,17 @@ export const DOC_TEMPLATES: DocTemplate[] = [
         text: phrase(
           "Eu,",
           profile.legal_name || profile.stage_name || "artista signatário(a)",
-          profile.cpf_cnpj ? `, inscrito(a) no ${docLabel(profile)} sob nº ${profile.cpf_cnpj}` : "",
-          profile.stage_name && profile.legal_name ? `, atuando artisticamente como "${profile.stage_name}"` : "",
+          profile.cpf_cnpj
+            ? `, inscrito(a) no ${docLabel(profile)} sob nº ${profile.cpf_cnpj}`
+            : "",
+          profile.stage_name && profile.legal_name
+            ? `, atuando artisticamente como "${profile.stage_name}"`
+            : "",
           `, DECLARO para os devidos fins de comprovação junto ao ${values["edital"] || "edital de fomento"} que ANUO com a apresentação do projeto`,
           values["project_name"] ? `"${values["project_name"]}"` : "objeto desta anuência",
-          values["producer_name"] ? `pelo(a) proponente ${values["producer_name"]}` : "pelo(a) proponente indicado(a)",
+          values["producer_name"]
+            ? `pelo(a) proponente ${values["producer_name"]}`
+            : "pelo(a) proponente indicado(a)",
           values["producer_doc"] ? `, inscrito(a) sob nº ${values["producer_doc"]}` : "",
           ", autorizando-o(a) a me representar perante o órgão de fomento para os fins do referido projeto.",
         ),
@@ -298,7 +375,10 @@ export const DOC_TEMPLATES: DocTemplate[] = [
           ".",
         ),
       },
-      { type: "para", text: "Declaro estar ciente do plano de trabalho, do orçamento previsto para o meu cachê e das obrigações de contrapartida vinculadas ao projeto." },
+      {
+        type: "para",
+        text: "Declaro estar ciente do plano de trabalho, do orçamento previsto para o meu cachê e das obrigações de contrapartida vinculadas ao projeto.",
+      },
       {
         type: "kv",
         rows: kvRows([
@@ -316,22 +396,37 @@ export const DOC_TEMPLATES: DocTemplate[] = [
           ),
         ],
       },
-      { type: "note", text: "Documento pode exigir firma reconhecida em cartório ou assinatura digital ICP-Brasil / Gov.br conforme o edital." },
+      {
+        type: "note",
+        text: "Documento pode exigir firma reconhecida em cartório ou assinatura digital ICP-Brasil / Gov.br conforme o edital.",
+      },
     ],
-
   },
   {
     id: "CESSAO_IMAGEM",
     label: "Termo de Cessão de Imagem e Voz",
     category: "Fomento & Editais",
-    description: "Autorização de uso de imagem, voz e performance para músicos de apoio, convidados e audiovisual.",
+    description:
+      "Autorização de uso de imagem, voz e performance para músicos de apoio, convidados e audiovisual.",
     fields: [
       { name: "grantor_name", label: "Cedente (nome completo)", type: "text" },
       { name: "grantor_doc", label: "CPF do cedente", type: "text" },
       { name: "grantor_role", label: "Função no projeto", type: "text" },
       { name: "project_name", label: "Projeto / obra", type: "text", wide: true },
-      { name: "scope", label: "Abrangência de uso", type: "textarea", wide: true, placeholder: "Uso em audiovisual, redes sociais, plataformas de streaming, materiais de divulgação e prestação de contas do edital." },
-      { name: "term", label: "Prazo da cessão", type: "select", options: ["Prazo indeterminado", "5 anos", "10 anos"] },
+      {
+        name: "scope",
+        label: "Abrangência de uso",
+        type: "textarea",
+        wide: true,
+        placeholder:
+          "Uso em audiovisual, redes sociais, plataformas de streaming, materiais de divulgação e prestação de contas do edital.",
+      },
+      {
+        name: "term",
+        label: "Prazo da cessão",
+        type: "select",
+        options: ["Prazo indeterminado", "5 anos", "10 anos"],
+      },
       { name: "onerous", label: "Natureza", type: "select", options: ["Gratuita", "Onerosa"] },
       { name: "city", label: "Cidade de assinatura", type: "text" },
       { name: "signature_date", label: "Data de assinatura", type: "date" },
@@ -350,25 +445,37 @@ export const DOC_TEMPLATES: DocTemplate[] = [
           ".",
         ),
       },
-      { type: "para", text: `Abrangência: ${values["scope"] || "reprodução, distribuição, comunicação ao público e divulgação em quaisquer mídias, inclusive digitais."}` },
-      { type: "para", text: `Prazo: ${values["term"] || "prazo indeterminado"}, em território nacional e internacional, sem limite de número de exibições.` },
-      { type: "para", text: "A presente autorização não implica vínculo empregatício, societário ou de exclusividade entre as partes." },
+      {
+        type: "para",
+        text: `Abrangência: ${values["scope"] || "reprodução, distribuição, comunicação ao público e divulgação em quaisquer mídias, inclusive digitais."}`,
+      },
+      {
+        type: "para",
+        text: `Prazo: ${values["term"] || "prazo indeterminado"}, em território nacional e internacional, sem limite de número de exibições.`,
+      },
+      {
+        type: "para",
+        text: "A presente autorização não implica vínculo empregatício, societário ou de exclusividade entre as partes.",
+      },
       { type: "para", text: place(profile, values) },
       {
         type: "signatures",
         names: [
-          phrase(values["grantor_name"] || "Cedente", values["grantor_doc"] ? `— CPF ${values["grantor_doc"]}` : ""),
+          phrase(
+            values["grantor_name"] || "Cedente",
+            values["grantor_doc"] ? `— CPF ${values["grantor_doc"]}` : "",
+          ),
           profile.stage_name || "Cessionário",
         ],
       },
     ],
-
   },
   {
     id: "DECLARACAO_NAO_VINCULO",
     label: "Declaração de Não Vínculo Empregatício",
     category: "Fomento & Editais",
-    description: "Modelo padrão de declaração de regularidade e ausência de vínculo para submissão em editais.",
+    description:
+      "Modelo padrão de declaração de regularidade e ausência de vínculo para submissão em editais.",
     fields: [
       { name: "counterparty", label: "Contratante / Proponente", type: "text" },
       { name: "project_name", label: "Projeto", type: "text", wide: true },
@@ -389,7 +496,10 @@ export const DOC_TEMPLATES: DocTemplate[] = [
         ),
       },
 
-      { type: "para", text: "DECLARO ainda estar em situação regular perante as Fazendas Federal, Estadual e Municipal, a Justiça do Trabalho e o FGTS, comprometendo-me a apresentar as respectivas certidões negativas quando solicitadas." },
+      {
+        type: "para",
+        text: "DECLARO ainda estar em situação regular perante as Fazendas Federal, Estadual e Municipal, a Justiça do Trabalho e o FGTS, comprometendo-me a apresentar as respectivas certidões negativas quando solicitadas.",
+      },
       { type: "kv", rows: artistBlock(profile) },
       { type: "para", text: place(profile, values) },
       { type: "signatures", names: [razaoSocial(profile) || "Declarante"] },
@@ -399,12 +509,19 @@ export const DOC_TEMPLATES: DocTemplate[] = [
     id: "SPLIT_SHEET",
     label: "Split Sheet de Autoria",
     category: "Direito Autoral",
-    description: "Acordo de percentuais de composição e produção entre co-autores, pronto para registro na associação.",
+    description:
+      "Acordo de percentuais de composição e produção entre co-autores, pronto para registro na associação.",
     fields: [
       { name: "song_title", label: "Título da obra", type: "text", wide: true },
       { name: "iswc", label: "ISWC", type: "text" },
       { name: "isrc", label: "ISRC do fonograma", type: "text" },
-      { name: "writers", label: "Autores (um por linha: Nome | Função | % | CAE/IPI | Associação)", type: "textarea", wide: true, placeholder: "Ana Souza | Letra e música | 50 | 00123456789 | UBC" },
+      {
+        name: "writers",
+        label: "Autores (um por linha: Nome | Função | % | CAE/IPI | Associação)",
+        type: "textarea",
+        wide: true,
+        placeholder: "Ana Souza | Letra e música | 50 | 00123456789 | UBC",
+      },
       { name: "publisher", label: "Editora", type: "text" },
       { name: "city", label: "Cidade de assinatura", type: "text" },
       { name: "signature_date", label: "Data de assinatura", type: "date" },
@@ -442,18 +559,24 @@ export const DOC_TEMPLATES: DocTemplate[] = [
               },
             ]
           : []),
-        { type: "para", text: "As partes declaram que os percentuais acima refletem integralmente a contribuição criativa de cada titular na obra musical, autorizando o registro desta divisão junto às associações de gestão coletiva e ao ECAD." },
+        {
+          type: "para",
+          text: "As partes declaram que os percentuais acima refletem integralmente a contribuição criativa de cada titular na obra musical, autorizando o registro desta divisão junto às associações de gestão coletiva e ao ECAD.",
+        },
         { type: "para", text: place(profile, values) },
-        { type: "signatures", names: lines.length ? lines.map((p) => p[0] ?? "") : ["Autor 1", "Autor 2"] },
+        {
+          type: "signatures",
+          names: lines.length ? lines.map((p) => p[0] ?? "") : ["Autor 1", "Autor 2"],
+        },
       ];
-
     },
   },
   {
     id: "FICHA_FONOGRAMA",
     label: "Ficha Técnica de Fonograma (ISRC/ISWC)",
     category: "Direito Autoral",
-    description: "Metadados completos da obra e do fonograma prontos para envio à associação e distribuidora.",
+    description:
+      "Metadados completos da obra e do fonograma prontos para envio à associação e distribuidora.",
     fields: [
       { name: "song_title", label: "Título", type: "text", wide: true },
       { name: "genre", label: "Gênero", type: "text" },
@@ -461,7 +584,12 @@ export const DOC_TEMPLATES: DocTemplate[] = [
       { name: "isrc", label: "ISRC", type: "text" },
       { name: "iswc", label: "ISWC", type: "text" },
       { name: "writers", label: "Compositores e percentuais", type: "textarea", wide: true },
-      { name: "performers", label: "Intérpretes e músicos acompanhantes", type: "textarea", wide: true },
+      {
+        name: "performers",
+        label: "Intérpretes e músicos acompanhantes",
+        type: "textarea",
+        wide: true,
+      },
       { name: "producer", label: "Produtor fonográfico", type: "text" },
       { name: "studio", label: "Estúdio / Data de gravação", type: "text" },
       { name: "label", label: "Selo / Editora", type: "text" },
@@ -483,30 +611,54 @@ export const DOC_TEMPLATES: DocTemplate[] = [
         ]),
       },
       ...(values["writers"]
-        ? ([{ type: "heading", text: "Compositores" }, { type: "para", text: values["writers"] }] as PdfBlock[])
+        ? ([
+            { type: "heading", text: "Compositores" },
+            { type: "para", text: values["writers"] },
+          ] as PdfBlock[])
         : []),
       ...(values["performers"]
-        ? ([{ type: "heading", text: "Intérpretes e músicos" }, { type: "para", text: values["performers"] }] as PdfBlock[])
+        ? ([
+            { type: "heading", text: "Intérpretes e músicos" },
+            { type: "para", text: values["performers"] },
+          ] as PdfBlock[])
         : []),
-      { type: "note", text: "Documento preparatório para cadastro de obra (ISWC) e fonograma (ISRC) junto à associação de gestão coletiva." },
+      {
+        type: "note",
+        text: "Documento preparatório para cadastro de obra (ISWC) e fonograma (ISRC) junto à associação de gestão coletiva.",
+      },
     ],
-
   },
   {
     id: "CONTRATO_AULAS",
     label: "Contrato de Aulas / Mentoria",
     category: "Educação & Serviços",
-    description: "Contrato de prestação de serviços educacionais com frequência, valores e política de faltas.",
+    description:
+      "Contrato de prestação de serviços educacionais com frequência, valores e política de faltas.",
     useClient: true,
     fields: [
       { name: "student_name", label: "Aluno(a) / Responsável", type: "text" },
       { name: "student_doc", label: "CPF do aluno/responsável", type: "text" },
-      { name: "modality", label: "Modalidade", type: "select", options: ["Presencial", "Online", "Híbrida"] },
+      {
+        name: "modality",
+        label: "Modalidade",
+        type: "select",
+        options: ["Presencial", "Online", "Híbrida"],
+      },
       { name: "instrument", label: "Instrumento / Conteúdo", type: "text" },
-      { name: "frequency", label: "Frequência e duração", type: "text", placeholder: "1 aula semanal de 50 minutos" },
+      {
+        name: "frequency",
+        label: "Frequência e duração",
+        type: "text",
+        placeholder: "1 aula semanal de 50 minutos",
+      },
       { name: "monthly_fee", label: "Mensalidade", type: "money" },
       { name: "due_day", label: "Dia de vencimento", type: "number" },
-      { name: "cancel_policy", label: "Política de faltas e reposição", type: "textarea", wide: true },
+      {
+        name: "cancel_policy",
+        label: "Política de faltas e reposição",
+        type: "textarea",
+        wide: true,
+      },
       { name: "city", label: "Cidade de assinatura", type: "text" },
       { name: "signature_date", label: "Data de assinatura", type: "date" },
     ],
@@ -545,8 +697,18 @@ export const DOC_TEMPLATES: DocTemplate[] = [
           profile.pix_key ? `Pagamentos via PIX ${profile.pix_key}.` : "",
         ),
       },
-      { type: "clause", title: "CLÁUSULA 3ª — FALTAS E REPOSIÇÕES", text: values["cancel_policy"] || "Aulas canceladas pelo aluno com menos de 24 horas de antecedência não serão repostas. Cancelamentos pelo professor serão repostos em data acordada entre as partes." },
-      { type: "clause", title: "CLÁUSULA 4ª — NATUREZA", text: "O presente contrato é de natureza civil, não gerando vínculo empregatício entre as partes." },
+      {
+        type: "clause",
+        title: "CLÁUSULA 3ª — FALTAS E REPOSIÇÕES",
+        text:
+          values["cancel_policy"] ||
+          "Aulas canceladas pelo aluno com menos de 24 horas de antecedência não serão repostas. Cancelamentos pelo professor serão repostos em data acordada entre as partes.",
+      },
+      {
+        type: "clause",
+        title: "CLÁUSULA 4ª — NATUREZA",
+        text: "O presente contrato é de natureza civil, não gerando vínculo empregatício entre as partes.",
+      },
       {
         type: "clause",
         title: "CLÁUSULA 5ª — VIGÊNCIA E RESCISÃO",
@@ -554,9 +716,11 @@ export const DOC_TEMPLATES: DocTemplate[] = [
       },
       foroClause(profile, "CLÁUSULA 6ª — FORO"),
       { type: "para", text: place(profile, values) },
-      { type: "signatures", names: [values["student_name"] || "Aluno(a)", profile.stage_name || "Professor(a)"] },
+      {
+        type: "signatures",
+        names: [values["student_name"] || "Aluno(a)", profile.stage_name || "Professor(a)"],
+      },
     ],
-
   },
   {
     id: "RPA",
@@ -577,7 +741,10 @@ export const DOC_TEMPLATES: DocTemplate[] = [
       { name: "signature_date", label: "Data", type: "date" },
     ],
     build: ({ values, profile, client }) => [
-      { type: "kv", rows: [...kvRows([["Recibo nº", values["receipt_number"]]]), ...clientBlock(client)] },
+      {
+        type: "kv",
+        rows: [...kvRows([["Recibo nº", values["receipt_number"]]]), ...clientBlock(client)],
+      },
       { type: "heading", text: "Prestador" },
       { type: "kv", rows: artistBlock(profile) },
       ...(values["service_description"]
@@ -598,7 +765,10 @@ export const DOC_TEMPLATES: DocTemplate[] = [
           ["Valor líquido recebido", values["net_value"]],
         ]),
       },
-      { type: "para", text: `Declaro ter recebido a importância líquida acima descrita, dando plena e geral quitação pelos serviços prestados. ${place(profile, values)}` },
+      {
+        type: "para",
+        text: `Declaro ter recebido a importância líquida acima descrita, dando plena e geral quitação pelos serviços prestados. ${place(profile, values)}`,
+      },
       {
         type: "signatures",
         names: [
@@ -609,7 +779,6 @@ export const DOC_TEMPLATES: DocTemplate[] = [
         ],
       },
     ],
-
   },
 ];
 

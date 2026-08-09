@@ -1,4 +1,5 @@
 <!-- LOVABLE:BEGIN -->
+
 > [!IMPORTANT]
 > This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
 > published git history — force pushing, or rebasing/amending/squashing commits
@@ -7,6 +8,7 @@
 >
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
+
 <!-- LOVABLE:END -->
 
 ## Multi-AI Collaboration (Lovable + Claude Code + Antigravity)
@@ -16,4 +18,3 @@
 - **Claude Code**: Atua no terminal via CLI para tarefas ágeis de edição e automação.
 - **Lovable**: Interface visual e prototipagem contínua.
 - **Regras Gerais**: Consultar [.agents/rules/collaboration.md](file:///Users/fbmasutti/.gemini/antigravity/scratch/brasil-music-docs/.agents/rules/collaboration.md).
-

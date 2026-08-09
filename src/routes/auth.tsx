@@ -18,9 +18,12 @@ export const Route = createFileRoute("/auth")({
     modo: search["modo"] === "criar" ? "criar" : search["modo"] === "entrar" ? "entrar" : undefined,
     // usado pelo fluxo de consentimento OAuth (integrações de agentes) para voltar
     // à tela de autorização depois do login
-    next: typeof search["next"] === "string" && search["next"].startsWith("/") && !search["next"].startsWith("//")
-      ? search["next"]
-      : undefined,
+    next:
+      typeof search["next"] === "string" &&
+      search["next"].startsWith("/") &&
+      !search["next"].startsWith("//")
+        ? search["next"]
+        : undefined,
   }),
   head: () => ({
     meta: [

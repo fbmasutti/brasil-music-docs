@@ -134,5 +134,8 @@ Deno.serve(async (req) => {
       .eq("id", event.id);
   }
 
-  return json({ ok: true, google_calendar_event_id: gcalData.id ?? event.google_calendar_event_id });
+  return json({
+    ok: true,
+    google_calendar_event_id: gcalData.id ?? event.google_calendar_event_id,
+  });
 });

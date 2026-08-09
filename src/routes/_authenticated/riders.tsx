@@ -39,7 +39,8 @@ import {
   StagePlotPrintable,
   parseStagePlot,
   PRINT_PLOT_WIDTH,
-  PRINT_PLOT_HEIGHT,
+  PRINT_PLOT_HEIGHT_PORTRAIT,
+  PRINT_PLOT_HEIGHT_LANDSCAPE,
   type StageItem,
 } from "@/components/StagePlot";
 import { toPng } from "html-to-image";
@@ -294,6 +295,8 @@ function RidersPage() {
   function exportRider(rider: RiderRow, plotImage: string | null, orientation: PdfOrientation) {
     const channels = Array.isArray(rider.channel_list) ? (rider.channel_list as string[]) : [];
     const plot = parseStagePlot(rider.stage_plot);
+    const plotHeight =
+      orientation === "paisagem" ? PRINT_PLOT_HEIGHT_LANDSCAPE : PRINT_PLOT_HEIGHT_PORTRAIT;
     downloadPdf(
       {
         title: `Rider técnico — ${rider.name}`,
@@ -301,7 +304,7 @@ function RidersPage() {
         subtitle: profile?.legal_name ?? "Rider técnico e de hospitalidade",
         footer: `${profile?.stage_name ?? "StageKit"} · rider técnico`,
         accent: accentForRider(rider),
-        orientation,
+        orientation: "retrato",
         blocks: [
           ...(channels.length
             ? ([
@@ -316,16 +319,13 @@ function RidersPage() {
           ...(plot.length
             ? ([
                 { type: "heading", text: "Mapa de palco" },
-                // Desenho de verdade. Antes isto era uma tabela de texto
-                // ("Bateria — linha 1, coluna 2"), que não comunica posição
-                // para quem monta o palco.
                 ...(plotImage
                   ? ([
                       {
                         type: "image",
                         dataUrl: plotImage,
-                        aspect: PRINT_PLOT_WIDTH / PRINT_PLOT_HEIGHT,
-                        caption: "Visão de quem está na plateia olhando para o palco.",
+                        aspect: PRINT_PLOT_WIDTH / plotHeight,
+                        caption: `Visão da plateia para o palco (${orientation === "paisagem" ? "mapa em formato amplo / paisagem" : "mapa em formato retrato"}).`,
                       },
                     ] as PdfBlock[])
                   : ([
@@ -464,108 +464,115 @@ function RidersPage() {
               <TabsTrigger value="mapa">Mapa de palco ({stage.length})</TabsTrigger>
             </TabsList>
             <TabsContent value="rider" className="space-y-4">
-            <div className="space-y-2">
-              <Label>Channel list</Label>
-              {channels.length === 0 ? (
-                <p className="text-xs text-muted-foreground">Nenhum canal ainda.</p>
-              ) : (
-                <div className="space-y-2">
-                  {channels.map((row) => (
-                    <div key={row.id} className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
-                      <Input
-                        value={row.instrument}
-                        onChange={(e) => updateChannelRow(row.id, { instrument: e.target.value })}
-                        placeholder="Instrumento (ex.: Bumbo)"
-                        className="flex-1"
-                      />
-                      <Select
-                        value={MIC_OPTIONS.includes(row.mic) ? row.mic : ""}
-                        onValueChange={(v) => updateChannelRow(row.id, { mic: v })}
+              <div className="space-y-2">
+                <Label>Channel list</Label>
+                {channels.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Nenhum canal ainda.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {channels.map((row) => (
+                      <div
+                        key={row.id}
+                        className="flex flex-wrap items-center gap-2 sm:flex-nowrap"
                       >
-                        <SelectTrigger className="w-44 shrink-0">
-                          <SelectValue placeholder="Microfone" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {MIC_OPTIONS.map((m) => (
-                            <SelectItem key={m} value={m}>
-                              {m}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        value={row.mic}
-                        onChange={(e) => updateChannelRow(row.id, { mic: e.target.value })}
-                        placeholder="Ou digite (ex.: Beta 91 sob o bumbo)"
-                        className="flex-1"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Remover canal"
-                        onClick={() => removeChannelRow(row.id)}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <Button type="button" variant="outline" size="sm" onClick={addChannelRow}>
-                <Plus className="mr-1 size-4" /> Adicionar canal
-              </Button>
-            </div>
-            <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
-              <CollapsibleTrigger className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
-                <ChevronDown
-                  className={`size-4 transition-transform ${advancedOpen ? "rotate-180" : ""}`}
-                />
-                {advancedOpen ? "Ocultar" : "+ Adicionar"} detalhes avançados (opcional)
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-3 space-y-4">
-                <FieldGrid>
-                  <TextField
-                    label="Mesa / Console"
-                    value={form.console_specs}
-                    onChange={set("console_specs")}
-                    placeholder="Digital, mínimo 16 canais"
+                        <Input
+                          value={row.instrument}
+                          onChange={(e) => updateChannelRow(row.id, { instrument: e.target.value })}
+                          placeholder="Instrumento (ex.: Bumbo)"
+                          className="flex-1"
+                        />
+                        <Select
+                          value={MIC_OPTIONS.includes(row.mic) ? row.mic : ""}
+                          onValueChange={(v) => updateChannelRow(row.id, { mic: v })}
+                        >
+                          <SelectTrigger className="w-44 shrink-0">
+                            <SelectValue placeholder="Microfone" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {MIC_OPTIONS.map((m) => (
+                              <SelectItem key={m} value={m}>
+                                {m}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          value={row.mic}
+                          onChange={(e) => updateChannelRow(row.id, { mic: e.target.value })}
+                          placeholder="Ou digite (ex.: Beta 91 sob o bumbo)"
+                          className="flex-1"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Remover canal"
+                          onClick={() => removeChannelRow(row.id)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <Button type="button" variant="outline" size="sm" onClick={addChannelRow}>
+                  <Plus className="mr-1 size-4" /> Adicionar canal
+                </Button>
+              </div>
+              <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+                <CollapsibleTrigger className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+                  <ChevronDown
+                    className={`size-4 transition-transform ${advancedOpen ? "rotate-180" : ""}`}
                   />
-                  <TextField
-                    label="P.A."
-                    value={form.pa_specs}
-                    onChange={set("pa_specs")}
-                    placeholder="Line array, compatível com o público"
+                  {advancedOpen ? "Ocultar" : "+ Adicionar"} detalhes avançados (opcional)
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-3 space-y-4">
+                  <FieldGrid>
+                    <TextField
+                      label="Mesa / Console"
+                      value={form.console_specs}
+                      onChange={set("console_specs")}
+                      placeholder="Digital, mínimo 16 canais"
+                    />
+                    <TextField
+                      label="P.A."
+                      value={form.pa_specs}
+                      onChange={set("pa_specs")}
+                      placeholder="Line array, compatível com o público"
+                    />
+                    <TextField
+                      label="Monitores"
+                      value={form.monitor_specs}
+                      onChange={set("monitor_specs")}
+                      placeholder="4 vias independentes ou in-ear"
+                    />
+                  </FieldGrid>
+                  <TextAreaField
+                    label="Observações gerais de som"
+                    value={form.sound_requirements}
+                    onChange={set("sound_requirements")}
                   />
-                  <TextField
-                    label="Monitores"
-                    value={form.monitor_specs}
-                    onChange={set("monitor_specs")}
-                    placeholder="4 vias independentes ou in-ear"
+                  <TextAreaField
+                    label="Iluminação"
+                    value={form.lighting_requirements}
+                    onChange={set("lighting_requirements")}
                   />
-                </FieldGrid>
-                <TextAreaField
-                  label="Observações gerais de som"
-                  value={form.sound_requirements}
-                  onChange={set("sound_requirements")}
-                />
-                <TextAreaField
-                  label="Iluminação"
-                  value={form.lighting_requirements}
-                  onChange={set("lighting_requirements")}
-                />
-                <TextAreaField label="Backline" value={form.backline} onChange={set("backline")} />
-                <TextAreaField
-                  label="Hospitality / camarim"
-                  value={form.hospitality}
-                  onChange={set("hospitality")}
-                />
-                <TextAreaField
-                  label="Rooming list / transporte"
-                  value={form.rooming_list}
-                  onChange={set("rooming_list")}
-                />
-              </CollapsibleContent>
-            </Collapsible>
+                  <TextAreaField
+                    label="Backline"
+                    value={form.backline}
+                    onChange={set("backline")}
+                  />
+                  <TextAreaField
+                    label="Hospitality / camarim"
+                    value={form.hospitality}
+                    onChange={set("hospitality")}
+                  />
+                  <TextAreaField
+                    label="Rooming list / transporte"
+                    value={form.rooming_list}
+                    onChange={set("rooming_list")}
+                  />
+                </CollapsibleContent>
+              </Collapsible>
             </TabsContent>
             <TabsContent value="mapa" className="space-y-3">
               <StagePlot items={stage} onChange={setStage} />
@@ -609,14 +616,14 @@ function RidersPage() {
                       size="sm"
                       onClick={() => setPendingExport({ rider: r, orientation: "retrato" })}
                     >
-                      <Download className="mr-1 size-4" /> PDF retrato
+                      <Download className="mr-1 size-4" /> PDF (Mapa Retrato)
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setPendingExport({ rider: r, orientation: "paisagem" })}
                     >
-                      <Download className="mr-1 size-4" /> PDF paisagem
+                      <Download className="mr-1 size-4" /> PDF (Mapa Amplo)
                     </Button>
                     <Button
                       variant="ghost"
@@ -660,7 +667,10 @@ function RidersPage() {
       {pendingExport ? (
         <div aria-hidden style={{ position: "fixed", left: -9999, top: 0, pointerEvents: "none" }}>
           <div ref={printRef}>
-            <StagePlotPrintable items={parseStagePlot(pendingExport.rider.stage_plot)} />
+            <StagePlotPrintable
+              items={parseStagePlot(pendingExport.rider.stage_plot)}
+              orientation={pendingExport.orientation}
+            />
           </div>
         </div>
       ) : null}

@@ -4,7 +4,6 @@
 
 O app está com erro de compilação porque a integração do Google Calendar já está no código, mas as colunas correspondentes nunca foram criadas no banco (`profiles.google_calendar_refresh_token`, `profiles.google_calendar_email`, `events.google_calendar_event_id`). O arquivo `supabase/migrations/20260807180000_add_google_calendar.sql` existe no repositório mas não foi executado. Aplico essa migração antes de qualquer outra coisa.
 
-
 ## 1. Rider com abas (Rider | Mapa de Palco)
 
 O modal do rider passa a ter duas abas no topo:

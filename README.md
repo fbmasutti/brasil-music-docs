@@ -12,8 +12,8 @@ Antes de cadastrar seu primeiro show, prepare a base da sua conta para automatiz
 
 Acesse [Configurações / Perfil](https://www.google.com/search?q=https://stage-kit.lovable.app/marca) e preencha suas informações cadastrais essenciais. Quanto mais completo o cadastro, mais rápido será o preenchimento de recibos e contratos:
 
-* **Dados Pessoais e Jurídicos:** Nome completo, CPF, CNPJ, MEI e Inscrição Municipal/Estadual.
-* **Endereço e Contato:** Logradouro, CEP, e-mail e telefone de contato.
+- **Dados Pessoais e Jurídicos:** Nome completo, CPF, CNPJ, MEI e Inscrição Municipal/Estadual.
+- **Endereço e Contato:** Logradouro, CEP, e-mail e telefone de contato.
 
 ---
 
@@ -21,9 +21,9 @@ Acesse [Configurações / Perfil](https://www.google.com/search?q=https://stage-
 
 Acesse a seção [Marca / Brand Kit](https://www.google.com/search?q=https://stage-kit.lovable.app/marca) para estruturar a identidade visual que servirá de base para o **Gerador de Posts**:
 
-* **Fotos e Imagens:** Faça upload das fotos de divulgação em alta resolução.
-* **Paleta de Cores:** Defina os modos de cor que melhor representam seu projeto visual.
-* **Múltiplos Brand Kits:** É possível criar diferentes perfis visuais para propostas artísticas distintas (ex: *Projeto Solo*, *Banda de Baile*, *Trio Acústico*).
+- **Fotos e Imagens:** Faça upload das fotos de divulgação em alta resolução.
+- **Paleta de Cores:** Defina os modos de cor que melhor representam seu projeto visual.
+- **Múltiplos Brand Kits:** É possível criar diferentes perfis visuais para propostas artísticas distintas (ex: _Projeto Solo_, _Banda de Baile_, _Trio Acústico_).
 
 ---
 
@@ -31,8 +31,8 @@ Acesse a seção [Marca / Brand Kit](https://www.google.com/search?q=https://sta
 
 Acesse [Contratantes](https://www.google.com/search?q=https://stage-kit.lovable.app/contratantes) e cadastre as casas de shows, produtores e parceiros com quem você costuma trabalhar:
 
-* **Informações para Emissão:** Razão Social, CNPJ/CPF, endereço completo e dados do responsável financeiro.
-* **Agilidade Futura:** Permite emitir contratos, recibos e RPAs com apenas um clique durante o fechamento de novas datas.
+- **Informações para Emissão:** Razão Social, CNPJ/CPF, endereço completo e dados do responsável financeiro.
+- **Agilidade Futura:** Permite emitir contratos, recibos e RPAs com apenas um clique durante o fechamento de novas datas.
 
 ---
 
@@ -40,10 +40,10 @@ Acesse [Contratantes](https://www.google.com/search?q=https://stage-kit.lovable.
 
 O **Dashboard** é a central de comando da sua operação artística:
 
-* **Ferramentas do Dia a Dia:** Acesso direto aos recursos essenciais ([Gerar contrato](https://www.google.com/search?q=https://stage-kit.lovable.app/documentos), [Rider pronto](https://www.google.com/search?q=https://stage-kit.lovable.app/riders), [Gerador de posts](https://www.google.com/search?q=https://stage-kit.lovable.app/gerador-cards), [Importar do WhatsApp](https://www.google.com/search?q=https://stage-kit.lovable.app/magic-paste), [Recibos](https://www.google.com/search?q=https://stage-kit.lovable.app/documentos) e [Roteiro ECAD](https://www.google.com/search?q=https://stage-kit.lovable.app/repertorio)).
-* **Próximos Compromissos:** Lista consolidada de shows e apresentações com datas, locais, cachês e status de negociação.
-* **Métricas Operacionais:** Indicadores em tempo real de shows confirmados, saldos a receber, documentos gerados e alertas de conformidade.
-* **Cadastros de Base:** Gestão centralizada de [Equipe](https://www.google.com/search?q=https://stage-kit.lovable.app/equipe), [Repertório](https://www.google.com/search?q=https://stage-kit.lovable.app/repertorio), [Formações](https://www.google.com/search?q=https://stage-kit.lovable.app/formacoes), [Portfólio](https://www.google.com/search?q=https://stage-kit.lovable.app/portfolio), [Marca](https://www.google.com/search?q=https://stage-kit.lovable.app/marca) e [Contratantes](https://www.google.com/search?q=https://stage-kit.lovable.app/contratantes).
+- **Ferramentas do Dia a Dia:** Acesso direto aos recursos essenciais ([Gerar contrato](https://www.google.com/search?q=https://stage-kit.lovable.app/documentos), [Rider pronto](https://www.google.com/search?q=https://stage-kit.lovable.app/riders), [Gerador de posts](https://www.google.com/search?q=https://stage-kit.lovable.app/gerador-cards), [Importar do WhatsApp](https://www.google.com/search?q=https://stage-kit.lovable.app/magic-paste), [Recibos](https://www.google.com/search?q=https://stage-kit.lovable.app/documentos) e [Roteiro ECAD](https://www.google.com/search?q=https://stage-kit.lovable.app/repertorio)).
+- **Próximos Compromissos:** Lista consolidada de shows e apresentações com datas, locais, cachês e status de negociação.
+- **Métricas Operacionais:** Indicadores em tempo real de shows confirmados, saldos a receber, documentos gerados e alertas de conformidade.
+- **Cadastros de Base:** Gestão centralizada de [Equipe](https://www.google.com/search?q=https://stage-kit.lovable.app/equipe), [Repertório](https://www.google.com/search?q=https://stage-kit.lovable.app/repertorio), [Formações](https://www.google.com/search?q=https://stage-kit.lovable.app/formacoes), [Portfólio](https://www.google.com/search?q=https://stage-kit.lovable.app/portfolio), [Marca](https://www.google.com/search?q=https://stage-kit.lovable.app/marca) e [Contratantes](https://www.google.com/search?q=https://stage-kit.lovable.app/contratantes).
 
 ---
 
@@ -51,19 +51,19 @@ O **Dashboard** é a central de comando da sua operação artística:
 
 ### Step 1: Cadastrar o Evento
 
-* **Via WhatsApp (Importação Inteligente):** Acesse a aba [Importar do WhatsApp](https://www.google.com/search?q=https://stage-kit.lovable.app/magic-paste), cole o texto da negociação enviada pelo contratante e o sistema extrairá automaticamente a data, local, horário e cachê.
-* **Manual:** Acesse a [Agenda de Shows](https://www.google.com/search?q=https://stage-kit.lovable.app/eventos) e clique em `Novo evento`.
+- **Via WhatsApp (Importação Inteligente):** Acesse a aba [Importar do WhatsApp](https://www.google.com/search?q=https://stage-kit.lovable.app/magic-paste), cole o texto da negociação enviada pelo contratante e o sistema extrairá automaticamente a data, local, horário e cachê.
+- **Manual:** Acesse a [Agenda de Shows](https://www.google.com/search?q=https://stage-kit.lovable.app/eventos) e clique em `Novo evento`.
 
 ---
 
 ### Step 2: Formações, Rider e Mapa de Palco
 
-1. Acesse [Formações & Riders](https://www.google.com/search?q=https://stage-kit.lovable.app/formacoes) para configurar seus formatos de apresentação (ex: *Duo Voz e Violão*, *Banda Completa*).
+1. Acesse [Formações & Riders](https://www.google.com/search?q=https://stage-kit.lovable.app/formacoes) para configurar seus formatos de apresentação (ex: _Duo Voz e Violão_, _Banda Completa_).
 2. O sistema gera automaticamente a documentação técnica completa:
-* **Mapa de Palco** com posicionamento visual dos integrantes.
-* **Input List / Channel List** pré-configurada.
-* **Demandas de Backline e Hospitality**.
 
+- **Mapa de Palco** com posicionamento visual dos integrantes.
+- **Input List / Channel List** pré-configurada.
+- **Demandas de Backline e Hospitality**.
 
 3. Acesse [Rider & Mapa de Palco](https://www.google.com/search?q=https://stage-kit.lovable.app/riders) para ajustar e exportar o PDF técnico para a casa de show.
 

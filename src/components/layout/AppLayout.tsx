@@ -70,7 +70,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Documentos",
     defaultOpen: true,
     items: [
-      { to: "/documentos", label: "Contratos & Recibos", icon: FileText },
+      { to: "/documentos", label: "Contratos e Documentos", icon: FileText },
       { to: "/riders", label: "Rider & Mapa de Palco", icon: Sliders },
       { to: "/repertorio", label: "Repertório", icon: Music4 },
     ],

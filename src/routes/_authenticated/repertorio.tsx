@@ -128,7 +128,6 @@ function RepertoirePage() {
 
   const ownSongs = songs.filter((s) => s.origin === "autoral");
 
-
   function authorsFor(s: Tables<"songs">) {
     if (s.origin === "cover") return s.original_authors || "—";
     const list = writers.filter((w) => w.song_id === s.id);
@@ -611,7 +610,6 @@ function SongFormDialog({
       );
   }
 
-
   async function fetchFromLink() {
     if (!form.external_link.trim()) return;
     setFetchingLink(true);
@@ -635,7 +633,9 @@ function SongFormDialog({
   useEffect(() => {
     if (!open) return;
     setSelectedFormations(
-      song ? formationSongs.filter((fs) => fs.song_id === song.id).map((fs) => fs.formation_id) : [],
+      song
+        ? formationSongs.filter((fs) => fs.song_id === song.id).map((fs) => fs.formation_id)
+        : [],
     );
     setForm(
       song
@@ -659,7 +659,6 @@ function SongFormDialog({
     // no momento em que o modal abre.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, song]);
-
 
   const isOwn = form.origin === "autoral";
 

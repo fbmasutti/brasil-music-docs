@@ -1,14 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  Images,
-  Plus,
-  Trash2,
-  ExternalLink,
-  Pencil,
-  Wand2,
-  Loader2,
-} from "lucide-react";
+import { Images, Plus, Trash2, ExternalLink, Pencil, Wand2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { fetchLinkMeta } from "@/lib/oembed";
 import { Button } from "@/components/ui/button";
@@ -111,7 +103,16 @@ function PortfolioPage() {
           {(list) => (
             <ul className="grid gap-4 sm:grid-cols-2">
               {list.map((item) => (
-                <li key={item.id} className="rounded-lg border border-border p-4">
+                <li key={item.id} className="rounded-lg border border-border p-4 shadow-xs">
+                  {item.media_url ? (
+                    <div className="mb-3 overflow-hidden rounded-md border border-border bg-muted/30">
+                      <img
+                        src={item.media_url}
+                        alt={item.title}
+                        className="h-44 w-full object-cover transition-transform hover:scale-105"
+                      />
+                    </div>
+                  ) : null}
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <Badge variant="outline">{item.category}</Badge>
@@ -206,7 +207,6 @@ function ClippingFormDialog({
       setFetching(false);
     }
   }
-
 
   useEffect(() => {
     if (!open) return;
@@ -320,6 +320,29 @@ function ClippingFormDialog({
               value={form.description}
               onChange={set("description")}
             />
+          </div>
+
+          <div className="space-y-2 sm:col-span-2">
+            <TextField
+              label="Imagem / Capa do registro (URL opcional)"
+              value={mediaUrl ?? ""}
+              onChange={(v) => setMediaUrl(v.trim() || null)}
+              placeholder="https://exemplo.com/imagem-do-show.jpg"
+            />
+            {mediaUrl ? (
+              <div className="relative mt-2 overflow-hidden rounded-md border border-border bg-muted/30">
+                <img src={mediaUrl} alt="Pré-visualização" className="h-32 w-full object-cover" />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="absolute right-2 top-2 bg-background/90 text-destructive text-xs"
+                  onClick={() => setMediaUrl(null)}
+                >
+                  Remover imagem
+                </Button>
+              </div>
+            ) : null}
           </div>
         </FieldGrid>
         <DialogFooter>
