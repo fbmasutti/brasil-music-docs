@@ -72,6 +72,8 @@ export const STAGE_KINDS: {
   iconSrc?: string;
   icon?: ReactNode;
   size: StageSize;
+  rotateDeg?: number;
+  scaleRatio?: number;
 }[] = [
   // Voz & Cordas
   {
@@ -80,6 +82,7 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/microfone.svg",
     size: "sm",
+    scaleRatio: 1.3,
   },
   {
     kind: "guitarra",
@@ -87,6 +90,8 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/guitarra.svg",
     size: "md",
+    rotateDeg: -45,
+    scaleRatio: 1.45,
   },
   {
     kind: "violao",
@@ -94,6 +99,8 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/violao.svg",
     size: "md",
+    rotateDeg: -45,
+    scaleRatio: 1.45,
   },
   {
     kind: "cavaco",
@@ -101,6 +108,8 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/cavaco.svg",
     size: "sm",
+    rotateDeg: -45,
+    scaleRatio: 1.35,
   },
   {
     kind: "baixo",
@@ -108,6 +117,8 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/baixo.svg",
     size: "md",
+    rotateDeg: -45,
+    scaleRatio: 1.45,
   },
   {
     kind: "violino",
@@ -115,6 +126,8 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/violino.svg",
     size: "md",
+    rotateDeg: -35,
+    scaleRatio: 1.35,
   },
   {
     kind: "pedalboard",
@@ -122,6 +135,7 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/pedalboard.svg",
     size: "sm",
+    scaleRatio: 1.25,
   },
 
   // Bateria & Percussão
@@ -131,6 +145,7 @@ export const STAGE_KINDS: {
     category: "bateria_percussao",
     iconSrc: "/stage-icons/bateria.svg",
     size: "lg",
+    scaleRatio: 1.3,
   },
   {
     kind: "cajon",
@@ -138,6 +153,7 @@ export const STAGE_KINDS: {
     category: "bateria_percussao",
     iconSrc: "/stage-icons/cajon.svg",
     size: "md",
+    scaleRatio: 1.3,
   },
   {
     kind: "conga",
@@ -145,6 +161,7 @@ export const STAGE_KINDS: {
     category: "bateria_percussao",
     iconSrc: "/stage-icons/conga.svg",
     size: "md",
+    scaleRatio: 1.3,
   },
   {
     kind: "pandeiro",
@@ -152,6 +169,7 @@ export const STAGE_KINDS: {
     category: "bateria_percussao",
     iconSrc: "/stage-icons/pandeiro.svg",
     size: "sm",
+    scaleRatio: 1.3,
   },
   {
     kind: "tantan",
@@ -159,6 +177,7 @@ export const STAGE_KINDS: {
     category: "bateria_percussao",
     iconSrc: "/stage-icons/tantan.svg",
     size: "md",
+    scaleRatio: 1.3,
   },
 
   // Teclas & Eletrônicos
@@ -168,6 +187,7 @@ export const STAGE_KINDS: {
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/teclado.svg",
     size: "md",
+    scaleRatio: 1.3,
   },
   {
     kind: "sintetizador",
@@ -175,6 +195,7 @@ export const STAGE_KINDS: {
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/sintetizador.svg",
     size: "md",
+    scaleRatio: 1.3,
   },
   {
     kind: "toca_discos",
@@ -182,6 +203,7 @@ export const STAGE_KINDS: {
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/toca-discos.svg",
     size: "md",
+    scaleRatio: 1.3,
   },
   {
     kind: "mpc",
@@ -189,6 +211,7 @@ export const STAGE_KINDS: {
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/mpc.svg",
     size: "sm",
+    scaleRatio: 1.25,
   },
 
   // Amplificadores & Retornos
@@ -198,6 +221,7 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/monitor.svg",
     size: "md",
+    scaleRatio: 1.3,
   },
   {
     kind: "monitor_esquerdo",
@@ -205,6 +229,7 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/monitor-esquerdo.svg",
     size: "md",
+    scaleRatio: 1.3,
   },
   {
     kind: "monitor_direito",
@@ -212,6 +237,7 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/monitor-direito.svg",
     size: "md",
+    scaleRatio: 1.3,
   },
   {
     kind: "subwoofer",
@@ -219,6 +245,7 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/subwoofer.svg",
     size: "lg",
+    scaleRatio: 1.25,
   },
   {
     kind: "cubo_guitarra",
@@ -226,6 +253,7 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/cubo-guitarra.svg",
     size: "md",
+    scaleRatio: 1.3,
   },
   {
     kind: "cubo_baixo",
@@ -233,6 +261,7 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/cubo-baixo.svg",
     size: "lg",
+    scaleRatio: 1.3,
   },
   {
     kind: "cabeca_amplificador",
@@ -240,6 +269,7 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/cabeca-amplificador.svg",
     size: "lg",
+    scaleRatio: 1.25,
   },
   {
     kind: "di_box",
@@ -247,6 +277,7 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/di-box.svg",
     size: "sm",
+    scaleRatio: 1.25,
   },
   {
     kind: "mesa_som",
@@ -254,6 +285,7 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/mesa-som.svg",
     size: "lg",
+    scaleRatio: 1.25,
   },
 
   // Sopros & Infra
@@ -263,6 +295,8 @@ export const STAGE_KINDS: {
     category: "sopros_infra",
     iconSrc: "/stage-icons/sax.svg",
     size: "md",
+    rotateDeg: -25,
+    scaleRatio: 1.35,
   },
   {
     kind: "trombone",
@@ -270,6 +304,8 @@ export const STAGE_KINDS: {
     category: "sopros_infra",
     iconSrc: "/stage-icons/trombone.svg",
     size: "md",
+    rotateDeg: -30,
+    scaleRatio: 1.35,
   },
   {
     kind: "trompete",
@@ -277,6 +313,8 @@ export const STAGE_KINDS: {
     category: "sopros_infra",
     iconSrc: "/stage-icons/trompete.svg",
     size: "md",
+    rotateDeg: -30,
+    scaleRatio: 1.35,
   },
   {
     kind: "ponto_energia",
@@ -284,6 +322,7 @@ export const STAGE_KINDS: {
     category: "sopros_infra",
     iconSrc: "/stage-icons/ponto-energia.svg",
     size: "sm",
+    scaleRatio: 1.25,
   },
   {
     kind: "praticavel",
@@ -291,6 +330,7 @@ export const STAGE_KINDS: {
     category: "sopros_infra",
     iconSrc: "/stage-icons/praticavel.svg",
     size: "lg",
+    scaleRatio: 1.15,
   },
   {
     kind: "outro",
@@ -298,6 +338,7 @@ export const STAGE_KINDS: {
     category: "sopros_infra",
     icon: <Music2 className="size-8 text-primary" />,
     size: "sm",
+    scaleRatio: 1.2,
   },
 ];
 
@@ -329,20 +370,29 @@ function categoryColorStyles(category: StageCategoryKey) {
 
 function StageIcon({ kind, className }: { kind: StageKind; className?: string }) {
   const def = STAGE_KINDS.find((k) => k.kind === kind);
+  const rot = def?.rotateDeg ?? 0;
+  const scale = def?.scaleRatio ?? 1.25;
+  const transform = `rotate(${rot}deg) scale(${scale})`;
+
   if (def?.iconSrc) {
     return (
-      <div className={cn("flex size-full items-center justify-center p-0", className)}>
+      <div
+        className={cn("flex size-full items-center justify-center p-0 overflow-visible", className)}
+      >
         <img
           src={def.iconSrc}
           alt={def.label}
-          className="h-full w-full object-contain filter drop-shadow-sm dark:invert dark:brightness-200"
+          style={{ transform }}
+          className="h-full w-full object-contain filter drop-shadow-sm dark:invert dark:brightness-200 transition-transform duration-200"
         />
       </div>
     );
   }
   return (
-    <div className={cn("flex size-full items-center justify-center p-0", className)}>
-      {def?.icon ?? <Music2 className="size-8 text-primary" />}
+    <div
+      className={cn("flex size-full items-center justify-center p-0 overflow-visible", className)}
+    >
+      <div style={{ transform }}>{def?.icon ?? <Music2 className="size-8 text-primary" />}</div>
     </div>
   );
 }
