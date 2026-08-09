@@ -1,4 +1,4 @@
-import { Music2, Trash2, Plus, Speaker, Search, Sparkles } from "lucide-react";
+import { Music2, Trash2, Plus, Speaker, Search, Sparkles, ArrowDown, ArrowUp } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -57,12 +57,12 @@ export type StageCategoryKey =
   | "amplificacao_monitores"
   | "sopros_infra";
 
-export const STAGE_CATEGORIES: { key: StageCategoryKey; label: string }[] = [
-  { key: "voz_cordas", label: "Voz & Cordas" },
-  { key: "bateria_percussao", label: "Bateria & Percussão" },
-  { key: "teclas_eletronicos", label: "Teclas & Eletrônicos" },
-  { key: "amplificacao_monitores", label: "Amplificadores & Retornos" },
-  { key: "sopros_infra", label: "Sopros & Infra" },
+export const STAGE_CATEGORIES: { key: StageCategoryKey; label: string; color: string }[] = [
+  { key: "voz_cordas", label: "Voz & Cordas", color: "sky" },
+  { key: "bateria_percussao", label: "Bateria & Percussão", color: "amber" },
+  { key: "teclas_eletronicos", label: "Teclas & Eletrônicos", color: "emerald" },
+  { key: "amplificacao_monitores", label: "Amplificadores & Retornos", color: "rose" },
+  { key: "sopros_infra", label: "Sopros & Infra", color: "indigo" },
 ];
 
 export const STAGE_KINDS: {
@@ -312,6 +312,21 @@ export function spanOf(kind: StageKind) {
   return SPANS[size];
 }
 
+function categoryColorStyles(category: StageCategoryKey) {
+  switch (category) {
+    case "voz_cordas":
+      return "border-sky-500/40 text-sky-600 dark:text-sky-400 bg-sky-500/5";
+    case "bateria_percussao":
+      return "border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/5";
+    case "teclas_eletronicos":
+      return "border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5";
+    case "amplificacao_monitores":
+      return "border-rose-500/40 text-rose-600 dark:text-rose-400 bg-rose-500/5";
+    case "sopros_infra":
+      return "border-indigo-500/40 text-indigo-600 dark:text-indigo-400 bg-indigo-500/5";
+  }
+}
+
 function StageIcon({ kind, className }: { kind: StageKind; className?: string }) {
   const def = STAGE_KINDS.find((k) => k.kind === kind);
   if (def?.iconSrc) {
@@ -320,7 +335,7 @@ function StageIcon({ kind, className }: { kind: StageKind; className?: string })
         <img
           src={def.iconSrc}
           alt={def.label}
-          className="h-full w-full object-contain filter drop-shadow-xs dark:invert dark:brightness-200"
+          className="h-full w-full object-contain filter drop-shadow-sm dark:invert dark:brightness-200"
         />
       </div>
     );
@@ -540,21 +555,27 @@ export function StagePlot({
 
       {warning ? <p className="text-xs text-destructive font-medium">{warning}</p> : null}
 
-      {/* Grade Interativa do Palco */}
-      <div className="rounded-xl border border-border bg-gradient-to-b from-muted/20 to-transparent p-4 shadow-inner">
-        <p className="mb-2.5 text-center text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center justify-center gap-2">
-          <span className="h-px w-12 bg-border" /> Fundo do Palco{" "}
-          <span className="h-px w-12 bg-border" />
-        </p>
+      {/* Grade Interativa do Palco com Moldura Profissional de Rider */}
+      <div className="rounded-xl border-2 border-border bg-gradient-to-b from-muted/20 to-transparent p-4 shadow-sm space-y-2">
+        {/* Cabeçalho do Fundo do Palco */}
+        <div className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-muted-foreground border-b border-border/60 pb-2">
+          <span className="text-[10px] text-muted-foreground/70">
+            LATERAIS / SIDE FILL ESQUERDO
+          </span>
+          <span className="flex items-center gap-1 text-primary">
+            <ArrowUp className="size-3" /> FUNDO DO PALCO / BACKSTAGE <ArrowUp className="size-3" />
+          </span>
+          <span className="text-[10px] text-muted-foreground/70">LATERAIS / SIDE FILL DIREITO</span>
+        </div>
 
         <div className="overflow-x-auto pb-2">
           <div
             ref={gridRef}
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
-            className="relative min-w-[780px]"
+            className="relative min-w-[800px]"
           >
-            {/* Linhas de Fundo Neutras da Grade (Sem Fundo Roxo no Centro) */}
+            {/* Linhas da Grade do Palco sem Fundo Roxo */}
             <div
               className="grid gap-2"
               style={{
@@ -562,15 +583,28 @@ export function StagePlot({
                 gridTemplateRows: `repeat(${ROWS}, 96px)`,
               }}
             >
-              {Array.from({ length: ROWS * COLS }).map((_, index) => (
-                <div
-                  key={index}
-                  className="rounded-lg border border-dashed border-border/60 bg-muted/10 transition-colors"
-                />
-              ))}
+              {Array.from({ length: ROWS * COLS }).map((_, index) => {
+                const col = index % COLS;
+                const isCenter = col === Math.floor(COLS / 2);
+                return (
+                  <div
+                    key={index}
+                    className={cn(
+                      "rounded-lg border border-dashed border-border/60 bg-background/20 transition-colors relative",
+                      isCenter && "border-border/90",
+                    )}
+                  >
+                    {isCenter && index < COLS && (
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] font-mono uppercase text-muted-foreground/60 bg-background px-1 border rounded">
+                        Eixo Central
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Elementos Posicionados no Palco (Sem fundo branco quadrado, ícones grandes) */}
+            {/* Ícones de Equipamentos sem Fundo Branco e Proporcionais */}
             <div
               className="pointer-events-none absolute inset-0 grid gap-2"
               style={{
@@ -580,6 +614,10 @@ export function StagePlot({
             >
               {items.map((item) => {
                 const span = spanOf(item.kind);
+                const category =
+                  STAGE_KINDS.find((k) => k.kind === item.kind)?.category ?? "sopros_infra";
+                const colorStyle = categoryColorStyles(category);
+
                 return (
                   <div
                     key={item.id}
@@ -590,7 +628,10 @@ export function StagePlot({
                       gridColumn: `${item.col + 1} / span ${span.w}`,
                       gridRow: `${item.row + 1} / span ${span.h}`,
                     }}
-                    className="group pointer-events-auto relative flex cursor-grab active:cursor-grabbing flex-col items-center justify-between rounded-lg border-2 border-primary/30 bg-background/40 hover:bg-background/80 backdrop-blur-2xs p-1 hover:border-primary hover:shadow-lg transition-all"
+                    className={cn(
+                      "group pointer-events-auto relative flex cursor-grab active:cursor-grabbing flex-col items-center justify-between rounded-lg border-2 backdrop-blur-2xs p-1 shadow-xs hover:shadow-md transition-all hover:scale-[1.02]",
+                      colorStyle,
+                    )}
                   >
                     <button
                       type="button"
@@ -605,7 +646,7 @@ export function StagePlot({
                       <StageIcon kind={item.kind} />
                     </div>
 
-                    <span className="w-full truncate text-[10px] font-bold text-center leading-none text-foreground bg-background/90 py-1 px-1.5 rounded-xs border border-border/50 shadow-2xs mt-0.5">
+                    <span className="w-full truncate text-[10px] font-bold text-center leading-none text-foreground bg-background/90 py-1 px-1.5 rounded-xs border border-border/60 shadow-2xs mt-0.5">
                       {item.label}
                     </span>
                   </div>
@@ -615,21 +656,28 @@ export function StagePlot({
           </div>
         </div>
 
-        <p className="mt-2.5 text-center text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center justify-center gap-2">
-          <span className="h-px w-12 bg-border" /> Plateia <span className="h-px w-12 bg-border" />
-        </p>
+        {/* Rodapé da Frente do Palco */}
+        <div className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-muted-foreground border-t border-border/60 pt-2">
+          <span className="text-[10px] text-muted-foreground/70">P.A. ESQUERDO (L)</span>
+          <span className="flex items-center gap-1 text-primary">
+            <ArrowDown className="size-3" /> FRENTE DO PALCO / PLATEIA (HOUSE MIX){" "}
+            <ArrowDown className="size-3" />
+          </span>
+          <span className="text-[10px] text-muted-foreground/70">P.A. DIREITO (R)</span>
+        </div>
       </div>
 
       <p className="text-xs text-muted-foreground">
-        💡 <strong>Dica:</strong> Arraste os elementos para posicionar no palco. Equipamentos
-        maiores ocupam mais células na grade.
+        💡 <strong>Mapa de Palco Profissional:</strong> Arraste os elementos para posicionar.
+        Equipamentos de grande porte (Bateria, Console, P.A.) ocupam proporções maiores na grade
+        para clareza técnica do produtor de áudio.
       </p>
     </div>
   );
 }
 
 /**
- * Versão estática do mapa para embutir no PDF: ícones grandes e limpos.
+ * Versão estática do mapa para embutir no PDF: visual vetorizado de padrão profissional.
  */
 export const PRINT_PLOT_WIDTH = 1200;
 export const PRINT_PLOT_HEIGHT_PORTRAIT = 880;
@@ -659,22 +707,41 @@ export function StagePlotPrintable({
         gap: 10,
         fontFamily: "Inter, system-ui, sans-serif",
         borderRadius: 8,
-        border: "1px solid #e4e4e7",
+        border: "2px solid #27272a",
       }}
     >
-      <p
+      <div
         style={{
-          textAlign: "center",
-          fontSize: 13,
-          letterSpacing: "0.15em",
-          fontWeight: 700,
-          textTransform: "uppercase",
-          color: "#71717a",
-          margin: 0,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          borderBottom: "2px solid #27272a",
+          paddingBottom: 6,
         }}
       >
-        --- Fundo do Palco ---
-      </p>
+        <span
+          style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "#71717a" }}
+        >
+          SIDE FILL (L)
+        </span>
+        <span
+          style={{
+            fontSize: 13,
+            fontWeight: 800,
+            textTransform: "uppercase",
+            color: "#18181b",
+            letterSpacing: "0.1em",
+          }}
+        >
+          ▲ FUNDO DO PALCO / BACKSTAGE ▲
+        </span>
+        <span
+          style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "#71717a" }}
+        >
+          SIDE FILL (R)
+        </span>
+      </div>
+
       <div style={{ position: "relative", flex: 1 }}>
         <div
           style={{
@@ -688,7 +755,7 @@ export function StagePlotPrintable({
           {Array.from({ length: ROWS * COLS }).map((_, index) => (
             <div
               key={index}
-              style={{ border: "1px dashed #d4d4d8", borderRadius: 6, background: "#fafafa" }}
+              style={{ border: "1px dashed #e4e4e7", borderRadius: 6, background: "#fafafa" }}
             />
           ))}
         </div>
@@ -719,7 +786,7 @@ export function StagePlotPrintable({
                   fontWeight: 600,
                   color: "#18181b",
                   background: "transparent",
-                  border: "1.5px dashed #71717a",
+                  border: "2px dashed #3f3f46",
                   borderRadius: 8,
                 }}
               >
@@ -739,7 +806,7 @@ export function StagePlotPrintable({
                 <span
                   style={{
                     fontSize: 11,
-                    fontWeight: 700,
+                    fontWeight: 800,
                     lineHeight: 1.1,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -747,10 +814,11 @@ export function StagePlotPrintable({
                     textAlign: "center",
                     maxWidth: "100%",
                     color: "#18181b",
-                    background: "#f4f4f5",
+                    background: "#ffffff",
                     padding: "3px 8px",
                     borderRadius: 4,
-                    border: "1px solid #e4e4e7",
+                    border: "1px solid #18181b",
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
                   }}
                 >
                   {item.label}
@@ -760,19 +828,38 @@ export function StagePlotPrintable({
           })}
         </div>
       </div>
-      <p
+
+      <div
         style={{
-          textAlign: "center",
-          fontSize: 13,
-          letterSpacing: "0.15em",
-          fontWeight: 700,
-          textTransform: "uppercase",
-          color: "#71717a",
-          margin: 0,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          borderTop: "2px solid #27272a",
+          paddingTop: 6,
         }}
       >
-        --- Plateia ---
-      </p>
+        <span
+          style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "#71717a" }}
+        >
+          P.A. ESQUERDO (L)
+        </span>
+        <span
+          style={{
+            fontSize: 13,
+            fontWeight: 800,
+            textTransform: "uppercase",
+            color: "#18181b",
+            letterSpacing: "0.1em",
+          }}
+        >
+          ▼ FRENTE DO PALCO / PLATEIA (HOUSE MIX) ▼
+        </span>
+        <span
+          style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "#71717a" }}
+        >
+          P.A. DIREITO (R)
+        </span>
+      </div>
     </div>
   );
 }
