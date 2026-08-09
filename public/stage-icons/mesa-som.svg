@@ -1,15 +1,77 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-<rect x="120" y="160" width="784" height="704" rx="30" fill="#121214"/>
-<circle cx="260" cy="260" r="22" fill="#06B6D4"/>
-<circle cx="400" cy="260" r="22" fill="#06B6D4"/>
-<circle cx="540" cy="260" r="22" fill="#06B6D4"/>
-<circle cx="680" cy="260" r="22" fill="#06B6D4"/>
-<rect x="230" y="380" width="60" height="380" rx="30" fill="#3a3a40"/>
-<rect x="370" y="380" width="60" height="380" rx="30" fill="#3a3a40"/>
-<rect x="510" y="380" width="60" height="380" rx="30" fill="#3a3a40"/>
-<rect x="650" y="380" width="60" height="380" rx="30" fill="#3a3a40"/>
-<rect x="222" y="540" width="76" height="34" rx="10" fill="#06B6D4"/>
-<rect x="362" y="440" width="76" height="34" rx="10" fill="#06B6D4"/>
-<rect x="502" y="620" width="76" height="34" rx="10" fill="#06B6D4"/>
-<rect x="642" y="500" width="76" height="34" rx="10" fill="#06B6D4"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="640" viewBox="0 0 1000 640">
+  <!-- Console / mesa de som na paleta ciano-teal do grupo de amplificação. -->
+
+  <!-- Corpo -->
+  <rect x="40" y="70" width="920" height="500" rx="34" fill="#022d34"/>
+  <rect x="40" y="70" width="920" height="440" rx="34" fill="#035866"/>
+  <rect x="72" y="102" width="856" height="376" rx="22" fill="#3a4e57"/>
+
+  <!-- Faixa superior: visor + medidores -->
+  <rect x="104" y="132" width="230" height="106" rx="12" fill="#022d34"/>
+  <rect x="122" y="150" width="194" height="70" rx="6" fill="#0591a8"/>
+  <g fill="#06b6d4">
+    <rect x="136" y="196" width="26" height="14" rx="4"/>
+    <rect x="172" y="182" width="26" height="28" rx="4"/>
+    <rect x="208" y="166" width="26" height="44" rx="4"/>
+    <rect x="244" y="176" width="26" height="34" rx="4"/>
+    <rect x="280" y="190" width="26" height="20" rx="4"/>
+  </g>
+
+  <!-- Knobs de ganho -->
+  <g>
+    <g fill="#022d34">
+      <circle cx="410" cy="185" r="30"/><circle cx="498" cy="185" r="30"/>
+      <circle cx="586" cy="185" r="30"/><circle cx="674" cy="185" r="30"/>
+      <circle cx="762" cy="185" r="30"/><circle cx="850" cy="185" r="30"/>
+    </g>
+    <g fill="#06b6d4">
+      <circle cx="410" cy="185" r="20"/><circle cx="498" cy="185" r="20"/>
+      <circle cx="586" cy="185" r="20"/><circle cx="674" cy="185" r="20"/>
+      <circle cx="762" cy="185" r="20"/><circle cx="850" cy="185" r="20"/>
+    </g>
+    <g stroke="#022d34" stroke-width="7" stroke-linecap="round">
+      <path d="M410 185 L 398 169"/><path d="M498 185 L 508 168"/>
+      <path d="M586 185 L 574 169"/><path d="M674 185 L 686 170"/>
+      <path d="M762 185 L 750 170"/><path d="M850 185 L 861 169"/>
+    </g>
+  </g>
+
+  <!-- Canaletas de fader -->
+  <g>
+    <g fill="#022d34">
+      <rect x="112" y="270" width="30" height="180" rx="15"/>
+      <rect x="212" y="270" width="30" height="180" rx="15"/>
+      <rect x="312" y="270" width="30" height="180" rx="15"/>
+      <rect x="412" y="270" width="30" height="180" rx="15"/>
+      <rect x="512" y="270" width="30" height="180" rx="15"/>
+      <rect x="612" y="270" width="30" height="180" rx="15"/>
+      <rect x="712" y="270" width="30" height="180" rx="15"/>
+      <rect x="812" y="270" width="30" height="180" rx="15"/>
+    </g>
+    <!-- Cursores em alturas diferentes -->
+    <g fill="#cfcee5">
+      <rect x="96" y="316" width="62" height="34" rx="10"/>
+      <rect x="196" y="366" width="62" height="34" rx="10"/>
+      <rect x="296" y="292" width="62" height="34" rx="10"/>
+      <rect x="396" y="344" width="62" height="34" rx="10"/>
+      <rect x="496" y="300" width="62" height="34" rx="10"/>
+      <rect x="596" y="382" width="62" height="34" rx="10"/>
+      <rect x="696" y="330" width="62" height="34" rx="10"/>
+      <rect x="796" y="356" width="62" height="34" rx="10"/>
+    </g>
+    <g fill="#a3add0">
+      <rect x="96" y="336" width="62" height="14" rx="7"/>
+      <rect x="196" y="386" width="62" height="14" rx="7"/>
+      <rect x="296" y="312" width="62" height="14" rx="7"/>
+      <rect x="396" y="364" width="62" height="14" rx="7"/>
+      <rect x="496" y="320" width="62" height="14" rx="7"/>
+      <rect x="596" y="402" width="62" height="14" rx="7"/>
+      <rect x="696" y="350" width="62" height="14" rx="7"/>
+      <rect x="796" y="376" width="62" height="14" rx="7"/>
+    </g>
+  </g>
+
+  <!-- Aba frontal -->
+  <rect x="40" y="500" width="920" height="70" rx="26" fill="#022d34"/>
+  <rect x="72" y="518" width="856" height="18" rx="9" fill="#0591a8" opacity="0.55"/>
 </svg>

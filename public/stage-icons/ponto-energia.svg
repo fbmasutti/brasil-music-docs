@@ -1,6 +1,54 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-<rect x="250" y="250" width="524" height="524" rx="60" fill="#121214"/>
-<rect x="380" y="380" width="40" height="140" rx="20" fill="#06B6D4"/>
-<rect x="604" y="380" width="40" height="140" rx="20" fill="#06B6D4"/>
-<circle cx="512" cy="620" r="40" fill="#06B6D4"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="420" viewBox="0 0 1000 420">
+  <!-- Ponto de energia / régua de AC: é o que aparece nos riders reais
+       ("RÉGUA DE AC 110V ESTABILIZADA"), não só uma tomada solta. -->
+
+  <!-- Cabo -->
+  <path d="M118 208 C 60 208 40 250 40 300 C 40 348 66 372 108 372"
+        fill="none" stroke="#2b1d32" stroke-width="34" stroke-linecap="round"/>
+  <path d="M118 200 C 70 200 56 238 56 292"
+        fill="none" stroke="#4d3a57" stroke-width="12" stroke-linecap="round" opacity="0.8"/>
+
+  <!-- Corpo da régua -->
+  <rect x="110" y="96" width="850" height="228" rx="42" fill="#a3add0"/>
+  <rect x="110" y="96" width="850" height="188" rx="42" fill="#cfcee5"/>
+  <rect x="146" y="126" width="778" height="128" rx="26" fill="#e6e5ef"/>
+
+  <!-- Tomadas padrão brasileiro (2 pinos + terra) -->
+  <g>
+    <g fill="#022d34">
+      <circle cx="330" cy="190" r="62"/>
+      <circle cx="500" cy="190" r="62"/>
+      <circle cx="670" cy="190" r="62"/>
+      <circle cx="840" cy="190" r="62"/>
+    </g>
+    <g fill="#3a4e57">
+      <circle cx="330" cy="190" r="50"/>
+      <circle cx="500" cy="190" r="50"/>
+      <circle cx="670" cy="190" r="50"/>
+      <circle cx="840" cy="190" r="50"/>
+    </g>
+    <!-- Furos -->
+    <g fill="#022d34">
+      <rect x="308" y="156" width="14" height="26" rx="7"/>
+      <rect x="338" y="156" width="14" height="26" rx="7"/>
+      <rect x="323" y="204" width="14" height="26" rx="7"/>
+
+      <rect x="478" y="156" width="14" height="26" rx="7"/>
+      <rect x="508" y="156" width="14" height="26" rx="7"/>
+      <rect x="493" y="204" width="14" height="26" rx="7"/>
+
+      <rect x="648" y="156" width="14" height="26" rx="7"/>
+      <rect x="678" y="156" width="14" height="26" rx="7"/>
+      <rect x="663" y="204" width="14" height="26" rx="7"/>
+
+      <rect x="818" y="156" width="14" height="26" rx="7"/>
+      <rect x="848" y="156" width="14" height="26" rx="7"/>
+      <rect x="833" y="204" width="14" height="26" rx="7"/>
+    </g>
+  </g>
+
+  <!-- Chave liga/desliga com indicador -->
+  <rect x="176" y="146" width="76" height="88" rx="16" fill="#022d34"/>
+  <rect x="188" y="158" width="52" height="42" rx="10" fill="#06b6d4"/>
+  <circle cx="214" cy="218" r="10" fill="#0591a8"/>
 </svg>

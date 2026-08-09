@@ -19,14 +19,24 @@ export type StageKind =
   | "voz"
   | "guitarra"
   | "violao"
+  | "violao_aco"
   | "cavaco"
+  | "banjo"
   | "baixo"
+  | "contrabaixo"
+  | "violino"
+  | "violoncelo"
   | "bateria"
   | "cajon"
   | "conga"
+  | "djembe"
   | "pandeiro"
   | "tantan"
+  | "triangulo"
   | "teclado"
+  | "piano"
+  | "orgao"
+  | "sanfona"
   | "sintetizador"
   | "monitor"
   | "monitor_esquerdo"
@@ -39,7 +49,6 @@ export type StageKind =
   | "sax"
   | "trombone"
   | "trompete"
-  | "violino"
   | "di_box"
   | "ponto_energia"
   | "praticavel"
@@ -74,6 +83,9 @@ export const STAGE_KINDS: {
   size: StageSize;
   rotateDeg?: number;
   scaleRatio?: number;
+  /** Arte ilustrada multitom: já é legível no escuro, então não leva o filtro de inversão
+   * que os ícones chapados antigos (corpo quase preto) ainda precisam. */
+  illustrated?: boolean;
 }[] = [
   // Voz & Cordas
   {
@@ -90,26 +102,44 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/guitarra.svg",
     size: "md",
-    rotateDeg: -45,
-    scaleRatio: 1.45,
+    scaleRatio: 1.3,
+    illustrated: true,
   },
   {
     kind: "violao",
-    label: "Violão",
+    label: "Violão (nylon)",
     category: "voz_cordas",
     iconSrc: "/stage-icons/violao.svg",
     size: "md",
-    rotateDeg: -45,
-    scaleRatio: 1.45,
+    scaleRatio: 1.3,
+    illustrated: true,
+  },
+  {
+    kind: "violao_aco",
+    label: "Violão de aço",
+    category: "voz_cordas",
+    iconSrc: "/stage-icons/violao-aco.svg",
+    size: "md",
+    scaleRatio: 1.3,
+    illustrated: true,
   },
   {
     kind: "cavaco",
-    label: "Cavaco / Banjo",
+    label: "Cavaquinho",
     category: "voz_cordas",
     iconSrc: "/stage-icons/cavaco.svg",
     size: "sm",
-    rotateDeg: -45,
-    scaleRatio: 1.35,
+    scaleRatio: 1.3,
+    illustrated: true,
+  },
+  {
+    kind: "banjo",
+    label: "Banjo",
+    category: "voz_cordas",
+    iconSrc: "/stage-icons/banjo.svg",
+    size: "sm",
+    scaleRatio: 1.3,
+    illustrated: true,
   },
   {
     kind: "baixo",
@@ -117,8 +147,17 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/baixo.svg",
     size: "md",
-    rotateDeg: -45,
-    scaleRatio: 1.45,
+    scaleRatio: 1.3,
+    illustrated: true,
+  },
+  {
+    kind: "contrabaixo",
+    label: "Contrabaixo acústico",
+    category: "voz_cordas",
+    iconSrc: "/stage-icons/contrabaixo.svg",
+    size: "lg",
+    scaleRatio: 1.15,
+    illustrated: true,
   },
   {
     kind: "violino",
@@ -128,6 +167,15 @@ export const STAGE_KINDS: {
     size: "md",
     rotateDeg: -35,
     scaleRatio: 1.35,
+  },
+  {
+    kind: "violoncelo",
+    label: "Violoncelo",
+    category: "voz_cordas",
+    iconSrc: "/stage-icons/violoncelo.svg",
+    size: "md",
+    scaleRatio: 1.25,
+    illustrated: true,
   },
   {
     kind: "pedalboard",
@@ -145,7 +193,8 @@ export const STAGE_KINDS: {
     category: "bateria_percussao",
     iconSrc: "/stage-icons/bateria.svg",
     size: "lg",
-    scaleRatio: 1.3,
+    scaleRatio: 1.2,
+    illustrated: true,
   },
   {
     kind: "cajon",
@@ -153,7 +202,8 @@ export const STAGE_KINDS: {
     category: "bateria_percussao",
     iconSrc: "/stage-icons/cajon.svg",
     size: "md",
-    scaleRatio: 1.3,
+    scaleRatio: 1.2,
+    illustrated: true,
   },
   {
     kind: "conga",
@@ -161,7 +211,17 @@ export const STAGE_KINDS: {
     category: "bateria_percussao",
     iconSrc: "/stage-icons/conga.svg",
     size: "md",
+    scaleRatio: 1.2,
+    illustrated: true,
+  },
+  {
+    kind: "djembe",
+    label: "Djembe",
+    category: "bateria_percussao",
+    iconSrc: "/stage-icons/djembe.svg",
+    size: "sm",
     scaleRatio: 1.3,
+    illustrated: true,
   },
   {
     kind: "pandeiro",
@@ -170,14 +230,25 @@ export const STAGE_KINDS: {
     iconSrc: "/stage-icons/pandeiro.svg",
     size: "sm",
     scaleRatio: 1.3,
+    illustrated: true,
   },
   {
     kind: "tantan",
-    label: "Tantã",
+    label: "Tantã / Zabumba",
     category: "bateria_percussao",
     iconSrc: "/stage-icons/tantan.svg",
     size: "md",
+    scaleRatio: 1.2,
+    illustrated: true,
+  },
+  {
+    kind: "triangulo",
+    label: "Triângulo",
+    category: "bateria_percussao",
+    iconSrc: "/stage-icons/triangulo.svg",
+    size: "sm",
     scaleRatio: 1.3,
+    illustrated: true,
   },
 
   // Teclas & Eletrônicos
@@ -188,6 +259,34 @@ export const STAGE_KINDS: {
     iconSrc: "/stage-icons/teclado.svg",
     size: "md",
     scaleRatio: 1.3,
+    illustrated: true,
+  },
+  {
+    kind: "piano",
+    label: "Piano de cauda",
+    category: "teclas_eletronicos",
+    iconSrc: "/stage-icons/piano.svg",
+    size: "lg",
+    scaleRatio: 1.15,
+    illustrated: true,
+  },
+  {
+    kind: "orgao",
+    label: "Órgão / Hammond",
+    category: "teclas_eletronicos",
+    iconSrc: "/stage-icons/orgao.svg",
+    size: "md",
+    scaleRatio: 1.3,
+    illustrated: true,
+  },
+  {
+    kind: "sanfona",
+    label: "Sanfona / Acordeon",
+    category: "teclas_eletronicos",
+    iconSrc: "/stage-icons/sanfona.svg",
+    size: "md",
+    scaleRatio: 1.25,
+    illustrated: true,
   },
   {
     kind: "sintetizador",
@@ -196,6 +295,7 @@ export const STAGE_KINDS: {
     iconSrc: "/stage-icons/sintetizador.svg",
     size: "md",
     scaleRatio: 1.3,
+    illustrated: true,
   },
   {
     kind: "toca_discos",
@@ -203,7 +303,8 @@ export const STAGE_KINDS: {
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/toca-discos.svg",
     size: "md",
-    scaleRatio: 1.3,
+    scaleRatio: 1.25,
+    illustrated: true,
   },
   {
     kind: "mpc",
@@ -229,7 +330,8 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/monitor-esquerdo.svg",
     size: "md",
-    scaleRatio: 1.3,
+    scaleRatio: 1.2,
+    illustrated: true,
   },
   {
     kind: "monitor_direito",
@@ -237,7 +339,8 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/monitor-direito.svg",
     size: "md",
-    scaleRatio: 1.3,
+    scaleRatio: 1.2,
+    illustrated: true,
   },
   {
     kind: "subwoofer",
@@ -245,7 +348,8 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/subwoofer.svg",
     size: "lg",
-    scaleRatio: 1.25,
+    scaleRatio: 1.15,
+    illustrated: true,
   },
   {
     kind: "cubo_guitarra",
@@ -253,7 +357,8 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/cubo-guitarra.svg",
     size: "md",
-    scaleRatio: 1.3,
+    scaleRatio: 1.25,
+    illustrated: true,
   },
   {
     kind: "cubo_baixo",
@@ -285,7 +390,8 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/mesa-som.svg",
     size: "lg",
-    scaleRatio: 1.25,
+    scaleRatio: 1.2,
+    illustrated: true,
   },
 
   // Sopros & Infra
@@ -295,8 +401,8 @@ export const STAGE_KINDS: {
     category: "sopros_infra",
     iconSrc: "/stage-icons/sax.svg",
     size: "md",
-    rotateDeg: -25,
-    scaleRatio: 1.35,
+    scaleRatio: 1.25,
+    illustrated: true,
   },
   {
     kind: "trombone",
@@ -304,8 +410,8 @@ export const STAGE_KINDS: {
     category: "sopros_infra",
     iconSrc: "/stage-icons/trombone.svg",
     size: "md",
-    rotateDeg: -30,
-    scaleRatio: 1.35,
+    scaleRatio: 1.3,
+    illustrated: true,
   },
   {
     kind: "trompete",
@@ -313,16 +419,17 @@ export const STAGE_KINDS: {
     category: "sopros_infra",
     iconSrc: "/stage-icons/trompete.svg",
     size: "md",
-    rotateDeg: -30,
-    scaleRatio: 1.35,
+    scaleRatio: 1.3,
+    illustrated: true,
   },
   {
     kind: "ponto_energia",
-    label: "Ponto de energia",
+    label: "Ponto de energia / Régua AC",
     category: "sopros_infra",
     iconSrc: "/stage-icons/ponto-energia.svg",
     size: "sm",
-    scaleRatio: 1.25,
+    scaleRatio: 1.3,
+    illustrated: true,
   },
   {
     kind: "praticavel",
@@ -383,7 +490,16 @@ function StageIcon({ kind, className }: { kind: StageKind; className?: string })
           src={def.iconSrc}
           alt={def.label}
           style={{ transform }}
-          className="h-full w-full object-contain filter drop-shadow-sm dark:invert dark:brightness-200 transition-transform duration-200"
+          className={cn(
+            "h-full w-full object-contain filter drop-shadow-sm transition-transform duration-200",
+            // Inverter só serve para a arte chapada antiga (corpo quase preto). Nos ícones
+            // ilustrados, inverter trocaria madeira por azul e latão por roxo — em vez disso
+            // eles ganham um contorno claro, que destaca peças de corpo escuro (bateria,
+            // piano, caixas de retorno) sem alterar as cores.
+            def.illustrated
+              ? "dark:drop-shadow-[0_0_1.5px_rgba(255,255,255,0.65)]"
+              : "dark:invert dark:brightness-200",
+          )}
         />
       </div>
     );
