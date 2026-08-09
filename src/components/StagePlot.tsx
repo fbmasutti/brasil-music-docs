@@ -296,7 +296,7 @@ export const STAGE_KINDS: {
     kind: "outro",
     label: "Outro",
     category: "sopros_infra",
-    icon: <Music2 className="size-5 text-primary" />,
+    icon: <Music2 className="size-8 text-primary" />,
     size: "sm",
   },
 ];
@@ -316,18 +316,18 @@ function StageIcon({ kind, className }: { kind: StageKind; className?: string })
   const def = STAGE_KINDS.find((k) => k.kind === kind);
   if (def?.iconSrc) {
     return (
-      <div className={cn("flex size-full items-center justify-center p-1", className)}>
+      <div className={cn("flex size-full items-center justify-center p-0", className)}>
         <img
           src={def.iconSrc}
           alt={def.label}
-          className="max-h-full max-w-full object-contain filter drop-shadow-sm dark:invert dark:brightness-200"
+          className="h-full w-full object-contain filter drop-shadow-xs dark:invert dark:brightness-200"
         />
       </div>
     );
   }
   return (
-    <div className={cn("flex size-full items-center justify-center p-1", className)}>
-      {def?.icon ?? <Music2 className="size-6 text-primary" />}
+    <div className={cn("flex size-full items-center justify-center p-0", className)}>
+      {def?.icon ?? <Music2 className="size-8 text-primary" />}
     </div>
   );
 }
@@ -541,7 +541,7 @@ export function StagePlot({
       {warning ? <p className="text-xs text-destructive font-medium">{warning}</p> : null}
 
       {/* Grade Interativa do Palco */}
-      <div className="rounded-xl border border-border bg-gradient-to-b from-muted/30 to-muted/10 p-4 shadow-inner">
+      <div className="rounded-xl border border-border bg-gradient-to-b from-muted/20 to-transparent p-4 shadow-inner">
         <p className="mb-2.5 text-center text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center justify-center gap-2">
           <span className="h-px w-12 bg-border" /> Fundo do Palco{" "}
           <span className="h-px w-12 bg-border" />
@@ -552,36 +552,30 @@ export function StagePlot({
             ref={gridRef}
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
-            className="relative min-w-[760px]"
+            className="relative min-w-[780px]"
           >
-            {/* Linhas de Fundo da Grade */}
+            {/* Linhas de Fundo Neutras da Grade (Sem Fundo Roxo no Centro) */}
             <div
-              className="grid gap-1.5"
+              className="grid gap-2"
               style={{
                 gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-                gridTemplateRows: `repeat(${ROWS}, 82px)`,
+                gridTemplateRows: `repeat(${ROWS}, 96px)`,
               }}
             >
-              {Array.from({ length: ROWS * COLS }).map((_, index) => {
-                const col = index % COLS;
-                return (
-                  <div
-                    key={index}
-                    className={cn(
-                      "rounded-lg border border-dashed border-border/50 bg-background/50 transition-colors",
-                      col === Math.floor(COLS / 2) && "border-primary/40 bg-primary/5",
-                    )}
-                  />
-                );
-              })}
+              {Array.from({ length: ROWS * COLS }).map((_, index) => (
+                <div
+                  key={index}
+                  className="rounded-lg border border-dashed border-border/60 bg-muted/10 transition-colors"
+                />
+              ))}
             </div>
 
-            {/* Elementos Posicionados no Palco */}
+            {/* Elementos Posicionados no Palco (Sem fundo branco quadrado, ícones grandes) */}
             <div
-              className="pointer-events-none absolute inset-0 grid gap-1.5"
+              className="pointer-events-none absolute inset-0 grid gap-2"
               style={{
                 gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-                gridTemplateRows: `repeat(${ROWS}, 82px)`,
+                gridTemplateRows: `repeat(${ROWS}, 96px)`,
               }}
             >
               {items.map((item) => {
@@ -596,22 +590,22 @@ export function StagePlot({
                       gridColumn: `${item.col + 1} / span ${span.w}`,
                       gridRow: `${item.row + 1} / span ${span.h}`,
                     }}
-                    className="group pointer-events-auto relative flex cursor-grab active:cursor-grabbing flex-col items-center justify-center rounded-lg border-2 border-primary/30 bg-card/95 p-1.5 shadow-xs hover:border-primary hover:shadow-md transition-all"
+                    className="group pointer-events-auto relative flex cursor-grab active:cursor-grabbing flex-col items-center justify-between rounded-lg border-2 border-primary/30 bg-background/40 hover:bg-background/80 backdrop-blur-2xs p-1 hover:border-primary hover:shadow-lg transition-all"
                   >
                     <button
                       type="button"
                       aria-label={`Remover ${item.label}`}
-                      className="absolute -right-1.5 -top-1.5 z-20 rounded-full bg-destructive text-destructive-foreground p-1 opacity-0 shadow-md transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                      className="absolute -right-2 -top-2 z-30 rounded-full bg-destructive text-destructive-foreground p-1 opacity-0 shadow-md transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                       onClick={() => onChange(items.filter((i) => i.id !== item.id))}
                     >
-                      <Trash2 className="size-3" />
+                      <Trash2 className="size-3.5" />
                     </button>
 
-                    <div className="flex-1 min-h-0 w-full flex items-center justify-center p-0.5">
+                    <div className="flex-1 min-h-0 w-full flex items-center justify-center p-0">
                       <StageIcon kind={item.kind} />
                     </div>
 
-                    <span className="w-full truncate text-[10px] font-semibold text-center leading-none text-muted-foreground bg-muted/80 py-0.5 px-1 rounded-sm mt-0.5">
+                    <span className="w-full truncate text-[10px] font-bold text-center leading-none text-foreground bg-background/90 py-1 px-1.5 rounded-xs border border-border/50 shadow-2xs mt-0.5">
                       {item.label}
                     </span>
                   </div>
@@ -627,15 +621,15 @@ export function StagePlot({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        💡 <strong>Dica:</strong> Arraste os elementos para posicionar no palco. A coluna central
-        destacada ajuda no alinhamento de bateria e voz principal.
+        💡 <strong>Dica:</strong> Arraste os elementos para posicionar no palco. Equipamentos
+        maiores ocupam mais células na grade.
       </p>
     </div>
   );
 }
 
 /**
- * Versão estática do mapa para embutir no PDF: suporta orientação Retrato (4:3) ou Paisagem (16:9).
+ * Versão estática do mapa para embutir no PDF: ícones grandes e limpos.
  */
 export const PRINT_PLOT_WIDTH = 1200;
 export const PRINT_PLOT_HEIGHT_PORTRAIT = 880;
@@ -650,7 +644,7 @@ export function StagePlotPrintable({
 }) {
   const isLandscape = orientation === "paisagem";
   const height = isLandscape ? PRINT_PLOT_HEIGHT_LANDSCAPE : PRINT_PLOT_HEIGHT_PORTRAIT;
-  const cellHeight = isLandscape ? 90 : 120;
+  const cellHeight = isLandscape ? 100 : 132;
 
   return (
     <div
@@ -719,16 +713,14 @@ export function StagePlotPrintable({
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
-                  justifyContent: "center",
-                  gap: 4,
-                  padding: 6,
+                  justifyContent: "space-between",
+                  padding: 4,
                   overflow: "hidden",
                   fontWeight: 600,
                   color: "#18181b",
-                  background: "#ffffff",
-                  border: "2px solid #a1a1aa",
+                  background: "transparent",
+                  border: "1.5px dashed #71717a",
                   borderRadius: 8,
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
                 }}
               >
                 <div
@@ -739,13 +731,14 @@ export function StagePlotPrintable({
                     width: "100%",
                     alignItems: "center",
                     justifyContent: "center",
+                    padding: 2,
                   }}
                 >
                   <StageIcon kind={item.kind} />
                 </div>
                 <span
                   style={{
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: 700,
                     lineHeight: 1.1,
                     overflow: "hidden",
@@ -753,10 +746,11 @@ export function StagePlotPrintable({
                     whiteSpace: "nowrap",
                     textAlign: "center",
                     maxWidth: "100%",
-                    color: "#3f3f46",
+                    color: "#18181b",
                     background: "#f4f4f5",
-                    padding: "2px 6px",
+                    padding: "3px 8px",
                     borderRadius: 4,
+                    border: "1px solid #e4e4e7",
                   }}
                 >
                   {item.label}
