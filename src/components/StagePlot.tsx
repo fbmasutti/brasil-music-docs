@@ -1,4 +1,15 @@
-import { Music2, Trash2, Plus, Speaker, Search, Sparkles, ArrowDown, ArrowUp } from "lucide-react";
+import {
+  Music2,
+  Trash2,
+  Plus,
+  Speaker,
+  Search,
+  Sparkles,
+  ArrowDown,
+  ArrowUp,
+  RotateCw,
+  FlipHorizontal,
+} from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -13,7 +24,20 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
-export type StageItem = { id: string; kind: StageKind; label: string; col: number; row: number };
+export type StageItem = {
+  id: string;
+  kind: StageKind;
+  label: string;
+  col: number;
+  row: number;
+  /** Múltiplo de 45°, somado ao padrão do tipo. A pegada não gira junto: a arte
+   * transborda e a colisão continua olhando o retângulo original, porque girar um
+   * retorno não deveria bloquear célula nova. */
+  rotateDeg?: number;
+  /** Espelha em relação ao padrão do tipo (XOR), para o monitor direito — que já nasce
+   * espelhado — responder ao botão como todo mundo. */
+  flipX?: boolean;
+};
 
 export type StageKind =
   | "voz"
@@ -59,11 +83,6 @@ export type StageKind =
   | "mesa_som"
   | "outro";
 
-/** `tall` é 1 coluna por 2 linhas: para arte alta e estreita, que num span deitado
- * encolhe pela altura e deixa sobra nas laterais. Hoje só o pedestal usa; o
- * contrabaixo é candidato, mas está em `lg` por causa do porte real dele. */
-export type StageSize = "sm" | "md" | "tall" | "lg";
-
 export type StageCategoryKey =
   | "voz_cordas"
   | "bateria_percussao"
@@ -85,7 +104,7 @@ export const STAGE_KINDS: {
   category: StageCategoryKey;
   iconSrc?: string;
   icon?: ReactNode;
-  size: StageSize;
+  footprint: { w: number; h: number };
   rotateDeg?: number;
   /** Tamanho relativo dentro da célula. Não é ajuste de enquadramento: codifica o porte
    * real da peça em escala comprimida, para uma DI não ocupar o mesmo espaço visual que
@@ -97,6 +116,10 @@ export const STAGE_KINDS: {
   /** Arte chapada de corpo quase preto, que precisa do filtro de inversão para aparecer
    * no tema escuro. Todo o set atual é ilustrado multitom, então o padrão é `false`. */
   flat?: boolean;
+  /** Contorno claro no tema escuro. Só para a arte que sumiria no fundo: medi a luminância
+   * média dos pixels pintados de cada ícone e marquei os abaixo de 90. Num ícone de tom
+   * médio (o pedestal dá 160) o contorno vira uma aura em volta do desenho. */
+  darkOutline?: boolean;
 }[] = [
   // Voz & Cordas
   {
@@ -104,7 +127,7 @@ export const STAGE_KINDS: {
     label: "Voz / microfone",
     category: "voz_cordas",
     iconSrc: "/stage-icons/microfone.svg",
-    size: "sm",
+    footprint: { w: 2, h: 2 },
     scaleRatio: 0.75,
   },
   {
@@ -112,7 +135,7 @@ export const STAGE_KINDS: {
     label: "Pedestal com microfone",
     category: "voz_cordas",
     iconSrc: "/stage-icons/pedestal.svg",
-    size: "tall",
+    footprint: { w: 2, h: 4 },
     scaleRatio: 1,
   },
   {
@@ -120,7 +143,7 @@ export const STAGE_KINDS: {
     label: "Guitarra",
     category: "voz_cordas",
     iconSrc: "/stage-icons/guitarra.svg",
-    size: "md",
+    footprint: { w: 3, h: 2 },
     scaleRatio: 1.05,
   },
   {
@@ -128,7 +151,7 @@ export const STAGE_KINDS: {
     label: "Violão (nylon)",
     category: "voz_cordas",
     iconSrc: "/stage-icons/violao.svg",
-    size: "md",
+    footprint: { w: 3, h: 3 },
     scaleRatio: 1.05,
   },
   {
@@ -136,7 +159,7 @@ export const STAGE_KINDS: {
     label: "Violão de aço",
     category: "voz_cordas",
     iconSrc: "/stage-icons/violao-aco.svg",
-    size: "md",
+    footprint: { w: 3, h: 2 },
     scaleRatio: 1.05,
   },
   {
@@ -144,7 +167,7 @@ export const STAGE_KINDS: {
     label: "Cavaquinho / Ukulele",
     category: "voz_cordas",
     iconSrc: "/stage-icons/cavaco.svg",
-    size: "sm",
+    footprint: { w: 2, h: 3 },
     scaleRatio: 0.9,
   },
   {
@@ -152,7 +175,7 @@ export const STAGE_KINDS: {
     label: "Banjo",
     category: "voz_cordas",
     iconSrc: "/stage-icons/banjo.svg",
-    size: "sm",
+    footprint: { w: 2, h: 2 },
     scaleRatio: 0.95,
   },
   {
@@ -160,7 +183,7 @@ export const STAGE_KINDS: {
     label: "Baixo",
     category: "voz_cordas",
     iconSrc: "/stage-icons/baixo.svg",
-    size: "md",
+    footprint: { w: 3, h: 2 },
     scaleRatio: 1.05,
   },
   {
@@ -168,15 +191,16 @@ export const STAGE_KINDS: {
     label: "Contrabaixo acústico",
     category: "voz_cordas",
     iconSrc: "/stage-icons/contrabaixo.svg",
-    size: "lg",
+    footprint: { w: 2, h: 5 },
     scaleRatio: 1.05,
+    darkOutline: true,
   },
   {
     kind: "violino",
     label: "Violino",
     category: "voz_cordas",
     iconSrc: "/stage-icons/violino.svg",
-    size: "sm",
+    footprint: { w: 2, h: 2 },
     scaleRatio: 0.9,
   },
   {
@@ -184,7 +208,7 @@ export const STAGE_KINDS: {
     label: "Violoncelo",
     category: "voz_cordas",
     iconSrc: "/stage-icons/violoncelo.svg",
-    size: "md",
+    footprint: { w: 3, h: 3 },
     scaleRatio: 1.05,
   },
   {
@@ -192,8 +216,9 @@ export const STAGE_KINDS: {
     label: "Pedalboard",
     category: "voz_cordas",
     iconSrc: "/stage-icons/pedalboard.svg",
-    size: "sm",
+    footprint: { w: 4, h: 2 },
     scaleRatio: 0.8,
+    darkOutline: true,
   },
 
   // Bateria & Percussão
@@ -202,15 +227,16 @@ export const STAGE_KINDS: {
     label: "Bateria",
     category: "bateria_percussao",
     iconSrc: "/stage-icons/bateria.svg",
-    size: "lg",
+    footprint: { w: 5, h: 4 },
     scaleRatio: 1.15,
+    darkOutline: true,
   },
   {
     kind: "cajon",
     label: "Cajón",
     category: "bateria_percussao",
     iconSrc: "/stage-icons/cajon.svg",
-    size: "md",
+    footprint: { w: 3, h: 3 },
     scaleRatio: 0.9,
   },
   {
@@ -218,15 +244,16 @@ export const STAGE_KINDS: {
     label: "Conga",
     category: "bateria_percussao",
     iconSrc: "/stage-icons/conga.svg",
-    size: "md",
+    footprint: { w: 3, h: 3 },
     scaleRatio: 1,
+    darkOutline: true,
   },
   {
     kind: "djembe",
     label: "Djembe",
     category: "bateria_percussao",
     iconSrc: "/stage-icons/djembe.svg",
-    size: "sm",
+    footprint: { w: 2, h: 3 },
     scaleRatio: 0.9,
   },
   {
@@ -234,7 +261,7 @@ export const STAGE_KINDS: {
     label: "Pandeiro",
     category: "bateria_percussao",
     iconSrc: "/stage-icons/pandeiro.svg",
-    size: "sm",
+    footprint: { w: 2, h: 2 },
     scaleRatio: 0.75,
   },
   {
@@ -242,7 +269,7 @@ export const STAGE_KINDS: {
     label: "Tantã / Zabumba",
     category: "bateria_percussao",
     iconSrc: "/stage-icons/tantan.svg",
-    size: "md",
+    footprint: { w: 2, h: 3 },
     scaleRatio: 0.85,
   },
   {
@@ -250,7 +277,7 @@ export const STAGE_KINDS: {
     label: "Triângulo",
     category: "bateria_percussao",
     iconSrc: "/stage-icons/triangulo.svg",
-    size: "sm",
+    footprint: { w: 2, h: 2 },
     scaleRatio: 0.55,
   },
 
@@ -260,7 +287,7 @@ export const STAGE_KINDS: {
     label: "Teclado",
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/teclado.svg",
-    size: "md",
+    footprint: { w: 5, h: 2 },
     scaleRatio: 1.15,
   },
   {
@@ -268,15 +295,16 @@ export const STAGE_KINDS: {
     label: "Piano de cauda",
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/piano.svg",
-    size: "lg",
+    footprint: { w: 5, h: 5 },
     scaleRatio: 1.1,
+    darkOutline: true,
   },
   {
     kind: "orgao",
     label: "Órgão / Hammond",
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/orgao.svg",
-    size: "md",
+    footprint: { w: 6, h: 2 },
     scaleRatio: 1.1,
   },
   {
@@ -284,23 +312,25 @@ export const STAGE_KINDS: {
     label: "Sanfona / Acordeon",
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/sanfona.svg",
-    size: "md",
+    footprint: { w: 3, h: 3 },
     scaleRatio: 0.95,
+    darkOutline: true,
   },
   {
     kind: "sintetizador",
     label: "Sintetizador / MIDI",
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/sintetizador.svg",
-    size: "md",
+    footprint: { w: 4, h: 2 },
     scaleRatio: 1,
+    darkOutline: true,
   },
   {
     kind: "toca_discos",
     label: "Toca-discos",
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/toca-discos.svg",
-    size: "md",
+    footprint: { w: 3, h: 3 },
     scaleRatio: 0.95,
   },
   {
@@ -308,8 +338,9 @@ export const STAGE_KINDS: {
     label: "MPC / Sampler",
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/mpc.svg",
-    size: "sm",
+    footprint: { w: 3, h: 2 },
     scaleRatio: 0.8,
+    darkOutline: true,
   },
 
   // Amplificadores & Retornos
@@ -318,24 +349,27 @@ export const STAGE_KINDS: {
     label: "Monitor / Retorno",
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/monitor.svg",
-    size: "md",
+    footprint: { w: 4, h: 2 },
     scaleRatio: 0.9,
+    darkOutline: true,
   },
   {
     kind: "monitor_esquerdo",
     label: "Monitor esquerdo",
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/monitor.svg",
-    size: "md",
+    footprint: { w: 4, h: 2 },
     scaleRatio: 0.9,
+    darkOutline: true,
   },
   {
     kind: "monitor_direito",
     label: "Monitor direito",
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/monitor.svg",
-    size: "md",
+    footprint: { w: 4, h: 2 },
     scaleRatio: 0.9,
+    darkOutline: true,
     flipX: true,
   },
   {
@@ -343,23 +377,25 @@ export const STAGE_KINDS: {
     label: "Monitor near field",
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/monitor-near-field.svg",
-    size: "md",
+    footprint: { w: 2, h: 3 },
     scaleRatio: 0.85,
+    darkOutline: true,
   },
   {
     kind: "subwoofer",
     label: "P.A. / Subwoofer",
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/subwoofer.svg",
-    size: "lg",
+    footprint: { w: 2, h: 5 },
     scaleRatio: 1,
+    darkOutline: true,
   },
   {
     kind: "cubo_guitarra",
     label: "Cubo de guitarra",
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/cubo-guitarra.svg",
-    size: "md",
+    footprint: { w: 3, h: 3 },
     scaleRatio: 0.9,
   },
   {
@@ -367,32 +403,36 @@ export const STAGE_KINDS: {
     label: "Cubo de baixo",
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/cubo-baixo.svg",
-    size: "lg",
+    footprint: { w: 3, h: 3 },
     scaleRatio: 0.95,
+    darkOutline: true,
   },
   {
     kind: "cabeca_amplificador",
     label: "Amplificador (cabeçote + caixa)",
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/cabeca-amplificador.svg",
-    size: "lg",
+    footprint: { w: 3, h: 4 },
     scaleRatio: 1,
+    darkOutline: true,
   },
   {
     kind: "di_box",
     label: "DI box",
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/di-box.svg",
-    size: "sm",
+    footprint: { w: 2, h: 2 },
     scaleRatio: 0.5,
+    darkOutline: true,
   },
   {
     kind: "mesa_som",
     label: "Console / Mesa de Som",
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/mesa-som.svg",
-    size: "lg",
+    footprint: { w: 4, h: 3 },
     scaleRatio: 1.05,
+    darkOutline: true,
   },
 
   // Sopros & Infra
@@ -401,7 +441,7 @@ export const STAGE_KINDS: {
     label: "Sax",
     category: "sopros_infra",
     iconSrc: "/stage-icons/sax.svg",
-    size: "md",
+    footprint: { w: 2, h: 3 },
     scaleRatio: 0.95,
   },
   {
@@ -409,7 +449,7 @@ export const STAGE_KINDS: {
     label: "Trombone",
     category: "sopros_infra",
     iconSrc: "/stage-icons/trombone.svg",
-    size: "md",
+    footprint: { w: 3, h: 3 },
     scaleRatio: 1.05,
   },
   {
@@ -417,7 +457,7 @@ export const STAGE_KINDS: {
     label: "Trompete",
     category: "sopros_infra",
     iconSrc: "/stage-icons/trompete.svg",
-    size: "md",
+    footprint: { w: 2, h: 2 },
     scaleRatio: 0.85,
   },
   {
@@ -425,7 +465,7 @@ export const STAGE_KINDS: {
     label: "Ponto de energia / Régua AC",
     category: "sopros_infra",
     iconSrc: "/stage-icons/ponto-energia.svg",
-    size: "sm",
+    footprint: { w: 2, h: 2 },
     scaleRatio: 0.6,
   },
   {
@@ -433,29 +473,24 @@ export const STAGE_KINDS: {
     label: "Praticável",
     category: "sopros_infra",
     iconSrc: "/stage-icons/praticavel.svg",
-    size: "lg",
+    footprint: { w: 6, h: 3 },
     scaleRatio: 1.15,
+    darkOutline: true,
   },
   {
     kind: "outro",
     label: "Outro",
     category: "sopros_infra",
     icon: <Music2 className="size-8 text-primary" />,
-    size: "sm",
+    footprint: { w: 2, h: 2 },
     scaleRatio: 0.7,
   },
 ];
 
-const SPANS: Record<StageSize, { w: number; h: number }> = {
-  sm: { w: 1, h: 1 },
-  md: { w: 2, h: 1 },
-  tall: { w: 1, h: 2 },
-  lg: { w: 2, h: 2 },
-};
-
+/** Pegada da peça na grade, em células. A razão largura/altura segue a proporção do
+ * desenho, para a arte preencher a caixa em vez de sobrar nas laterais. */
 export function spanOf(kind: StageKind) {
-  const size = STAGE_KINDS.find((k) => k.kind === kind)?.size ?? "sm";
-  return SPANS[size];
+  return STAGE_KINDS.find((k) => k.kind === kind)?.footprint ?? { w: 2, h: 2 };
 }
 
 function categoryColorStyles(category: StageCategoryKey) {
@@ -473,11 +508,26 @@ function categoryColorStyles(category: StageCategoryKey) {
   }
 }
 
-function StageIcon({ kind, className }: { kind: StageKind; className?: string }) {
+function StageIcon({
+  kind,
+  className,
+  rotateDeg,
+  flipX,
+}: {
+  kind: StageKind;
+  className?: string;
+  // `exactOptionalPropertyTypes` está ligado: os campos vêm de StageItem podendo ser
+  // undefined, então o tipo precisa aceitar isso explicitamente.
+  rotateDeg?: number | undefined;
+  flipX?: boolean | undefined;
+}) {
   const def = STAGE_KINDS.find((k) => k.kind === kind);
-  const rot = def?.rotateDeg ?? 0;
   const scale = def?.scaleRatio ?? 1;
-  const transform = `rotate(${rot}deg) scale(${scale})${def?.flipX ? " scaleX(-1)" : ""}`;
+  // A peça no mapa manda por cima do padrão do tipo: a rotação soma e o espelho é XOR,
+  // para o monitor direito (que já nasce espelhado) responder ao botão como todo mundo.
+  const rot = (def?.rotateDeg ?? 0) + (rotateDeg ?? 0);
+  const espelhado = Boolean(def?.flipX) !== Boolean(flipX);
+  const transform = `rotate(${rot}deg) scale(${scale})${espelhado ? " scaleX(-1)" : ""}`;
 
   if (def?.iconSrc) {
     return (
@@ -491,12 +541,11 @@ function StageIcon({ kind, className }: { kind: StageKind; className?: string })
           className={cn(
             "h-full w-full object-contain filter drop-shadow-sm transition-transform duration-200",
             // Inverter só serve para arte chapada de corpo quase preto. Na arte ilustrada,
-            // inverter trocaria madeira por azul e latão por roxo — em vez disso ela ganha um
-            // contorno claro, que destaca peças escuras (bateria, piano, retornos) sem mexer
-            // nas cores.
-            def.flat
-              ? "dark:invert dark:brightness-200"
-              : "dark:drop-shadow-[0_0_1.5px_rgba(255,255,255,0.65)]",
+            // inverter trocaria madeira por azul e latão por roxo.
+            def.flat && "dark:invert dark:brightness-200",
+            // O contorno claro é para a arte que sumiria no fundo escuro, e só para ela:
+            // num ícone de tom médio ele vira uma aura feia em volta do desenho.
+            def.darkOutline && "dark:drop-shadow-[0_0_1.5px_rgba(255,255,255,0.6)]",
           )}
         />
       </div>
@@ -511,21 +560,9 @@ function StageIcon({ kind, className }: { kind: StageKind; className?: string })
   );
 }
 
-export const COLS = 9;
-export const ROWS = 6;
+export const COLS = 18;
+export const ROWS = 12;
 
-const LEGACY_COLS = 5;
-const LEGACY_ROWS = 3;
-
-function upgradeLegacy(items: StageItem[]): StageItem[] {
-  const legacy = items.every((i) => i.col < LEGACY_COLS && i.row < LEGACY_ROWS);
-  if (!legacy || items.length === 0) return items;
-  return items.map((i) => ({
-    ...i,
-    col: Math.min(COLS - spanOf(i.kind).w, i.col * 2),
-    row: Math.min(ROWS - spanOf(i.kind).h, i.row * 2 + (ROWS - LEGACY_ROWS * 2)),
-  }));
-}
 
 export function parseStagePlot(raw: unknown): StageItem[] {
   if (!Array.isArray(raw)) return [];
@@ -533,7 +570,7 @@ export function parseStagePlot(raw: unknown): StageItem[] {
     (i): i is StageItem =>
       Boolean(i) && typeof i === "object" && "kind" in (i as object) && "col" in (i as object),
   );
-  return upgradeLegacy(items);
+  return items;
 }
 
 function overlaps(a: StageItem, col: number, row: number, span: { w: number; h: number }) {
@@ -579,6 +616,16 @@ export function StagePlot({
     setWarning(null);
     const label = STAGE_KINDS.find((k) => k.kind === kind)?.label ?? "Outro";
     onChange([...items, { id: crypto.randomUUID(), kind, label, col: spot.col, row: spot.row }]);
+  }
+
+  function rotate(id: string) {
+    onChange(
+      items.map((i) => (i.id === id ? { ...i, rotateDeg: ((i.rotateDeg ?? 0) + 45) % 360 } : i)),
+    );
+  }
+
+  function mirror(id: string) {
+    onChange(items.map((i) => (i.id === id ? { ...i, flipX: !i.flipX } : i)));
   }
 
   function cellFromPointer(clientX: number, clientY: number) {
@@ -695,7 +742,7 @@ export function StagePlot({
                   variant="secondary"
                   className="ml-1 px-1 py-0 text-[9px] uppercase font-mono"
                 >
-                  {k.size}
+                  {k.footprint.w}×{k.footprint.h}
                 </Badge>
               </Button>
             ))
@@ -732,19 +779,21 @@ export function StagePlot({
           <span className="text-[10px] text-muted-foreground/70">LATERAIS / SIDE FILL DIREITO</span>
         </div>
 
-        <div className="overflow-x-auto pb-2">
+        {/* pb-6 é a calha do rótulo: a peça da última linha pendura o nome para fora da
+            pegada, e sem esse respiro ele cairia em cima do rodapé do palco. */}
+        <div className="overflow-x-auto pb-6">
           <div
             ref={gridRef}
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
-            className="relative min-w-[800px]"
+            className="relative min-w-[900px]"
           >
             {/* Linhas da Grade do Palco sem Fundo Roxo */}
             <div
               className="grid gap-1"
               style={{
                 gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-                gridTemplateRows: `repeat(${ROWS}, 96px)`,
+                gridTemplateRows: `repeat(${ROWS}, 48px)`,
               }}
             >
               {Array.from({ length: ROWS * COLS }).map((_, index) => {
@@ -773,7 +822,7 @@ export function StagePlot({
               className="pointer-events-none absolute inset-0 grid gap-1"
               style={{
                 gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-                gridTemplateRows: `repeat(${ROWS}, 96px)`,
+                gridTemplateRows: `repeat(${ROWS}, 48px)`,
               }}
             >
               {items.map((item) => {
@@ -793,24 +842,44 @@ export function StagePlot({
                       gridRow: `${item.row + 1} / span ${span.h}`,
                     }}
                     className={cn(
-                      "group pointer-events-auto relative flex cursor-grab active:cursor-grabbing flex-col items-center justify-between rounded-lg border-2 backdrop-blur-2xs p-1 shadow-xs hover:shadow-md transition-all hover:scale-[1.02]",
+                      "group pointer-events-auto relative cursor-grab active:cursor-grabbing rounded-lg border-2 backdrop-blur-2xs shadow-xs hover:shadow-md transition-all hover:scale-[1.02]",
                       colorStyle,
                     )}
                   >
-                    <button
-                      type="button"
-                      aria-label={`Remover ${item.label}`}
-                      className="absolute -right-2 -top-2 z-30 rounded-full bg-destructive text-destructive-foreground p-1 opacity-0 shadow-md transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-                      onClick={() => onChange(items.filter((i) => i.id !== item.id))}
-                    >
-                      <Trash2 className="size-3.5" />
-                    </button>
-
-                    <div className="flex-1 min-h-0 w-full flex items-center justify-center p-0">
-                      <StageIcon kind={item.kind} />
+                    <div className="absolute -right-2 -top-2 z-30 flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                      <button
+                        type="button"
+                        aria-label={`Girar ${item.label} 45 graus`}
+                        className="rounded-full bg-background text-foreground border border-border p-1 shadow-md"
+                        onClick={() => rotate(item.id)}
+                      >
+                        <RotateCw className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Espelhar ${item.label}`}
+                        className="rounded-full bg-background text-foreground border border-border p-1 shadow-md"
+                        onClick={() => mirror(item.id)}
+                      >
+                        <FlipHorizontal className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Remover ${item.label}`}
+                        className="rounded-full bg-destructive text-destructive-foreground p-1 shadow-md"
+                        onClick={() => onChange(items.filter((i) => i.id !== item.id))}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
                     </div>
 
-                    <span className="w-full truncate text-[10px] font-bold text-center leading-none text-foreground bg-background/90 py-1 px-1.5 rounded-xs border border-border/60 shadow-2xs mt-0.5">
+                    {/* A pegada inteira é arte: o rótulo sai dela e flutua por baixo, para o
+                        desenho não perder altura para uma faixa de texto. */}
+                    <StageIcon kind={item.kind} rotateDeg={item.rotateDeg} flipX={item.flipX} />
+
+                    {/* O rótulo fica sempre abaixo do ícone — regra única, previsível. A
+                        última linha não vaza porque a grade tem uma calha reservada embaixo. */}
+                    <span className="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 -translate-y-0.5 whitespace-nowrap rounded-xs border border-border/60 bg-background/95 px-1.5 py-0.5 text-[10px] font-bold leading-none text-foreground shadow-2xs">
                       {item.label}
                     </span>
                   </div>
@@ -856,7 +925,11 @@ export function StagePlotPrintable({
 }) {
   const isLandscape = orientation === "paisagem";
   const height = isLandscape ? PRINT_PLOT_HEIGHT_LANDSCAPE : PRINT_PLOT_HEIGHT_PORTRAIT;
-  const cellHeight = isLandscape ? 100 : 132;
+  // 12 linhas + 11 vãos de 3px + a calha de rótulo precisam caber na área entre o
+  // cabeçalho e o rodapé da folha (≈802px no retrato, ≈597px no paisagem).
+  const cellHeight = isLandscape ? 44 : 61;
+  // Calha embaixo da grade: o rótulo da última linha pende para fora da pegada.
+  const LABEL_GUTTER = 20;
 
   return (
     <div
@@ -906,7 +979,7 @@ export function StagePlotPrintable({
         </span>
       </div>
 
-      <div style={{ position: "relative", flex: 1 }}>
+      <div style={{ position: "relative", flex: 1, paddingBottom: LABEL_GUTTER }}>
         <div
           style={{
             display: "grid",
@@ -916,11 +989,9 @@ export function StagePlotPrintable({
             height: "100%",
           }}
         >
+          {/* Fundo liso: no PDF o quadriculado só desenhava a sobra de cada caixa. */}
           {Array.from({ length: ROWS * COLS }).map((_, index) => (
-            <div
-              key={index}
-              style={{ border: "1px dashed #e4e4e7", borderRadius: 6, background: "#fafafa" }}
-            />
+            <div key={index} style={{ borderRadius: 6, background: "#fafafa" }} />
           ))}
         </div>
         <div
@@ -941,48 +1012,35 @@ export function StagePlotPrintable({
                 style={{
                   gridColumn: `${item.col + 1} / span ${span.w}`,
                   gridRow: `${item.row + 1} / span ${span.h}`,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: 4,
-                  overflow: "hidden",
-                  fontWeight: 600,
+                  position: "relative",
+                  overflow: "visible",
                   color: "#18181b",
-                  background: "transparent",
-                  border: "2px dashed #3f3f46",
-                  borderRadius: 8,
                 }}
               >
-                <div
-                  style={{
-                    flex: 1,
-                    minHeight: 0,
-                    display: "flex",
-                    width: "100%",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: 2,
-                  }}
-                >
-                  <StageIcon kind={item.kind} />
-                </div>
+                {/* Sem moldura e sem faixa de rótulo: a pegada inteira é desenho, e o
+                    nome flutua logo abaixo, como nos mapas de palco de referência. */}
+                <StageIcon
+                  kind={item.kind}
+                  rotateDeg={item.rotateDeg}
+                  flipX={item.flipX}
+                />
                 <span
                   style={{
-                    fontSize: 11,
+                    position: "absolute",
+                    left: "50%",
+                    top: "100%",
+                    transform: "translate(-50%, -2px)",
+                    zIndex: 20,
+                    fontSize: 10,
                     fontWeight: 800,
                     lineHeight: 1.1,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
                     textAlign: "center",
-                    maxWidth: "100%",
                     color: "#18181b",
                     background: "#ffffff",
-                    padding: "3px 8px",
+                    padding: "2px 6px",
                     borderRadius: 4,
-                    border: "1px solid #18181b",
-                    boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+                    border: "1px solid #d4d4d8",
                   }}
                 >
                   {item.label}
@@ -1067,6 +1125,36 @@ export function StageItemLabels({
               onChange(items.map((i) => (i.id === item.id ? { ...i, label: e.target.value } : i)))
             }
           />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            aria-label={`Girar ${item.label} 45 graus`}
+            title="Girar 45°"
+            onClick={() =>
+              onChange(
+                items.map((i) =>
+                  i.id === item.id ? { ...i, rotateDeg: ((i.rotateDeg ?? 0) + 45) % 360 } : i,
+                ),
+              )
+            }
+          >
+            <RotateCw className="size-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            aria-label={`Espelhar ${item.label}`}
+            title="Espelhar na horizontal"
+            onClick={() =>
+              onChange(items.map((i) => (i.id === item.id ? { ...i, flipX: !i.flipX } : i)))
+            }
+          >
+            <FlipHorizontal className="size-4" />
+          </Button>
           <Button
             type="button"
             variant="ghost"
