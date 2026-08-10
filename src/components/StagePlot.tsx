@@ -779,9 +779,7 @@ export function StagePlot({
           <span className="text-[10px] text-muted-foreground/70">LATERAIS / SIDE FILL DIREITO</span>
         </div>
 
-        {/* pb-6 é a calha do rótulo: a peça da última linha pendura o nome para fora da
-            pegada, e sem esse respiro ele cairia em cima do rodapé do palco. */}
-        <div className="overflow-x-auto pb-6">
+        <div className="overflow-x-auto pb-2">
           <div
             ref={gridRef}
             onDragOver={(e) => e.preventDefault()}
@@ -877,9 +875,10 @@ export function StagePlot({
                         desenho não perder altura para uma faixa de texto. */}
                     <StageIcon kind={item.kind} rotateDeg={item.rotateDeg} flipX={item.flipX} />
 
-                    {/* O rótulo fica sempre abaixo do ícone — regra única, previsível. A
-                        última linha não vaza porque a grade tem uma calha reservada embaixo. */}
-                    <span className="pointer-events-none absolute left-1/2 top-full z-20 -translate-x-1/2 -translate-y-0.5 whitespace-nowrap rounded-xs border border-border/60 bg-background/95 px-1.5 py-0.5 text-[10px] font-bold leading-none text-foreground shadow-2xs">
+                    {/* Rótulo sobreposto no rodapé da própria pegada: não rouba altura da
+                        arte (que segue ocupando a caixa inteira) e não vaza para a célula
+                        vizinha. Quebra em duas linhas quando o nome é longo. */}
+                    <span className="pointer-events-none absolute bottom-0.5 left-1/2 z-20 max-w-[calc(100%-4px)] -translate-x-1/2 rounded-xs border border-border/60 bg-background/95 px-1 py-0.5 text-center text-[9px] font-bold leading-[1.15] text-foreground shadow-2xs">
                       {item.label}
                     </span>
                   </div>
@@ -925,11 +924,10 @@ export function StagePlotPrintable({
 }) {
   const isLandscape = orientation === "paisagem";
   const height = isLandscape ? PRINT_PLOT_HEIGHT_LANDSCAPE : PRINT_PLOT_HEIGHT_PORTRAIT;
-  // 12 linhas + 11 vãos de 3px + a calha de rótulo precisam caber na área entre o
-  // cabeçalho e o rodapé da folha (≈802px no retrato, ≈597px no paisagem).
-  const cellHeight = isLandscape ? 44 : 61;
-  // Calha embaixo da grade: o rótulo da última linha pende para fora da pegada.
-  const LABEL_GUTTER = 20;
+  // 12 linhas + 11 vãos de 3px precisam caber na área entre o cabeçalho e o rodapé
+  // da folha (≈802px no retrato, ≈597px no paisagem). O rótulo mora dentro da pegada,
+  // então não é preciso reservar calha embaixo.
+  const cellHeight = isLandscape ? 46 : 63;
 
   return (
     <div
@@ -979,7 +977,7 @@ export function StagePlotPrintable({
         </span>
       </div>
 
-      <div style={{ position: "relative", flex: 1, paddingBottom: LABEL_GUTTER }}>
+      <div style={{ position: "relative", flex: 1 }}>
         <div
           style={{
             display: "grid",
@@ -1026,19 +1024,21 @@ export function StagePlotPrintable({
                 />
                 <span
                   style={{
+                    // Sobreposto no rodapé da própria pegada: a arte segue ocupando a caixa
+                    // inteira e o nome não invade a célula vizinha nem o rodapé do palco.
                     position: "absolute",
                     left: "50%",
-                    top: "100%",
-                    transform: "translate(-50%, -2px)",
+                    bottom: 2,
+                    transform: "translateX(-50%)",
+                    maxWidth: "calc(100% - 4px)",
                     zIndex: 20,
-                    fontSize: 10,
+                    fontSize: 9,
                     fontWeight: 800,
-                    lineHeight: 1.1,
-                    whiteSpace: "nowrap",
+                    lineHeight: 1.15,
                     textAlign: "center",
                     color: "#18181b",
                     background: "#ffffff",
-                    padding: "2px 6px",
+                    padding: "1px 4px",
                     borderRadius: 4,
                     border: "1px solid #d4d4d8",
                   }}
