@@ -196,8 +196,8 @@ function ContractWizard() {
                 step === s.id
                   ? "border-primary/50 bg-primary/15 text-primary"
                   : step > s.id
-                    ? // --accent é violeta escuro, quase da mesma luminância do fundo:
-                      // usar success aqui, como nos demais indicadores de progresso.
+                    ? // --accent é escuro e de baixo croma, quase da mesma luminância do
+                      // fundo: usar success aqui, como nos demais indicadores de progresso.
                       "border-success/40 bg-success/10 text-success"
                     : "border-border text-muted-foreground",
               )}

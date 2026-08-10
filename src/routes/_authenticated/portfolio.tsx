@@ -103,7 +103,7 @@ function PortfolioPage() {
           {(list) => (
             <ul className="grid gap-4 sm:grid-cols-2">
               {list.map((item) => (
-                <li key={item.id} className="rounded-lg border border-border p-4 shadow-xs">
+                <li key={item.id} className="rounded-lg border border-border p-4">
                   {item.media_url ? (
                     <div className="mb-3 overflow-hidden rounded-md border border-border bg-muted/30">
                       <img

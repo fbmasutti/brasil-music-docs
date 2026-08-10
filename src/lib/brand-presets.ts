@@ -35,7 +35,7 @@ export const BRAND_PRESETS: BrandPreset[] = [
   {
     id: "neon_night",
     label: "Neon Night",
-    description: "Slate profundo com violeta neon — combina com o visual padrão do StageKit.",
+    description: "Slate profundo com violeta neon — contraste alto, boa leitura no feed.",
     palette: {
       bg: "#09090B",
       card: "#18181B",

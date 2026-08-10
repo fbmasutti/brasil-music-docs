@@ -83,7 +83,7 @@ function Landing() {
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-6">
         <div className="flex items-center gap-2.5">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground glow-violet">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground glow-brand">
             <Radio className="size-4.5" />
           </span>
           <span className="font-extrabold tracking-tight">StageKit</span>

@@ -52,18 +52,19 @@ export function StatCard({
   value,
   hint,
   icon,
-  tone = "violet",
+  tone = "brand",
 }: {
   label: string;
   value: string;
   hint?: string | undefined;
   icon?: ReactNode | undefined;
-  tone?: "violet" | "cyan" | "amber" | "lime" | "muted" | undefined;
+  /** `brand` segue a cor primária do tema; os demais são acentos fixos. */
+  tone?: "brand" | "cyan" | "amber" | "lime" | "muted" | undefined;
 }) {
   const tones: Record<string, string> = {
-    violet: "text-primary bg-primary/10 border-primary/20",
-    // Usava text-accent, que é um violeta escuro — o cartão "ciano" saía
-    // roxo e com contraste baixo. Agora aponta para a variável --cyan.
+    brand: "text-primary bg-primary/10 border-primary/20",
+    // Usava text-accent, que é escuro e de baixo croma — o cartão "ciano" saía
+    // com a cor da marca e contraste baixo. Agora aponta para a variável --cyan.
     cyan: "text-cyan bg-cyan/10 border-cyan/20",
     amber: "text-warning bg-warning/10 border-warning/20",
     lime: "text-lime bg-lime/10 border-lime/20",

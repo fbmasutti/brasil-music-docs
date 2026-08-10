@@ -224,7 +224,7 @@ export function AppLayout() {
               onClick={toggleTheme}
               aria-label={theme === "dark" ? "Mudar para tema claro" : "Mudar para tema escuro"}
               // O tema real vem do script inline (antes da hidratação) e pode
-              // divergir do "dark" padrão do primeiro render no servidor —
+              // divergir do "light" padrão do primeiro render no servidor —
               // só o ícone pisca por um frame, as cores da página não.
               suppressHydrationWarning
             >
@@ -281,7 +281,7 @@ function NavGroupBlock({
 function Brand({ compact }: { compact?: boolean | undefined }) {
   return (
     <div className={cn("flex items-center gap-2.5", compact ? "" : "px-5 pb-6")}>
-      <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground glow-violet">
+      <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground glow-brand">
         <Radio className="size-4.5" />
       </span>
       <div>

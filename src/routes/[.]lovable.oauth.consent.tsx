@@ -90,7 +90,7 @@ function Consent() {
     <main className="flex min-h-screen items-center justify-center px-4 py-12">
       <div className="panel w-full max-w-md p-6">
         <div className="mb-6 flex items-center gap-2.5">
-          <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground glow-violet">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground glow-brand">
             <Radio className="size-5" />
           </span>
           <span className="text-lg font-extrabold tracking-tight">StageKit</span>
