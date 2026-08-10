@@ -699,6 +699,7 @@ export function StagePlot({
               placeholder="Buscar instrumento..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              title="Busca em todas as categorias de uma vez, ignorando as abas"
               className="h-8 pl-8 text-xs"
             />
           </div>
@@ -714,6 +715,9 @@ export function StagePlot({
                 variant={activeCategory === cat.key ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setActiveCategory(cat.key)}
+                title={`Mostrar só ${cat.label} (${
+                  STAGE_KINDS.filter((k) => k.category === cat.key).length
+                } peças)`}
                 className="h-7 px-2.5 text-xs font-medium"
               >
                 {cat.label}
@@ -732,6 +736,7 @@ export function StagePlot({
                 variant="outline"
                 size="sm"
                 onClick={() => add(k.kind)}
+                title={`Adicionar ${k.label} — ocupa ${k.footprint.w}×${k.footprint.h} células da grade`}
                 className="h-8 border-border/80 bg-background hover:bg-accent/60 transition-all"
               >
                 <span className="flex size-4 shrink-0 items-center justify-center">
@@ -757,6 +762,7 @@ export function StagePlot({
             variant="secondary"
             size="sm"
             onClick={suggestMonitors}
+            title="Coloca um retorno na frente de cada músico que ainda não tem um por perto"
             className="h-8 text-xs font-medium ml-auto"
           >
             <Speaker className="mr-1 size-3.5 text-primary" /> Sugerir Monitores
@@ -833,7 +839,7 @@ export function StagePlot({
                   <div
                     key={item.id}
                     draggable
-                    title={item.label}
+                    title={`${item.label} — arraste para reposicionar no palco`}
                     onDragStart={(e) => e.dataTransfer.setData("text/plain", item.id)}
                     style={{
                       gridColumn: `${item.col + 1} / span ${span.w}`,
@@ -848,6 +854,7 @@ export function StagePlot({
                       <button
                         type="button"
                         aria-label={`Girar ${item.label} 45 graus`}
+                        title={`Girar 45° (está em ${item.rotateDeg ?? 0}°) — aponte a peça para quem ela atende`}
                         className="rounded-full bg-background text-foreground border border-border p-1 shadow-md"
                         onClick={() => rotate(item.id)}
                       >
@@ -856,6 +863,7 @@ export function StagePlot({
                       <button
                         type="button"
                         aria-label={`Espelhar ${item.label}`}
+                        title="Espelhar na horizontal — vira o desenho para o outro lado, sem mudar de lugar"
                         className="rounded-full bg-background text-foreground border border-border p-1 shadow-md"
                         onClick={() => mirror(item.id)}
                       >
@@ -864,6 +872,7 @@ export function StagePlot({
                       <button
                         type="button"
                         aria-label={`Remover ${item.label}`}
+                        title={`Remover "${item.label}" do palco`}
                         className="rounded-full bg-destructive text-destructive-foreground p-1 shadow-md"
                         onClick={() => onChange(items.filter((i) => i.id !== item.id))}
                       >
@@ -1107,7 +1116,10 @@ export function StageItemLabels({
               onChange(items.map((i) => (i.id === item.id ? { ...i, kind: v as StageKind } : i)))
             }
           >
-            <SelectTrigger className="w-44 h-8 text-xs">
+            <SelectTrigger
+              className="w-44 h-8 text-xs"
+              title="Trocar o tipo desta peça — o desenho e o espaço que ela ocupa mudam junto"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -1120,6 +1132,7 @@ export function StageItemLabels({
           </Select>
           <input
             className="h-8 flex-1 rounded-md border border-input bg-background px-3 text-xs"
+            title="Nome que aparece no mapa e no PDF. Nomes curtos cabem melhor dentro da peça"
             value={item.label}
             onChange={(e) =>
               onChange(items.map((i) => (i.id === item.id ? { ...i, label: e.target.value } : i)))
@@ -1131,7 +1144,7 @@ export function StageItemLabels({
             size="icon"
             className="size-8"
             aria-label={`Girar ${item.label} 45 graus`}
-            title="Girar 45°"
+            title={`Girar 45° (está em ${item.rotateDeg ?? 0}°) — aponte a peça para quem ela atende`}
             onClick={() =>
               onChange(
                 items.map((i) =>
@@ -1148,7 +1161,7 @@ export function StageItemLabels({
             size="icon"
             className="size-8"
             aria-label={`Espelhar ${item.label}`}
-            title="Espelhar na horizontal"
+            title="Espelhar na horizontal — vira o desenho para o outro lado, sem mudar de lugar"
             onClick={() =>
               onChange(items.map((i) => (i.id === item.id ? { ...i, flipX: !i.flipX } : i)))
             }
@@ -1161,6 +1174,7 @@ export function StageItemLabels({
             size="icon"
             className="size-8"
             aria-label="Remover"
+            title={`Remover "${item.label}" do palco`}
             onClick={() => onChange(items.filter((i) => i.id !== item.id))}
           >
             <Trash2 className="size-4 text-destructive" />
