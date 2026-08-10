@@ -135,8 +135,12 @@ export const STAGE_KINDS: {
     label: "Pedestal com microfone",
     category: "voz_cordas",
     iconSrc: "/stage-icons/pedestal.svg",
-    footprint: { w: 2, h: 4 },
+    // A arte é 1:3,27 e não foi cortada: a pegada é que acompanha. Em 2x5 ela preenche
+    // 77% da largura da caixa; em 2x4 cairia para 62%.
+    footprint: { w: 2, h: 5 },
     scaleRatio: 1,
+    // Haste quase preta: luminância média 35, a mais escura do set depois dos retornos.
+    darkOutline: true,
   },
   {
     kind: "guitarra",
