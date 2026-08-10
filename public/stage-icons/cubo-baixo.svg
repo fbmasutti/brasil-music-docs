@@ -1,14 +1,43 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-<rect x="462" y="88" width="100" height="30" rx="14" fill="#06B6D4"/>
-<rect x="180" y="118" width="664" height="204" rx="24" fill="#121214"/>
-<circle cx="290" cy="220" r="26" fill="#06B6D4"/>
-<circle cx="400" cy="220" r="26" fill="#06B6D4"/>
-<circle cx="512" cy="220" r="26" fill="#06B6D4"/>
-<circle cx="624" cy="220" r="26" fill="#06B6D4"/>
-<circle cx="734" cy="220" r="26" fill="#06B6D4"/>
-<rect x="140" y="342" width="744" height="596" rx="30" fill="#121214"/>
-<circle cx="360" cy="640" r="140" fill="#06B6D4"/>
-<circle cx="360" cy="640" r="100" fill="#121214"/>
-<circle cx="664" cy="640" r="140" fill="#06B6D4"/>
-<circle cx="664" cy="640" r="100" fill="#121214"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="780" viewBox="0 0 800 780">
+  <!-- Combo de baixo 1x15 com driver de agudo. O falante único diferencia esta peça
+       do cabeçote + caixa 4x12, que usa a mesma paleta teal. -->
+
+  <!-- Alça -->
+  <path d="M330 44 h140 a26 26 0 0 1 0 52 h-140 a26 26 0 0 1 0-52 z" fill="#121214"/>
+
+  <!-- Gabinete -->
+  <rect x="34" y="80" width="732" height="660" rx="30" fill="#022d34" stroke="#121214" stroke-width="16"/>
+
+  <!-- Painel de controle -->
+  <rect x="72" y="116" width="656" height="112" rx="18" fill="#035866"/>
+  <g>
+    <circle cx="148" cy="172" r="30" fill="#022d34"/><circle cx="148" cy="172" r="20" fill="#cfcee5"/>
+    <circle cx="240" cy="172" r="30" fill="#022d34"/><circle cx="240" cy="172" r="20" fill="#cfcee5"/>
+    <circle cx="332" cy="172" r="30" fill="#022d34"/><circle cx="332" cy="172" r="20" fill="#a3add0"/>
+    <circle cx="424" cy="172" r="30" fill="#022d34"/><circle cx="424" cy="172" r="20" fill="#a3add0"/>
+  </g>
+  <rect x="510" y="146" width="140" height="52" rx="12" fill="#022d34"/>
+  <rect x="526" y="160" width="108" height="24" rx="7" fill="#06b6d4"/>
+  <circle cx="694" cy="172" r="17" fill="#bd514e"/>
+
+  <!-- Tela -->
+  <rect x="72" y="258" width="656" height="446" rx="20" fill="#04404b"/>
+
+  <!-- Driver de agudo -->
+  <rect x="520" y="292" width="168" height="72" rx="14" fill="#0591a8"/>
+  <rect x="544" y="308" width="120" height="40" rx="9" fill="#022d34"/>
+
+  <!-- Falante de 15 -->
+  <circle cx="400" cy="500" r="186" fill="#0591a8"/>
+  <circle cx="400" cy="500" r="152" fill="#06b6d4"/>
+  <circle cx="400" cy="500" r="62" fill="#cfcee5"/>
+  <circle cx="400" cy="500" r="26" fill="#a3add0"/>
+
+  <!-- Cantoneiras -->
+  <g fill="#121214">
+    <path d="M34 110 a30 30 0 0 1 30-30 h44 l-74 74 z"/>
+    <path d="M766 110 a30 30 0 0 0-30-30 h-44 l74 74 z"/>
+    <path d="M34 710 a30 30 0 0 0 30 30 h44 l-74-74 z"/>
+    <path d="M766 710 a30 30 0 0 1-30 30 h-44 l74-74 z"/>
+  </g>
 </svg>

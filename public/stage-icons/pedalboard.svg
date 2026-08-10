@@ -1,13 +1,78 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <!-- Pedalboard: régua com dois pedais e cabo de saída. -->
-  <rect x="120" y="300" width="784" height="424" rx="34" fill="#121214"/>
-  <rect x="180" y="360" width="290" height="304" rx="22" fill="#3a3a40"/>
-  <rect x="554" y="360" width="290" height="304" rx="22" fill="#3a3a40"/>
-  <circle cx="325" cy="440" r="34" fill="#06B6D4"/>
-  <circle cx="699" cy="440" r="34" fill="#06B6D4"/>
-  <circle cx="325" cy="580" r="52" fill="#121214"/>
-  <circle cx="699" cy="580" r="52" fill="#121214"/>
-  <circle cx="325" cy="580" r="24" fill="#06B6D4"/>
-  <circle cx="699" cy="580" r="24" fill="#06B6D4"/>
-  <rect x="470" y="470" width="84" height="26" rx="13" fill="#06B6D4"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="500" viewBox="0 0 1000 500">
+  <!-- Fileira de três pedais compactos ligados por cabos, traçada da imagem de
+       referência. As cores da referência caem na paleta do set: teal, laranja
+       e marrom escuro. -->
+
+  <style>
+    .corpo  { stroke: #200d02; stroke-width: 16; stroke-linejoin: round; }
+    .led    { fill: #f25332; }
+    .anel   { fill: #2b3238; }
+    .cromo  { fill: #cfcee5; }
+    .risco  { stroke: #2b3238; stroke-width: 9; stroke-linecap: round; }
+    .linha  { fill: #fce6e1; opacity: .85; }
+    .chapa  { fill: #33383d; }
+    .lombo  { fill: #454b51; }
+    .tampa  { fill: #1a1a1e; }
+    .lug    { fill: #9aa6b1; stroke: #200d02; stroke-width: 10; }
+  </style>
+
+  <!-- Cabos de ligação -->
+  <g fill="none" stroke="#1a1a1e" stroke-width="18" stroke-linecap="round">
+    <path d="M296 237 C 330 352, 342 352, 376 237"/>
+    <path d="M636 237 C 670 352, 682 352, 716 237"/>
+  </g>
+
+  <!-- Pedal 1 — teal -->
+  <g transform="translate(30 12)">
+    <rect class="corpo" x="0" y="0" width="260" height="470" rx="26" fill="#0591a8"/>
+    <rect x="14" y="14" width="232" height="150" rx="18" fill="#035866"/>
+    <circle class="led" cx="130" cy="42" r="13"/>
+    <circle class="anel" cx="66" cy="100" r="34"/><circle class="cromo" cx="66" cy="100" r="24"/>
+    <path class="risco" d="M66 100 L52 80"/>
+    <circle class="anel" cx="194" cy="100" r="34"/><circle class="cromo" cx="194" cy="100" r="24"/>
+    <path class="risco" d="M194 100 L208 80"/>
+    <circle class="anel" cx="130" cy="126" r="22"/><circle class="cromo" cx="130" cy="126" r="14"/>
+    <rect class="linha" x="26" y="180" width="208" height="9" rx="4.5"/>
+    <rect class="chapa" x="26" y="214" width="208" height="206" rx="22"/>
+    <rect class="lombo" x="26" y="214" width="208" height="26" rx="13"/>
+    <rect class="tampa" x="106" y="440" width="48" height="26" rx="6"/>
+    <rect class="lug" x="-18" y="186" width="24" height="54" rx="9"/>
+    <rect class="lug" x="254" y="186" width="24" height="54" rx="9"/>
+  </g>
+
+  <!-- Pedal 2 — laranja -->
+  <g transform="translate(370 12)">
+    <rect class="corpo" x="0" y="0" width="260" height="470" rx="26" fill="#f9ab3e"/>
+    <rect x="14" y="14" width="232" height="150" rx="18" fill="#db8f4c"/>
+    <circle class="led" cx="130" cy="42" r="13"/>
+    <circle class="anel" cx="66" cy="100" r="34"/><circle class="cromo" cx="66" cy="100" r="24"/>
+    <path class="risco" d="M66 100 L54 78"/>
+    <circle class="anel" cx="194" cy="100" r="34"/><circle class="cromo" cx="194" cy="100" r="24"/>
+    <path class="risco" d="M194 100 L206 78"/>
+    <circle class="anel" cx="130" cy="126" r="22"/><circle class="cromo" cx="130" cy="126" r="14"/>
+    <rect class="linha" x="26" y="180" width="208" height="9" rx="4.5"/>
+    <rect class="chapa" x="26" y="214" width="208" height="206" rx="22"/>
+    <rect class="lombo" x="26" y="214" width="208" height="26" rx="13"/>
+    <rect class="tampa" x="106" y="440" width="48" height="26" rx="6"/>
+    <rect class="lug" x="-18" y="186" width="24" height="54" rx="9"/>
+    <rect class="lug" x="254" y="186" width="24" height="54" rx="9"/>
+  </g>
+
+  <!-- Pedal 3 — marrom escuro -->
+  <g transform="translate(710 12)">
+    <rect class="corpo" x="0" y="0" width="260" height="470" rx="26" fill="#5a2d10"/>
+    <rect x="14" y="14" width="232" height="150" rx="18" fill="#421f0a"/>
+    <circle class="led" cx="130" cy="42" r="13"/>
+    <circle class="anel" cx="66" cy="100" r="34"/><circle class="cromo" cx="66" cy="100" r="24"/>
+    <path class="risco" d="M66 100 L50 84"/>
+    <circle class="anel" cx="194" cy="100" r="34"/><circle class="cromo" cx="194" cy="100" r="24"/>
+    <path class="risco" d="M194 100 L210 84"/>
+    <circle class="anel" cx="130" cy="126" r="22"/><circle class="cromo" cx="130" cy="126" r="14"/>
+    <rect class="linha" x="26" y="180" width="208" height="9" rx="4.5"/>
+    <rect class="chapa" x="26" y="214" width="208" height="206" rx="22"/>
+    <rect class="lombo" x="26" y="214" width="208" height="26" rx="13"/>
+    <rect class="tampa" x="106" y="440" width="48" height="26" rx="6"/>
+    <rect class="lug" x="-18" y="186" width="24" height="54" rx="9"/>
+    <rect class="lug" x="254" y="186" width="24" height="54" rx="9"/>
+  </g>
 </svg>

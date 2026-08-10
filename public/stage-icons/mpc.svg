@@ -1,15 +1,43 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-<rect x="140" y="200" width="744" height="624" rx="30" fill="#121214"/>
-<rect x="200" y="270" width="130" height="130" rx="18" fill="#06B6D4"/>
-<rect x="360" y="270" width="130" height="130" rx="18" fill="#06B6D4"/>
-<rect x="520" y="270" width="130" height="130" rx="18" fill="#06B6D4"/>
-<rect x="680" y="270" width="130" height="130" rx="18" fill="#06B6D4"/>
-<rect x="200" y="430" width="130" height="130" rx="18" fill="#06B6D4"/>
-<rect x="360" y="430" width="130" height="130" rx="18" fill="#06B6D4"/>
-<rect x="520" y="430" width="130" height="130" rx="18" fill="#06B6D4"/>
-<rect x="680" y="430" width="130" height="130" rx="18" fill="#06B6D4"/>
-<rect x="200" y="590" width="130" height="130" rx="18" fill="#06B6D4"/>
-<rect x="360" y="590" width="130" height="130" rx="18" fill="#06B6D4"/>
-<rect x="520" y="590" width="130" height="130" rx="18" fill="#06B6D4"/>
-<rect x="680" y="590" width="130" height="130" rx="18" fill="#06B6D4"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="760" viewBox="0 0 1000 760">
+  <!-- Sampler de pads, mesma paleta do sintetizador (roxo-escuro + ciano). -->
+
+  <rect x="36" y="36" width="928" height="688" rx="40" fill="#2b1d32" stroke="#121214" stroke-width="16"/>
+  <rect x="70" y="66" width="860" height="44" rx="18" fill="#4d3a57" opacity="0.6"/>
+
+  <!-- Visor -->
+  <rect x="88" y="104" width="334" height="172" rx="18" fill="#022d34"/>
+  <rect x="112" y="126" width="286" height="128" rx="10" fill="#06b6d4"/>
+  <g fill="#022d34" opacity="0.55">
+    <rect x="136" y="150" width="150" height="16" rx="8"/>
+    <rect x="136" y="184" width="220" height="12" rx="6"/>
+    <rect x="136" y="212" width="96" height="12" rx="6"/>
+  </g>
+
+  <!-- Knobs e roda de dados -->
+  <g>
+    <circle cx="544" cy="150" r="42" fill="#022d34"/><circle cx="544" cy="150" r="28" fill="#cfcee5"/>
+    <circle cx="656" cy="150" r="42" fill="#022d34"/><circle cx="656" cy="150" r="28" fill="#a3add0"/>
+    <circle cx="768" cy="150" r="42" fill="#022d34"/><circle cx="768" cy="150" r="28" fill="#cfcee5"/>
+    <circle cx="880" cy="190" r="66" fill="#022d34"/>
+    <circle cx="880" cy="190" r="46" fill="#4d3a57"/>
+    <path d="M880 190 L880 152" stroke="#cfcee5" stroke-width="12" stroke-linecap="round"/>
+  </g>
+
+  <!-- Grade de pads -->
+  <g>
+    <rect x="88" y="320" width="182" height="102" rx="18" fill="#4d3a57"/>
+    <rect x="292" y="320" width="182" height="102" rx="18" fill="#06b6d4"/>
+    <rect x="496" y="320" width="182" height="102" rx="18" fill="#4d3a57"/>
+    <rect x="700" y="320" width="182" height="102" rx="18" fill="#4d3a57"/>
+
+    <rect x="88" y="446" width="182" height="102" rx="18" fill="#4d3a57"/>
+    <rect x="292" y="446" width="182" height="102" rx="18" fill="#4d3a57"/>
+    <rect x="496" y="446" width="182" height="102" rx="18" fill="#06b6d4"/>
+    <rect x="700" y="446" width="182" height="102" rx="18" fill="#4d3a57"/>
+
+    <rect x="88" y="572" width="182" height="102" rx="18" fill="#4d3a57"/>
+    <rect x="292" y="572" width="182" height="102" rx="18" fill="#4d3a57"/>
+    <rect x="496" y="572" width="182" height="102" rx="18" fill="#4d3a57"/>
+    <rect x="700" y="572" width="182" height="102" rx="18" fill="#4d3a57"/>
+  </g>
 </svg>

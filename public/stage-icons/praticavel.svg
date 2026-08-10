@@ -1,6 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-<rect x="120" y="380" width="784" height="180" rx="16" fill="#121214"/>
-<rect x="160" y="560" width="60" height="140" fill="#121214"/>
-<rect x="804" y="560" width="60" height="140" fill="#121214"/>
-<rect x="120" y="420" width="784" height="16" fill="#06B6D4"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="420" viewBox="0 0 1000 420">
+  <!-- Praticável em 3/4. Tons neutros de propósito: é a base sobre a qual
+       outros instrumentos ficam, não deve competir com eles. -->
+
+  <!-- Saia frontal -->
+  <path d="M70 238 L950 238 L950 352 L70 352 Z"
+        fill="#2b3238" stroke="#200d02" stroke-width="16" stroke-linejoin="round"/>
+
+  <!-- Tampo -->
+  <path d="M176 34 L858 34 L950 238 L70 238 Z"
+        fill="#4a5560" stroke="#200d02" stroke-width="16" stroke-linejoin="round"/>
+
+  <!-- Carpete: réguas do tampo -->
+  <g stroke="#3a444d" stroke-width="9" stroke-linecap="round">
+    <path d="M290 44 L214 228"/>
+    <path d="M404 44 L358 228"/>
+    <path d="M518 44 L502 228"/>
+    <path d="M632 44 L646 228"/>
+    <path d="M746 44 L790 228"/>
+  </g>
+
+  <!-- Quina iluminada entre tampo e saia -->
+  <path d="M70 238 L950 238 L950 262 L70 262 Z" fill="#5f6c78" opacity="0.5"/>
+
+  <!-- Pés -->
+  <g fill="#1e242a">
+    <rect x="118" y="352" width="72" height="52" rx="10"/>
+    <rect x="830" y="352" width="72" height="52" rx="10"/>
+  </g>
 </svg>

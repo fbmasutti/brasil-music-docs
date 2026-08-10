@@ -1,19 +1,46 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <!-- Amplificador completo: cabeçote em cima da caixa (4x10). -->
-  <rect x="150" y="120" width="724" height="230" rx="26" fill="#121214"/>
-  <rect x="196" y="166" width="632" height="140" rx="18" fill="#3a3a40"/>
-  <circle cx="290" cy="236" r="28" fill="#06B6D4"/>
-  <circle cx="400" cy="236" r="28" fill="#06B6D4"/>
-  <circle cx="510" cy="236" r="28" fill="#06B6D4"/>
-  <circle cx="620" cy="236" r="28" fill="#06B6D4"/>
-  <rect x="700" y="204" width="100" height="64" rx="16" fill="#06B6D4"/>
-  <rect x="120" y="376" width="784" height="548" rx="30" fill="#121214"/>
-  <circle cx="330" cy="530" r="112" fill="#06B6D4"/>
-  <circle cx="330" cy="530" r="74" fill="#121214"/>
-  <circle cx="694" cy="530" r="112" fill="#06B6D4"/>
-  <circle cx="694" cy="530" r="74" fill="#121214"/>
-  <circle cx="330" cy="772" r="112" fill="#06B6D4"/>
-  <circle cx="330" cy="772" r="74" fill="#121214"/>
-  <circle cx="694" cy="772" r="112" fill="#06B6D4"/>
-  <circle cx="694" cy="772" r="74" fill="#121214"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
+  <!-- Cabeçote sobre caixa 4x12, na paleta teal do grupo de amplificação. -->
+
+  <!-- Cabeçote -->
+  <rect x="24" y="30" width="752" height="236" rx="26" fill="#022d34" stroke="#121214" stroke-width="16"/>
+  <rect x="62" y="66" width="676" height="164" rx="16" fill="#035866"/>
+  <!-- Fileira de knobs -->
+  <g>
+    <circle cx="140" cy="148" r="32" fill="#022d34"/><circle cx="140" cy="148" r="21" fill="#cfcee5"/>
+    <circle cx="234" cy="148" r="32" fill="#022d34"/><circle cx="234" cy="148" r="21" fill="#cfcee5"/>
+    <circle cx="328" cy="148" r="32" fill="#022d34"/><circle cx="328" cy="148" r="21" fill="#a3add0"/>
+    <circle cx="422" cy="148" r="32" fill="#022d34"/><circle cx="422" cy="148" r="21" fill="#a3add0"/>
+    <circle cx="516" cy="148" r="32" fill="#022d34"/><circle cx="516" cy="148" r="21" fill="#cfcee5"/>
+  </g>
+  <rect x="586" y="112" width="118" height="72" rx="14" fill="#022d34"/>
+  <rect x="602" y="130" width="86" height="36" rx="8" fill="#06b6d4"/>
+  <circle cx="645" cy="214" r="15" fill="#bd514e"/>
+
+  <!-- Caixa -->
+  <rect x="24" y="292" width="752" height="678" rx="30" fill="#022d34" stroke="#121214" stroke-width="16"/>
+  <rect x="66" y="332" width="668" height="598" rx="20" fill="#04404b"/>
+
+  <!-- Quatro falantes de 12 -->
+  <g>
+    <circle cx="234" cy="480" r="134" fill="#0591a8"/>
+    <circle cx="234" cy="480" r="100" fill="#06b6d4"/>
+    <circle cx="234" cy="480" r="40" fill="#cfcee5"/>
+    <circle cx="566" cy="480" r="134" fill="#0591a8"/>
+    <circle cx="566" cy="480" r="100" fill="#06b6d4"/>
+    <circle cx="566" cy="480" r="40" fill="#cfcee5"/>
+    <circle cx="234" cy="782" r="134" fill="#0591a8"/>
+    <circle cx="234" cy="782" r="100" fill="#06b6d4"/>
+    <circle cx="234" cy="782" r="40" fill="#cfcee5"/>
+    <circle cx="566" cy="782" r="134" fill="#0591a8"/>
+    <circle cx="566" cy="782" r="100" fill="#06b6d4"/>
+    <circle cx="566" cy="782" r="40" fill="#cfcee5"/>
+  </g>
+
+  <!-- Cantoneiras da caixa -->
+  <g fill="#121214">
+    <path d="M24 322 a30 30 0 0 1 30-30 h44 l-74 74 z"/>
+    <path d="M776 322 a30 30 0 0 0-30-30 h-44 l74 74 z"/>
+    <path d="M24 940 a30 30 0 0 0 30 30 h44 l-74-74 z"/>
+    <path d="M776 940 a30 30 0 0 1-30 30 h-44 l74-74 z"/>
+  </g>
 </svg>

@@ -17,6 +17,7 @@ export type StageItem = { id: string; kind: StageKind; label: string; col: numbe
 
 export type StageKind =
   | "voz"
+  | "pedestal"
   | "guitarra"
   | "violao"
   | "violao_aco"
@@ -41,6 +42,7 @@ export type StageKind =
   | "monitor"
   | "monitor_esquerdo"
   | "monitor_direito"
+  | "monitor_near_field"
   | "subwoofer"
   | "cubo_guitarra"
   | "cubo_baixo"
@@ -57,7 +59,10 @@ export type StageKind =
   | "mesa_som"
   | "outro";
 
-export type StageSize = "sm" | "md" | "lg";
+/** `tall` é 1 coluna por 2 linhas: para arte alta e estreita, que num span deitado
+ * encolhe pela altura e deixa sobra nas laterais. Hoje só o pedestal usa; o
+ * contrabaixo é candidato, mas está em `lg` por causa do porte real dele. */
+export type StageSize = "sm" | "md" | "tall" | "lg";
 
 export type StageCategoryKey =
   | "voz_cordas"
@@ -82,10 +87,16 @@ export const STAGE_KINDS: {
   icon?: ReactNode;
   size: StageSize;
   rotateDeg?: number;
+  /** Tamanho relativo dentro da célula. Não é ajuste de enquadramento: codifica o porte
+   * real da peça em escala comprimida, para uma DI não ocupar o mesmo espaço visual que
+   * um cajón. Piso em ~0.5 — abaixo disso o ícone some dentro da moldura. */
   scaleRatio?: number;
-  /** Arte ilustrada multitom: já é legível no escuro, então não leva o filtro de inversão
-   * que os ícones chapados antigos (corpo quase preto) ainda precisam. */
-  illustrated?: boolean;
+  /** Espelha no eixo X. Deixa o par esquerdo/direito de retornos compartilhar um único
+   * arquivo, com simetria garantida. */
+  flipX?: boolean;
+  /** Arte chapada de corpo quase preto, que precisa do filtro de inversão para aparecer
+   * no tema escuro. Todo o set atual é ilustrado multitom, então o padrão é `false`. */
+  flat?: boolean;
 }[] = [
   // Voz & Cordas
   {
@@ -94,7 +105,15 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/microfone.svg",
     size: "sm",
-    scaleRatio: 1.3,
+    scaleRatio: 0.75,
+  },
+  {
+    kind: "pedestal",
+    label: "Pedestal com microfone",
+    category: "voz_cordas",
+    iconSrc: "/stage-icons/pedestal.svg",
+    size: "tall",
+    scaleRatio: 1,
   },
   {
     kind: "guitarra",
@@ -102,8 +121,7 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/guitarra.svg",
     size: "md",
-    scaleRatio: 1.3,
-    illustrated: true,
+    scaleRatio: 1.05,
   },
   {
     kind: "violao",
@@ -111,8 +129,7 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/violao.svg",
     size: "md",
-    scaleRatio: 1.3,
-    illustrated: true,
+    scaleRatio: 1.05,
   },
   {
     kind: "violao_aco",
@@ -120,17 +137,15 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/violao-aco.svg",
     size: "md",
-    scaleRatio: 1.3,
-    illustrated: true,
+    scaleRatio: 1.05,
   },
   {
     kind: "cavaco",
-    label: "Cavaquinho",
+    label: "Cavaquinho / Ukulele",
     category: "voz_cordas",
     iconSrc: "/stage-icons/cavaco.svg",
     size: "sm",
-    scaleRatio: 1.3,
-    illustrated: true,
+    scaleRatio: 0.9,
   },
   {
     kind: "banjo",
@@ -138,8 +153,7 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/banjo.svg",
     size: "sm",
-    scaleRatio: 1.3,
-    illustrated: true,
+    scaleRatio: 0.95,
   },
   {
     kind: "baixo",
@@ -147,8 +161,7 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/baixo.svg",
     size: "md",
-    scaleRatio: 1.3,
-    illustrated: true,
+    scaleRatio: 1.05,
   },
   {
     kind: "contrabaixo",
@@ -156,17 +169,15 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/contrabaixo.svg",
     size: "lg",
-    scaleRatio: 1.15,
-    illustrated: true,
+    scaleRatio: 1.05,
   },
   {
     kind: "violino",
     label: "Violino",
     category: "voz_cordas",
     iconSrc: "/stage-icons/violino.svg",
-    size: "md",
-    rotateDeg: -35,
-    scaleRatio: 1.35,
+    size: "sm",
+    scaleRatio: 0.9,
   },
   {
     kind: "violoncelo",
@@ -174,8 +185,7 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/violoncelo.svg",
     size: "md",
-    scaleRatio: 1.25,
-    illustrated: true,
+    scaleRatio: 1.05,
   },
   {
     kind: "pedalboard",
@@ -183,7 +193,7 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/pedalboard.svg",
     size: "sm",
-    scaleRatio: 1.25,
+    scaleRatio: 0.8,
   },
 
   // Bateria & Percussão
@@ -193,8 +203,7 @@ export const STAGE_KINDS: {
     category: "bateria_percussao",
     iconSrc: "/stage-icons/bateria.svg",
     size: "lg",
-    scaleRatio: 1.2,
-    illustrated: true,
+    scaleRatio: 1.15,
   },
   {
     kind: "cajon",
@@ -202,8 +211,7 @@ export const STAGE_KINDS: {
     category: "bateria_percussao",
     iconSrc: "/stage-icons/cajon.svg",
     size: "md",
-    scaleRatio: 1.2,
-    illustrated: true,
+    scaleRatio: 0.9,
   },
   {
     kind: "conga",
@@ -211,8 +219,7 @@ export const STAGE_KINDS: {
     category: "bateria_percussao",
     iconSrc: "/stage-icons/conga.svg",
     size: "md",
-    scaleRatio: 1.2,
-    illustrated: true,
+    scaleRatio: 1,
   },
   {
     kind: "djembe",
@@ -220,8 +227,7 @@ export const STAGE_KINDS: {
     category: "bateria_percussao",
     iconSrc: "/stage-icons/djembe.svg",
     size: "sm",
-    scaleRatio: 1.3,
-    illustrated: true,
+    scaleRatio: 0.9,
   },
   {
     kind: "pandeiro",
@@ -229,8 +235,7 @@ export const STAGE_KINDS: {
     category: "bateria_percussao",
     iconSrc: "/stage-icons/pandeiro.svg",
     size: "sm",
-    scaleRatio: 1.3,
-    illustrated: true,
+    scaleRatio: 0.75,
   },
   {
     kind: "tantan",
@@ -238,8 +243,7 @@ export const STAGE_KINDS: {
     category: "bateria_percussao",
     iconSrc: "/stage-icons/tantan.svg",
     size: "md",
-    scaleRatio: 1.2,
-    illustrated: true,
+    scaleRatio: 0.85,
   },
   {
     kind: "triangulo",
@@ -247,8 +251,7 @@ export const STAGE_KINDS: {
     category: "bateria_percussao",
     iconSrc: "/stage-icons/triangulo.svg",
     size: "sm",
-    scaleRatio: 1.3,
-    illustrated: true,
+    scaleRatio: 0.55,
   },
 
   // Teclas & Eletrônicos
@@ -258,8 +261,7 @@ export const STAGE_KINDS: {
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/teclado.svg",
     size: "md",
-    scaleRatio: 1.3,
-    illustrated: true,
+    scaleRatio: 1.15,
   },
   {
     kind: "piano",
@@ -267,8 +269,7 @@ export const STAGE_KINDS: {
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/piano.svg",
     size: "lg",
-    scaleRatio: 1.15,
-    illustrated: true,
+    scaleRatio: 1.1,
   },
   {
     kind: "orgao",
@@ -276,8 +277,7 @@ export const STAGE_KINDS: {
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/orgao.svg",
     size: "md",
-    scaleRatio: 1.3,
-    illustrated: true,
+    scaleRatio: 1.1,
   },
   {
     kind: "sanfona",
@@ -285,8 +285,7 @@ export const STAGE_KINDS: {
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/sanfona.svg",
     size: "md",
-    scaleRatio: 1.25,
-    illustrated: true,
+    scaleRatio: 0.95,
   },
   {
     kind: "sintetizador",
@@ -294,8 +293,7 @@ export const STAGE_KINDS: {
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/sintetizador.svg",
     size: "md",
-    scaleRatio: 1.3,
-    illustrated: true,
+    scaleRatio: 1,
   },
   {
     kind: "toca_discos",
@@ -303,8 +301,7 @@ export const STAGE_KINDS: {
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/toca-discos.svg",
     size: "md",
-    scaleRatio: 1.25,
-    illustrated: true,
+    scaleRatio: 0.95,
   },
   {
     kind: "mpc",
@@ -312,7 +309,7 @@ export const STAGE_KINDS: {
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/mpc.svg",
     size: "sm",
-    scaleRatio: 1.25,
+    scaleRatio: 0.8,
   },
 
   // Amplificadores & Retornos
@@ -322,25 +319,32 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/monitor.svg",
     size: "md",
-    scaleRatio: 1.3,
+    scaleRatio: 0.9,
   },
   {
     kind: "monitor_esquerdo",
     label: "Monitor esquerdo",
     category: "amplificacao_monitores",
-    iconSrc: "/stage-icons/monitor-esquerdo.svg",
+    iconSrc: "/stage-icons/monitor.svg",
     size: "md",
-    scaleRatio: 1.2,
-    illustrated: true,
+    scaleRatio: 0.9,
   },
   {
     kind: "monitor_direito",
     label: "Monitor direito",
     category: "amplificacao_monitores",
-    iconSrc: "/stage-icons/monitor-direito.svg",
+    iconSrc: "/stage-icons/monitor.svg",
     size: "md",
-    scaleRatio: 1.2,
-    illustrated: true,
+    scaleRatio: 0.9,
+    flipX: true,
+  },
+  {
+    kind: "monitor_near_field",
+    label: "Monitor near field",
+    category: "amplificacao_monitores",
+    iconSrc: "/stage-icons/monitor-near-field.svg",
+    size: "md",
+    scaleRatio: 0.85,
   },
   {
     kind: "subwoofer",
@@ -348,8 +352,7 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/subwoofer.svg",
     size: "lg",
-    scaleRatio: 1.15,
-    illustrated: true,
+    scaleRatio: 1,
   },
   {
     kind: "cubo_guitarra",
@@ -357,8 +360,7 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/cubo-guitarra.svg",
     size: "md",
-    scaleRatio: 1.25,
-    illustrated: true,
+    scaleRatio: 0.9,
   },
   {
     kind: "cubo_baixo",
@@ -366,7 +368,7 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/cubo-baixo.svg",
     size: "lg",
-    scaleRatio: 1.3,
+    scaleRatio: 0.95,
   },
   {
     kind: "cabeca_amplificador",
@@ -374,7 +376,7 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/cabeca-amplificador.svg",
     size: "lg",
-    scaleRatio: 1.25,
+    scaleRatio: 1,
   },
   {
     kind: "di_box",
@@ -382,7 +384,7 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/di-box.svg",
     size: "sm",
-    scaleRatio: 1.25,
+    scaleRatio: 0.5,
   },
   {
     kind: "mesa_som",
@@ -390,8 +392,7 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/mesa-som.svg",
     size: "lg",
-    scaleRatio: 1.2,
-    illustrated: true,
+    scaleRatio: 1.05,
   },
 
   // Sopros & Infra
@@ -401,8 +402,7 @@ export const STAGE_KINDS: {
     category: "sopros_infra",
     iconSrc: "/stage-icons/sax.svg",
     size: "md",
-    scaleRatio: 1.25,
-    illustrated: true,
+    scaleRatio: 0.95,
   },
   {
     kind: "trombone",
@@ -410,8 +410,7 @@ export const STAGE_KINDS: {
     category: "sopros_infra",
     iconSrc: "/stage-icons/trombone.svg",
     size: "md",
-    scaleRatio: 1.3,
-    illustrated: true,
+    scaleRatio: 1.05,
   },
   {
     kind: "trompete",
@@ -419,8 +418,7 @@ export const STAGE_KINDS: {
     category: "sopros_infra",
     iconSrc: "/stage-icons/trompete.svg",
     size: "md",
-    scaleRatio: 1.3,
-    illustrated: true,
+    scaleRatio: 0.85,
   },
   {
     kind: "ponto_energia",
@@ -428,8 +426,7 @@ export const STAGE_KINDS: {
     category: "sopros_infra",
     iconSrc: "/stage-icons/ponto-energia.svg",
     size: "sm",
-    scaleRatio: 1.3,
-    illustrated: true,
+    scaleRatio: 0.6,
   },
   {
     kind: "praticavel",
@@ -445,13 +442,14 @@ export const STAGE_KINDS: {
     category: "sopros_infra",
     icon: <Music2 className="size-8 text-primary" />,
     size: "sm",
-    scaleRatio: 1.2,
+    scaleRatio: 0.7,
   },
 ];
 
 const SPANS: Record<StageSize, { w: number; h: number }> = {
   sm: { w: 1, h: 1 },
   md: { w: 2, h: 1 },
+  tall: { w: 1, h: 2 },
   lg: { w: 2, h: 2 },
 };
 
@@ -478,8 +476,8 @@ function categoryColorStyles(category: StageCategoryKey) {
 function StageIcon({ kind, className }: { kind: StageKind; className?: string }) {
   const def = STAGE_KINDS.find((k) => k.kind === kind);
   const rot = def?.rotateDeg ?? 0;
-  const scale = def?.scaleRatio ?? 1.25;
-  const transform = `rotate(${rot}deg) scale(${scale})`;
+  const scale = def?.scaleRatio ?? 1;
+  const transform = `rotate(${rot}deg) scale(${scale})${def?.flipX ? " scaleX(-1)" : ""}`;
 
   if (def?.iconSrc) {
     return (
@@ -492,13 +490,13 @@ function StageIcon({ kind, className }: { kind: StageKind; className?: string })
           style={{ transform }}
           className={cn(
             "h-full w-full object-contain filter drop-shadow-sm transition-transform duration-200",
-            // Inverter só serve para a arte chapada antiga (corpo quase preto). Nos ícones
-            // ilustrados, inverter trocaria madeira por azul e latão por roxo — em vez disso
-            // eles ganham um contorno claro, que destaca peças de corpo escuro (bateria,
-            // piano, caixas de retorno) sem alterar as cores.
-            def.illustrated
-              ? "dark:drop-shadow-[0_0_1.5px_rgba(255,255,255,0.65)]"
-              : "dark:invert dark:brightness-200",
+            // Inverter só serve para arte chapada de corpo quase preto. Na arte ilustrada,
+            // inverter trocaria madeira por azul e latão por roxo — em vez disso ela ganha um
+            // contorno claro, que destaca peças escuras (bateria, piano, retornos) sem mexer
+            // nas cores.
+            def.flat
+              ? "dark:invert dark:brightness-200"
+              : "dark:drop-shadow-[0_0_1.5px_rgba(255,255,255,0.65)]",
           )}
         />
       </div>
@@ -743,7 +741,7 @@ export function StagePlot({
           >
             {/* Linhas da Grade do Palco sem Fundo Roxo */}
             <div
-              className="grid gap-2"
+              className="grid gap-1"
               style={{
                 gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
                 gridTemplateRows: `repeat(${ROWS}, 96px)`,
@@ -772,7 +770,7 @@ export function StagePlot({
 
             {/* Ícones de Equipamentos sem Fundo Branco e Proporcionais */}
             <div
-              className="pointer-events-none absolute inset-0 grid gap-2"
+              className="pointer-events-none absolute inset-0 grid gap-1"
               style={{
                 gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
                 gridTemplateRows: `repeat(${ROWS}, 96px)`,
@@ -914,7 +912,7 @@ export function StagePlotPrintable({
             display: "grid",
             gridTemplateColumns: `repeat(${COLS}, 1fr)`,
             gridTemplateRows: `repeat(${ROWS}, ${cellHeight}px)`,
-            gap: 6,
+            gap: 3,
             height: "100%",
           }}
         >
@@ -932,7 +930,7 @@ export function StagePlotPrintable({
             display: "grid",
             gridTemplateColumns: `repeat(${COLS}, 1fr)`,
             gridTemplateRows: `repeat(${ROWS}, ${cellHeight}px)`,
-            gap: 6,
+            gap: 3,
           }}
         >
           {items.map((item) => {

@@ -14,8 +14,23 @@ export type RiderPreset = {
 
 /**
  * As posições são escritas direto na grade real do mapa (9 colunas x 6 linhas):
- * `row: 0` é o fundo do palco e `row: 5` é a boca de cena / plateia. A coluna 4
- * é o eixo central — por isso voz principal e bateria moram por ali.
+ * `row: 0` é o fundo do palco (upstage) e `row: 5` é a boca de cena (downstage).
+ * A coluna 4 é o eixo central. Como manda a convenção de mapa de palco, o desenho
+ * é a visão da plateia para o palco.
+ *
+ * Convenções seguidas por todos os presets:
+ * - **P.A. nas pontas**: um par de `subwoofer` ancorado nas colunas 0-1 e 7-8 das
+ *   duas últimas linhas. É o enquadramento do palco, presente até nos formatos solo.
+ * - **Retornos na frente**: as cunhas de boca de cena ficam na `row: 5`, entre os
+ *   P.A., apontadas para quem está na frente. Retorno de músico que fica no fundo
+ *   (bateria, percussão) vai numa linha logo à frente dele, não na boca de cena.
+ * - **Bateria ao centro**, no fundo — `col: 4`.
+ * - **DI acompanha violão e cavaquinho** (e teclado/baixo quando saem por DI),
+ *   sempre na célula vizinha ao instrumento.
+ * - **Amplificador acompanha o instrumento**: guitarra com `cubo_guitarra`, baixo
+ *   com `cubo_baixo`, contrabaixo acústico idem — o cubo atrás do respectivo músico.
+ * - **Microfone**: `pedestal` quando o músico toca algo e precisa das mãos livres;
+ *   `voz` (de mão) para quem só canta.
  */
 export const RIDER_PRESETS: RiderPreset[] = [
   {
@@ -24,12 +39,15 @@ export const RIDER_PRESETS: RiderPreset[] = [
     description: "Formato acústico solo: 2 canais, retorno único e mínimo de backline.",
     channels: ["Voz principal — SM58 com pedestal girafa", "Violão — DI ativo (saída do captador)"],
     stage: [
-      { kind: "voz", label: "Voz principal", col: 4, row: 3 },
+      { kind: "pedestal", label: "Voz principal", col: 4, row: 2 },
       { kind: "violao", label: "Violão", col: 5, row: 3 },
-      { kind: "monitor_esquerdo", label: "Monitor 1", col: 3, row: 4 },
+      { kind: "di_box", label: "DI violão", col: 7, row: 3 },
+      { kind: "subwoofer", label: "P.A. esquerdo", col: 0, row: 4 },
+      { kind: "subwoofer", label: "P.A. direito", col: 7, row: 4 },
+      { kind: "monitor_esquerdo", label: "Monitor 1", col: 3, row: 5 },
     ],
     sound:
-      "P.A. compatível com o local, mesa digital com no mínimo 4 canais, 1 monitor de palco (ou sistema in-ear), 2 pedestais girafa e cabos XLR/P10 em bom estado.",
+      "P.A. compatível com o local, montado nas duas pontas do palco, mesa digital com no mínimo 4 canais, 1 cunha de retorno na boca de cena (ou sistema in-ear), 1 DI ativo para o violão, 2 pedestais girafa e cabos XLR/P10 em bom estado.",
     lighting: "Iluminação frontal branca quente e contraluz simples. Não são exigidos efeitos.",
     backline: "1 banqueta sem braços, 1 suporte de violão e 1 mesa de apoio para setlist e água.",
     hospitality:
@@ -47,15 +65,19 @@ export const RIDER_PRESETS: RiderPreset[] = [
       "Shaker / overhead — condensador",
     ],
     stage: [
-      { kind: "cajon", label: "Cajón", col: 6, row: 2 },
-      { kind: "voz", label: "Voz principal", col: 3, row: 3 },
+      { kind: "cajon", label: "Cajón", col: 5, row: 1 },
+      { kind: "monitor", label: "Monitor 3 — cajón", col: 5, row: 2 },
+      { kind: "pedestal", label: "Voz 2 / backing", col: 7, row: 1 },
+      { kind: "pedestal", label: "Voz principal", col: 3, row: 2 },
       { kind: "violao", label: "Violão", col: 4, row: 3 },
-      { kind: "voz", label: "Voz 2 / backing", col: 6, row: 3 },
-      { kind: "monitor_esquerdo", label: "Monitor 1", col: 2, row: 4 },
-      { kind: "monitor_direito", label: "Monitor 2", col: 5, row: 4 },
+      { kind: "di_box", label: "DI violão", col: 6, row: 3 },
+      { kind: "subwoofer", label: "P.A. esquerdo", col: 0, row: 4 },
+      { kind: "subwoofer", label: "P.A. direito", col: 7, row: 4 },
+      { kind: "monitor_esquerdo", label: "Monitor 1 — voz", col: 2, row: 5 },
+      { kind: "monitor_direito", label: "Monitor 2 — violão", col: 5, row: 5 },
     ],
     sound:
-      "Mesa digital com no mínimo 8 canais, 3 monitores de palco independentes, 3 pedestais girafa, 1 DI ativo e cabeamento XLR/P10 revisado.",
+      "Mesa digital com no mínimo 8 canais, 3 monitores de palco independentes (2 na boca de cena e 1 para o cajón), P.A. nas duas pontas do palco, 3 pedestais girafa, 1 DI ativo para o violão e cabeamento XLR/P10 revisado.",
     lighting: "Iluminação frontal quente com contraluz simples; sem exigência de efeitos.",
     backline:
       "2 banquetas sem braço, 1 suporte de violão, 1 cajón (quando não trazido pelo grupo) e mesa de apoio.",
@@ -78,18 +100,25 @@ export const RIDER_PRESETS: RiderPreset[] = [
       "Surdo — Beta 52",
     ],
     stage: [
+      { kind: "praticavel", label: "Praticável central", col: 4, row: 0 },
       { kind: "tantan", label: "Surdo / tantã", col: 2, row: 1 },
       { kind: "pandeiro", label: "Pandeiro", col: 6, row: 1 },
-      { kind: "praticavel", label: "Praticável central", col: 4, row: 2 },
-      { kind: "banjo", label: "Banjo", col: 7, row: 2 },
-      { kind: "violao", label: "Violão 7 cordas", col: 6, row: 3 },
-      { kind: "cavaco", label: "Cavaquinho", col: 3, row: 4 },
-      { kind: "voz", label: "Voz principal", col: 4, row: 4 },
-      { kind: "monitor_esquerdo", label: "Monitor 1", col: 1, row: 5 },
-      { kind: "monitor_direito", label: "Monitor 2", col: 6, row: 5 },
+      { kind: "banjo", label: "Banjo", col: 7, row: 1 },
+      { kind: "di_box", label: "DI banjo", col: 8, row: 1 },
+      { kind: "pedestal", label: "Voz 2", col: 1, row: 2 },
+      { kind: "pedestal", label: "Voz principal", col: 4, row: 2 },
+      { kind: "pedestal", label: "Voz 3", col: 8, row: 2 },
+      { kind: "cavaco", label: "Cavaquinho", col: 2, row: 3 },
+      { kind: "di_box", label: "DI cavaquinho", col: 3, row: 3 },
+      { kind: "violao", label: "Violão 7 cordas", col: 5, row: 3 },
+      { kind: "di_box", label: "DI violão", col: 7, row: 3 },
+      { kind: "subwoofer", label: "P.A. esquerdo", col: 0, row: 4 },
+      { kind: "subwoofer", label: "P.A. direito", col: 7, row: 4 },
+      { kind: "monitor_esquerdo", label: "Monitor 1", col: 2, row: 5 },
+      { kind: "monitor_direito", label: "Monitor 2", col: 5, row: 5 },
     ],
     sound:
-      "Mesa digital de 16 canais, 4 mixes de monitor, P.A. compatível com o público, 6 pedestais girafa e 3 DIs ativos. Disposição em roda com praticável central quando possível.",
+      "Mesa digital de 16 canais, 4 mixes de monitor com 2 cunhas na boca de cena, P.A. em torre nas duas pontas do palco, 6 pedestais girafa e 3 DIs ativos (cavaquinho, banjo e violão 7 cordas). Disposição em roda com praticável central quando possível.",
     lighting:
       "Iluminação ambiente quente sobre a roda, 4 LED PARs e contraluz frontal para captação de vídeo.",
     backline:
@@ -110,12 +139,15 @@ export const RIDER_PRESETS: RiderPreset[] = [
       "Triângulo — condensador",
     ],
     stage: [
-      { kind: "triangulo", label: "Triângulo", col: 2, row: 2 },
-      { kind: "tantan", label: "Zabumba", col: 6, row: 2 },
-      { kind: "voz", label: "Voz principal", col: 3, row: 3 },
+      { kind: "triangulo", label: "Triângulo", col: 3, row: 1 },
+      { kind: "tantan", label: "Zabumba", col: 5, row: 1 },
+      { kind: "pedestal", label: "Voz principal", col: 3, row: 2 },
       { kind: "sanfona", label: "Sanfona", col: 4, row: 3 },
-      { kind: "monitor_esquerdo", label: "Monitor 1", col: 2, row: 4 },
-      { kind: "monitor_direito", label: "Monitor 2", col: 5, row: 4 },
+      { kind: "di_box", label: "DI sanfona", col: 6, row: 3 },
+      { kind: "subwoofer", label: "P.A. esquerdo", col: 0, row: 4 },
+      { kind: "subwoofer", label: "P.A. direito", col: 7, row: 4 },
+      { kind: "monitor_esquerdo", label: "Monitor 1 — voz / sanfona", col: 2, row: 5 },
+      { kind: "monitor_direito", label: "Monitor 2 — zabumba", col: 5, row: 5 },
     ],
     sound:
       "Mesa digital com no mínimo 8 canais, 2 mixes de monitor independentes, P.A. compatível com o público, 3 pedestais girafa, 1 DI ativo e 1 pedestal reto para o triângulo.",
@@ -147,18 +179,25 @@ export const RIDER_PRESETS: RiderPreset[] = [
       "Backing vocal 2 — SM58",
     ],
     stage: [
+      { kind: "cubo_baixo", label: "Cubo de baixo", col: 0, row: 0 },
       { kind: "bateria", label: "Bateria", col: 4, row: 0 },
-      { kind: "cubo_baixo", label: "Cubo de baixo", col: 1, row: 1 },
+      { kind: "cubo_guitarra", label: "Cubo de guitarra", col: 7, row: 0 },
       { kind: "teclado", label: "Teclado", col: 7, row: 1 },
-      { kind: "baixo", label: "Baixo", col: 1, row: 3 },
-      { kind: "cubo_guitarra", label: "Cubo de guitarra", col: 6, row: 2 },
-      { kind: "voz", label: "Voz principal", col: 4, row: 3 },
-      { kind: "guitarra", label: "Guitarra", col: 6, row: 3 },
-      { kind: "monitor_esquerdo", label: "Monitor voz", col: 2, row: 4 },
-      { kind: "monitor_direito", label: "Monitor guitarra", col: 5, row: 4 },
+      { kind: "di_box", label: "DI teclado", col: 6, row: 1 },
+      { kind: "baixo", label: "Baixo", col: 0, row: 2 },
+      { kind: "di_box", label: "DI baixo", col: 2, row: 2 },
+      { kind: "monitor", label: "Monitor 3 — bateria", col: 3, row: 2 },
+      { kind: "guitarra", label: "Guitarra", col: 7, row: 2 },
+      { kind: "pedestal", label: "Backing vocal 1", col: 2, row: 3 },
+      { kind: "pedestal", label: "Backing vocal 2", col: 6, row: 3 },
+      { kind: "voz", label: "Voz principal", col: 4, row: 4 },
+      { kind: "subwoofer", label: "P.A. esquerdo", col: 0, row: 4 },
+      { kind: "subwoofer", label: "P.A. direito", col: 7, row: 4 },
+      { kind: "monitor_esquerdo", label: "Monitor 1 — voz", col: 2, row: 5 },
+      { kind: "monitor_direito", label: "Monitor 2 — guitarra", col: 5, row: 5 },
     ],
     sound:
-      "Mesa digital de 24 canais com no mínimo 5 mixes de monitor independentes, P.A. adequado ao público esperado, 5 monitores de palco, praticável para bateria e cabeamento completo.",
+      "Mesa digital de 24 canais com no mínimo 5 mixes de monitor independentes: 2 cunhas na boca de cena (voz e guitarra), 1 cunha para a bateria e in-ear ou cunha extra para baixo e teclado. P.A. adequado ao público esperado, em torre nas duas pontas do palco, praticável para bateria e cabeamento completo.",
     lighting:
       "Mínimo de 8 refletores LED PAR, 4 moving heads, 2 canhões de contraluz e máquina de fumaça, com operador durante a passagem de som e o show.",
     backline:
@@ -179,16 +218,21 @@ export const RIDER_PRESETS: RiderPreset[] = [
       "Percussão — 2 canais",
     ],
     stage: [
+      { kind: "cubo_guitarra", label: "Cubo de guitarra", col: 0, row: 0 },
       { kind: "bateria", label: "Bateria (fundo)", col: 4, row: 0 },
-      { kind: "guitarra", label: "Guitarra", col: 1, row: 2 },
-      { kind: "baixo", label: "Baixo", col: 7, row: 2 },
+      { kind: "cubo_baixo", label: "Cubo de baixo", col: 7, row: 0 },
+      { kind: "guitarra", label: "Guitarra", col: 0, row: 1 },
+      { kind: "baixo", label: "Baixo", col: 6, row: 2 },
+      { kind: "di_box", label: "DI baixo", col: 8, row: 2 },
       { kind: "subwoofer", label: "P.A. esquerdo", col: 0, row: 4 },
       { kind: "voz", label: "Voz 1 (frente)", col: 3, row: 4 },
       { kind: "voz", label: "Voz 2 (frente)", col: 5, row: 4 },
       { kind: "subwoofer", label: "P.A. direito", col: 7, row: 4 },
+      { kind: "monitor_esquerdo", label: "Monitor 1 — voz 1", col: 2, row: 5 },
+      { kind: "monitor_direito", label: "Monitor 2 — voz 2", col: 5, row: 5 },
     ],
     sound:
-      "Sistema de trio com mínimo 60.000W RMS, mesa digital, sistema in-ear para 6 canais, 4 microfones sem fio e técnico próprio do carro de som.",
+      "Sistema de trio com mínimo 60.000W RMS distribuído nas torres das duas pontas, mesa digital, sistema in-ear para 6 canais mais 2 cunhas de apoio na boca de cena para os vocais, 4 microfones sem fio e técnico próprio do carro de som.",
     lighting:
       "Iluminação estrutural do trio com operador, strobo e contraluz frontal para captação de imagem.",
     backline:
@@ -206,9 +250,12 @@ export const RIDER_PRESETS: RiderPreset[] = [
       "Áudio de apoio (notebook) — P2 estéreo",
     ],
     stage: [
-      { kind: "voz", label: "Voz / condução", col: 4, row: 3 },
-      { kind: "teclado", label: "Instrumento harmônico", col: 5, row: 3 },
-      { kind: "monitor_esquerdo", label: "Monitor", col: 3, row: 4 },
+      { kind: "pedestal", label: "Voz / condução", col: 3, row: 3 },
+      { kind: "teclado", label: "Instrumento harmônico", col: 4, row: 3 },
+      { kind: "di_box", label: "DI do instrumento", col: 6, row: 3 },
+      { kind: "subwoofer", label: "P.A. esquerdo", col: 0, row: 4 },
+      { kind: "subwoofer", label: "P.A. direito", col: 7, row: 4 },
+      { kind: "monitor_esquerdo", label: "Monitor", col: 3, row: 5 },
     ],
     sound:
       "Caixa amplificada ou P.A. compatível com a sala, 2 canais de microfone, 1 entrada auxiliar para áudio e cabo P2.",
