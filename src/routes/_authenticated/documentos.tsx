@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { FileText, Download, Save } from "lucide-react";
+import { FileText, Download, Save, Send, Maximize2, CheckSquare, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -10,6 +10,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   PageHeader,
   PageContainer,
@@ -21,12 +28,14 @@ import {
   StatusBadge,
 } from "@/components/ui-kit";
 import { QuickAddClientDialog } from "@/components/QuickAddClientDialog";
-
-import { useList, useInsert, useRemove, useProfile } from "@/lib/queries";
+import { useList, useInsert, useRemove, useUpdate, useProfile } from "@/lib/queries";
 import { useDocumentAccent } from "@/lib/active-formation";
 import { DOC_TEMPLATES, getTemplate } from "@/lib/documents";
-import { downloadPdf, pdfPreviewUrl, type PdfDoc } from "@/lib/pdf";
+import { downloadPdf, pdfPreviewUrl, pdfBlob, type PdfDoc } from "@/lib/pdf";
 import { dateBR, DOCUMENT_STATUS } from "@/lib/format";
+import { useDebounced } from "@/lib/use-debounced";
+import { shareFile } from "@/lib/share";
+import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/documentos")({
   head: () => ({
@@ -58,6 +67,7 @@ function DocumentsPage() {
   });
   const insert = useInsert("generated_documents", "Documento salvo no histórico");
   const remove = useRemove("generated_documents", "Documento removido");
+  const updateDoc = useUpdate("generated_documents", "Documento atualizado");
 
   const [templateId, setTemplateId] = useState(DOC_TEMPLATES[0]!.id);
   const [values, setValues] = useState<Record<string, string>>({});
@@ -69,17 +79,20 @@ function DocumentsPage() {
   const event = events.find((e) => e.id === eventId) ?? null;
   const accent = useDocumentAccent(event?.formation_id);
 
+  // 3.4: spec memoizado, depois debounced para evitar jsPDF a cada tecla
   const spec: PdfDoc = useMemo(
     () => ({
       title: template.label,
       brand: profile?.stage_name ?? "StageKit",
-      subtitle: profile?.legal_name ?? "Documentação profissional para músicos",
+      subtitle: profile?.pf_full_name ?? profile?.legal_name ?? "Documentação profissional para músicos",
       footer: `${profile?.stage_name ?? "StageKit"} · gerado em ${dateBR(new Date().toISOString().slice(0, 10))}`,
       accent,
       blocks: template.build({ values, profile: profile ?? {}, client, event }),
     }),
     [template, values, profile, client, event, accent],
   );
+  const debouncedSpec = useDebounced(spec, 350);
+  const previewUrl = useMemo(() => pdfPreviewUrl(debouncedSpec), [debouncedSpec]);
 
   const filename = `${template.id.toLowerCase()}-${(profile?.stage_name ?? "stagekit")
     .toLowerCase()
@@ -96,15 +109,64 @@ function DocumentsPage() {
     });
   }
 
+  // 3.6: salva + compartilha PDF + status AGUARDANDO_ASSINATURA
+  async function sendForSignature() {
+    const blob = pdfBlob(spec);
+    const file = new File([blob], `${filename}.pdf`, { type: "application/pdf" });
+    const text = client?.phone
+      ? `Olá${client.contact_name ? ` ${client.contact_name}` : ""}! Segue o documento "${template.label}" para sua revisão e assinatura.`
+      : undefined;
+    await shareFile({ file, title: template.label, ...(text ? { text } : {}) });
+    insert.mutate({
+      doc_type: template.id,
+      title: `${template.label}${event ? ` — ${event.title}` : client ? ` — ${client.name}` : ""}`,
+      payload: values,
+      client_id: clientId || null,
+      event_id: eventId || null,
+      status: "AGUARDANDO_ASSINATURA",
+    });
+  }
+
+  // 3.1: transições de status no histórico
+  function advanceStatus(doc: Tables<"generated_documents">) {
+    const next: Record<string, string> = {
+      RASCUNHO: "ENVIADO",
+      ENVIADO: "AGUARDANDO_ASSINATURA",
+      AGUARDANDO_ASSINATURA: "ASSINADO",
+    };
+    const nextStatus = next[doc.status];
+    if (!nextStatus) return;
+    updateDoc.mutate({
+      id: doc.id,
+      values: {
+        status: nextStatus,
+        ...(nextStatus === "ASSINADO" ? { signed_at: new Date().toISOString() } : {}),
+      },
+    });
+  }
+
+  function resetStatus(doc: Tables<"generated_documents">) {
+    updateDoc.mutate({ id: doc.id, values: { status: "RASCUNHO", signed_at: null } });
+  }
+
+  const nextStatusLabel: Record<string, string> = {
+    RASCUNHO: "Marcar como Enviado",
+    ENVIADO: "Marcar como Aguardando assinatura",
+    AGUARDANDO_ASSINATURA: "Marcar como Assinado",
+  };
+
   return (
     <PageContainer>
       <PageHeader
         title="Contratos e Documentos"
-        subtitle="Como usar: 1) escolha o modelo abaixo · 2) complete os campos · 3) baixe o PDF. Seus dados do Dados do Artista entram sozinhos."
+        subtitle="Escolha o modelo, preencha os campos e baixe ou envie o PDF. Seus dados do Perfil entram automaticamente."
         actions={
           <>
             <Button variant="outline" size="sm" onClick={save} disabled={insert.isPending}>
-              <Save className="mr-1 size-4" /> Salvar no histórico
+              <Save className="mr-1 size-4" /> Salvar
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => void sendForSignature()} disabled={insert.isPending}>
+              <Send className="mr-1 size-4" /> Encaminhar para assinatura
             </Button>
             <Button size="sm" onClick={() => downloadPdf(spec, filename)}>
               <Download className="mr-1 size-4" /> Baixar PDF
@@ -115,7 +177,8 @@ function DocumentsPage() {
 
       <div className="grid gap-5 lg:grid-cols-5">
         <div className="space-y-5 lg:col-span-3">
-          <Section title="Modelo" description={template.description}>
+          {/* 3.2: passos numerados colapsíveis */}
+          <Section title="Passo 1 — Escolha o modelo" description={template.description} collapsible defaultOpen>
             <div className="space-y-2">
               <Label>Documento</Label>
               <Select
@@ -189,7 +252,7 @@ function DocumentsPage() {
             )}
           </Section>
 
-          <Section title="Preenchimento">
+          <Section title="Passo 2 — Preencha os dados" collapsible defaultOpen>
             <FieldGrid>
               {template.fields.map((field) => {
                 const value = values[field.name] ?? "";
@@ -240,50 +303,90 @@ function DocumentsPage() {
             </FieldGrid>
           </Section>
 
-          <Section title={`Histórico (${docs.length})`}>
+          {/* 3.1: histórico com ciclo de vida */}
+          <Section title={`Histórico (${docs.length})`} collapsible defaultOpen={docs.length > 0}>
             {docs.length === 0 ? (
               <p className="text-sm text-muted-foreground">Nenhum documento salvo ainda.</p>
             ) : (
               <ul className="divide-y divide-border">
-                {docs.map((d) => (
-                  <li key={d.id} className="flex items-center justify-between gap-3 py-2.5">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{d.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {d.doc_type} · {dateBR(d.created_at.slice(0, 10))}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <StatusBadge status={d.status} map={DOCUMENT_STATUS} />
-                      <ItemActions
-                        onDelete={() => remove.mutate(d.id)}
-                        deleteConfirm={{
-                          title: `Remover "${d.title}"?`,
-                          description:
-                            "O registro sai do histórico de documentos gerados. O PDF que você já baixou não é afetado.",
-                          confirmLabel: "Remover documento",
-                        }}
-                      />
-                    </div>
-                  </li>
-                ))}
+                {docs.map((d) => {
+                  const nextLabel = nextStatusLabel[d.status];
+                  return (
+                    <li key={d.id} className="flex items-center justify-between gap-3 py-2.5">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{d.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {d.doc_type} · {dateBR(d.created_at.slice(0, 10))}
+                          {d.signed_at ? ` · assinado em ${dateBR(d.signed_at.slice(0, 10))}` : ""}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={d.status} map={DOCUMENT_STATUS} />
+                        <ItemActions
+                          onDelete={() => remove.mutate(d.id)}
+                          deleteConfirm={{
+                            title: `Remover "${d.title}"?`,
+                            description:
+                              "O registro sai do histórico de documentos gerados. O PDF que você já baixou não é afetado.",
+                            confirmLabel: "Remover documento",
+                          }}
+                          extra={[
+                            ...(nextLabel
+                              ? [{
+                                  label: nextLabel,
+                                  icon: <CheckSquare className="size-4" />,
+                                  onClick: () => advanceStatus(d),
+                                }]
+                              : []),
+                            ...(d.status !== "RASCUNHO"
+                              ? [{
+                                  label: "Voltar para Rascunho",
+                                  icon: <RotateCcw className="size-4" />,
+                                  onClick: () => resetStatus(d),
+                                }]
+                              : []),
+                          ]}
+                        />
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </Section>
         </div>
 
+        {/* 3.3: preview com botão de fullscreen */}
         <div className="lg:col-span-2">
           <Section
             title="Pré-visualização"
-            description="Atualiza conforme você preenche os campos."
+            description="Atualiza 350 ms após você parar de digitar."
             className="lg:sticky lg:top-24"
+            actions={
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="icon" aria-label="Tela cheia">
+                    <Maximize2 className="size-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
+                  <DialogHeader>
+                    <DialogTitle>{template.label}</DialogTitle>
+                  </DialogHeader>
+                  <iframe
+                    title="Pré-visualização em tela cheia"
+                    src={previewUrl}
+                    className="flex-1 w-full rounded-lg border"
+                  />
+                </DialogContent>
+              </Dialog>
+            }
           >
-            {/* O PDF em si é sempre branco, então a moldura fica num cinza claro fixo —
-                não segue o tema, pra nunca ficar escura ao redor de um documento branco. */}
+            {/* PDF sempre é branco — moldura cinza fixa para não escurecer ao redor do doc */}
             <div className="overflow-hidden rounded-lg border border-border bg-zinc-100">
               <iframe
                 title="Pré-visualização do documento"
-                src={pdfPreviewUrl(spec)}
+                src={previewUrl}
                 className="h-[60vh] lg:h-[520px] w-full"
               />
             </div>

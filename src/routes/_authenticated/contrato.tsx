@@ -27,6 +27,7 @@ import { useDocumentAccent } from "@/lib/active-formation";
 import { pushEventToGoogleCalendar } from "@/lib/google-calendar";
 import { getTemplate, type EventRow } from "@/lib/documents";
 import { downloadPdf, pdfPreviewUrl, type PdfDoc } from "@/lib/pdf";
+import { useDebounced } from "@/lib/use-debounced";
 import { dateBR, money } from "@/lib/format";
 import { shareText } from "@/lib/share";
 import { cn } from "@/lib/utils";
@@ -117,6 +118,9 @@ function ContractWizard() {
     }),
     [template, profile, client, draftEvent, city, accent],
   );
+
+  const debouncedSpec = useDebounced(spec, 350);
+  const previewUrl = useMemo(() => pdfPreviewUrl(debouncedSpec), [debouncedSpec]);
 
   const filename = `contrato-show-${(client?.name ?? "contratante")
     .toLowerCase()
@@ -309,7 +313,7 @@ function ContractWizard() {
             <div className="overflow-hidden rounded-lg border border-border bg-zinc-100">
               <iframe
                 title="Pré-visualização do contrato"
-                src={pdfPreviewUrl(spec)}
+                src={previewUrl}
                 className="h-[60vh] lg:h-[520px] w-full"
               />
             </div>
