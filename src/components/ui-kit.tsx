@@ -31,6 +31,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+
+export function StatusBadge({ status, map }: { status: string; map: Record<string, { label: string; tone: string }> }) {
+  const meta = map[status] ?? { label: status, tone: "bg-muted/50 text-muted-foreground border-border" };
+  return <Badge variant="outline" className={meta.tone}>{meta.label}</Badge>;
+}
 
 export function PageHeader({
   title,

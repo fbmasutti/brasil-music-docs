@@ -32,6 +32,7 @@ import {
   TextField,
   ItemActions,
   ConfirmDelete,
+  StatusBadge,
 } from "@/components/ui-kit";
 import { useList, useInsert, useUpdate, useRemove } from "@/lib/queries";
 import { dateBR, money, cacheStatus, CACHE_STATUS } from "@/lib/format";
@@ -191,7 +192,6 @@ function FinanceiroPage() {
               const client = clients.find((c) => c.id === e.client_id);
               const saldo = Number(e.fee_total) - Number(e.fee_deposit);
               const message = `Oi! Passando pra lembrar do saldo do show "${e.title}" (${dateBR(e.event_date)}): ${money(saldo)}. Qualquer coisa me chama!`;
-              const status = CACHE_STATUS[cacheStatus(Number(e.fee_total), Number(e.fee_deposit))];
               return (
                 <li key={e.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                   <div className="min-w-0">
@@ -208,9 +208,7 @@ function FinanceiroPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge variant="outline" className={status.tone}>
-                      {status.label}
-                    </Badge>
+                    <StatusBadge status={cacheStatus(Number(e.fee_total), Number(e.fee_deposit))} map={CACHE_STATUS} />
                     <span className="text-sm font-semibold text-warning">{money(saldo)}</span>
                     {client?.phone ? (
                       <Button asChild size="sm" variant="outline">
@@ -249,9 +247,7 @@ function FinanceiroPage() {
                   <p className="text-xs text-muted-foreground">{dateBR(e.event_date)}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Badge variant="outline" className={CACHE_STATUS.QUITADO.tone}>
-                    {CACHE_STATUS.QUITADO.label}
-                  </Badge>
+                  <StatusBadge status="QUITADO" map={CACHE_STATUS} />
                   <span className="text-sm font-semibold text-success">
                     {money(Number(e.fee_total))}
                   </span>

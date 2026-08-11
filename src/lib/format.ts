@@ -152,6 +152,21 @@ export const CACHE_STATUS = {
 
 export type CacheStatusKey = keyof typeof CACHE_STATUS;
 
+export const DOCUMENT_STATUS: Record<string, { label: string; tone: string }> = {
+  RASCUNHO: { label: "Rascunho", tone: NEUTRAL_TONE },
+  ENVIADO: { label: "Enviado", tone: "bg-cyan/15 text-cyan border-cyan/30" },
+  ASSINADO: { label: "Assinado", tone: "bg-success/15 text-success border-success/30" },
+  CANCELADO: { label: "Cancelado", tone: "bg-destructive/15 text-destructive border-destructive/30" },
+};
+
+export const CHARGE_STATUS: Record<string, { label: string; tone: string }> = {
+  PENDENTE: { label: "Pendente", tone: "bg-warning/15 text-warning border-warning/30" },
+  PARCIAL: { label: "Parcial", tone: "bg-cyan/15 text-cyan border-cyan/30" },
+  PAGO: { label: "Pago", tone: "bg-success/15 text-success border-success/30" },
+  CANCELADO: { label: "Cancelado", tone: "bg-destructive/15 text-destructive border-destructive/30" },
+  INADIMPLENTE: { label: "Inadimplente", tone: "bg-destructive/15 text-destructive border-destructive/30" },
+};
+
 export function cacheStatus(feeTotal: number, feeDeposit: number): CacheStatusKey {
   if (feeDeposit <= 0) return "PENDENTE";
   if (feeDeposit >= feeTotal) return "QUITADO";

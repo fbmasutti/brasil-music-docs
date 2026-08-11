@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { FileText, Download, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -19,6 +18,7 @@ import {
   TextField,
   TextAreaField,
   ItemActions,
+  StatusBadge,
 } from "@/components/ui-kit";
 import { QuickAddClientDialog } from "@/components/QuickAddClientDialog";
 
@@ -26,7 +26,7 @@ import { useList, useInsert, useRemove, useProfile } from "@/lib/queries";
 import { useDocumentAccent } from "@/lib/active-formation";
 import { DOC_TEMPLATES, getTemplate } from "@/lib/documents";
 import { downloadPdf, pdfPreviewUrl, type PdfDoc } from "@/lib/pdf";
-import { dateBR, NEUTRAL_TONE } from "@/lib/format";
+import { dateBR, DOCUMENT_STATUS } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/documentos")({
   head: () => ({
@@ -254,9 +254,7 @@ function DocumentsPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={NEUTRAL_TONE}>
-                        {d.status}
-                      </Badge>
+                      <StatusBadge status={d.status} map={DOCUMENT_STATUS} />
                       <ItemActions
                         onDelete={() => remove.mutate(d.id)}
                         deleteConfirm={{

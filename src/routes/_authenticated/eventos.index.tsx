@@ -2,7 +2,6 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarDays, CalendarPlus, Plus, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +15,7 @@ import {
   EmptyState,
   ItemActions,
   ListState,
+  StatusBadge,
 } from "@/components/ui-kit";
 import { EventFormDialog } from "@/components/EventFormDialog";
 import { useList, useInsert, useRemove } from "@/lib/queries";
@@ -161,7 +161,6 @@ function EventList({
   return (
     <ul className="divide-y divide-border">
       {events.map((e) => {
-        const status = EVENT_STATUS[e.status] ?? { label: e.status, tone: "" };
         const client = clients.find((c) => c.id === e.client_id);
         const googleCalendarUrl = buildGoogleCalendarUrl(e);
         return (
@@ -184,9 +183,7 @@ function EventList({
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm font-semibold">{money(Number(e.fee_total))}</span>
-              <Badge variant="outline" className={status.tone}>
-                {status.label}
-              </Badge>
+              <StatusBadge status={e.status} map={EVENT_STATUS} />
               <Button asChild variant="ghost" size="icon" aria-label={`Gerar post de ${e.title}`}>
                 <Link to="/gerador-cards" search={{ event: e.id }}>
                   <Megaphone className="size-4" />
