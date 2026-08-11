@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Layers,
   Plus,
@@ -10,6 +10,7 @@ import {
   ChevronDown,
   Star,
   Pencil,
+  Lightbulb,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +68,59 @@ const emptyMemberForm = { team_member_id: "", split_percent: "" };
 
 function rosterTotal(roster: { split_percent: number }[]) {
   return roster.reduce((sum, m) => sum + Number(m.split_percent), 0);
+}
+
+// Sugestão do que costuma faltar na mala, deduzida do que já está nela — não
+// tem valor monetário por item no schema hoje, então isso fica em regra de
+// palavra-chave, não em cálculo. `suggest` também funciona como chave: se já
+// tem algo parecido na mala, a regra não repete a sugestão.
+const GEAR_SUGGESTIONS: { match: RegExp; suggest: string; already: RegExp }[] = [
+  {
+    match: /amplificador|amp\b|110v|220v|caixa ativa|caixa de som/i,
+    suggest: "Transformador / testador de tomada",
+    already: /transformador|testador/i,
+  },
+  {
+    match: /microfone sem fio|sem fio/i,
+    suggest: "Pilhas reserva",
+    already: /pilha/i,
+  },
+  {
+    match: /bateria|prato\b/i,
+    suggest: "Capas de transporte",
+    already: /capa|case/i,
+  },
+  {
+    match: /teclado|piano digital/i,
+    suggest: "Suporte em X e banco",
+    already: /suporte|banco/i,
+  },
+  {
+    match: /pedal|pedaleira/i,
+    suggest: "Fonte extra para pedaleira",
+    already: /fonte/i,
+  },
+  {
+    match: /violão|guitarra|baixo\b/i,
+    suggest: "Jogo de cordas reserva",
+    already: /corda/i,
+  },
+  {
+    match: /cabo p10|cabo xlr|cabo\b/i,
+    suggest: "Fita isolante / gaffer",
+    already: /fita|gaffer/i,
+  },
+];
+
+function suggestMissingGear(labels: string[]): string[] {
+  const text = labels.join(" | ");
+  const out: string[] = [];
+  for (const rule of GEAR_SUGGESTIONS) {
+    if (rule.match.test(text) && !rule.already.test(text) && !out.includes(rule.suggest)) {
+      out.push(rule.suggest);
+    }
+  }
+  return out.slice(0, 2);
 }
 
 function FormationsPage() {
@@ -443,6 +497,26 @@ function FormationsPage() {
                         ))}
                       </ul>
 
+                      {gear.length
+                        ? suggestMissingGear(gear.map((g) => g.label)).map((suggestion) => (
+                            <button
+                              key={suggestion}
+                              type="button"
+                              onClick={() =>
+                                insertGear.mutate({
+                                  formation_id: f.id,
+                                  label: suggestion,
+                                  position: gear.length,
+                                })
+                              }
+                              className="mt-2 flex w-full items-start gap-1.5 rounded-md border border-dashed border-primary/30 bg-primary/5 px-2 py-1.5 text-left text-xs text-primary transition-colors hover:bg-primary/10"
+                            >
+                              <Lightbulb className="mt-0.5 size-3.5 shrink-0" />
+                              Falta {suggestion.toLowerCase()}? Clique para adicionar.
+                            </button>
+                          ))
+                        : null}
+
                       {gearFor === f.id ? (
                         <div className="mt-3 flex items-end gap-2">
                           <div className="flex-1">
@@ -486,6 +560,17 @@ function FormationsPage() {
                           <Luggage className="mr-1 size-4" /> Adicionar item
                         </Button>
                       )}
+
+                      {gear.length >= 3 ? (
+                        <p className="mt-3 text-xs text-muted-foreground">
+                          Mala com {gear.length} itens — vale reservar uma parte do que você fatura
+                          para manutenção e troca de peças.{" "}
+                          <Link to="/financeiro" className="text-primary hover:underline">
+                            Configurar reserva de manutenção
+                          </Link>
+                          .
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                     </CollapsibleContent>
