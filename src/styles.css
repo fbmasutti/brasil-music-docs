@@ -5,8 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * StageKit design system — deep zinc + azul elétrico (hue 258), com variante
- * clara no mesmo matiz. Alternado via atributo `data-theme` na tag <html>
+ * StageKit design system — deep zinc + ciano-teal (hue 219), o mesmo matiz dos
+ * ícones de instrumento, com variante clara na mesma família. Alternado via atributo `data-theme` na tag <html>
  * (ver src/lib/theme.ts), não classe. O :root sem atributo carrega o tema claro,
  * que é o padrão — vale no primeiro paint, antes de o script rodar, e para quem
  * está sem JS. Todas as cores em oklch.
@@ -74,13 +74,13 @@
   --card-foreground: oklch(0.97 0.002 285);
   --popover: oklch(0.19 0.006 285);
   --popover-foreground: oklch(0.97 0.002 285);
-  --primary: oklch(0.60 0.21 258);
+  --primary: oklch(0.62 0.10 219);
   --primary-foreground: oklch(0.99 0.002 285);
   --secondary: oklch(0.25 0.008 285);
   --secondary-foreground: oklch(0.97 0.002 285);
   --muted: oklch(0.24 0.007 285);
   --muted-foreground: oklch(0.68 0.01 285);
-  --accent: oklch(0.28 0.03 258);
+  --accent: oklch(0.28 0.03 219);
   --accent-foreground: oklch(0.98 0.002 285);
   --destructive: oklch(0.6 0.22 22);
   --destructive-foreground: oklch(0.98 0.002 285);
@@ -95,20 +95,20 @@
   --orange: oklch(0.68 0.21 43); /* #FC640F */
   --border: oklch(0.27 0.008 285);
   --input: oklch(0.28 0.008 285);
-  --ring: oklch(0.60 0.21 258);
-  --chart-1: oklch(0.60 0.21 258);
-  --chart-2: oklch(0.72 0.14 205);
+  --ring: oklch(0.62 0.10 219);
+  --chart-1: oklch(0.62 0.10 219);
+  --chart-2: oklch(0.68 0.18 300);
   --chart-3: oklch(0.7 0.15 155);
   --chart-4: oklch(0.78 0.15 78);
   --chart-5: oklch(0.6 0.22 22);
   --sidebar: oklch(0.17 0.006 285);
   --sidebar-foreground: oklch(0.9 0.004 285);
-  --sidebar-primary: oklch(0.60 0.21 258);
+  --sidebar-primary: oklch(0.62 0.10 219);
   --sidebar-primary-foreground: oklch(0.99 0.002 285);
-  --sidebar-accent: oklch(0.25 0.02 258);
-  --sidebar-accent-foreground: oklch(0.98 0.002 258);
+  --sidebar-accent: oklch(0.25 0.02 219);
+  --sidebar-accent-foreground: oklch(0.98 0.002 219);
   --sidebar-border: oklch(0.24 0.008 285);
-  --sidebar-ring: oklch(0.60 0.21 258);
+  --sidebar-ring: oklch(0.62 0.10 219);
 }
 
 /* Tema claro — o padrão. Vem depois do escuro de propósito: o `:root` puro tem
@@ -127,14 +127,14 @@
   --card-foreground: oklch(0.2 0.006 285);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.2 0.006 285);
-  --primary: oklch(0.54 0.21 258);
+  --primary: oklch(0.52 0.09 219);
   --primary-foreground: oklch(0.99 0.002 285);
   --secondary: oklch(0.95 0.004 285);
   --secondary-foreground: oklch(0.22 0.006 285);
   --muted: oklch(0.95 0.004 285);
   --muted-foreground: oklch(0.48 0.012 285);
-  --accent: oklch(0.94 0.025 258);
-  --accent-foreground: oklch(0.28 0.03 258);
+  --accent: oklch(0.94 0.025 219);
+  --accent-foreground: oklch(0.28 0.03 219);
   --destructive: oklch(0.52 0.2 22);
   --destructive-foreground: oklch(0.99 0.002 285);
   --success: oklch(0.42 0.13 155);
@@ -146,20 +146,20 @@
   --orange: oklch(0.55 0.19 43);
   --border: oklch(0.9 0.005 285);
   --input: oklch(0.89 0.006 285);
-  --ring: oklch(0.54 0.21 258);
-  --chart-1: oklch(0.54 0.21 258);
-  --chart-2: oklch(0.5 0.12 205);
+  --ring: oklch(0.52 0.09 219);
+  --chart-1: oklch(0.52 0.09 219);
+  --chart-2: oklch(0.52 0.18 300);
   --chart-3: oklch(0.42 0.13 155);
   --chart-4: oklch(0.5 0.15 78);
   --chart-5: oklch(0.52 0.2 22);
   --sidebar: oklch(0.97 0.004 285);
   --sidebar-foreground: oklch(0.25 0.006 285);
-  --sidebar-primary: oklch(0.54 0.21 258);
+  --sidebar-primary: oklch(0.52 0.09 219);
   --sidebar-primary-foreground: oklch(0.99 0.002 285);
-  --sidebar-accent: oklch(0.93 0.02 258);
-  --sidebar-accent-foreground: oklch(0.28 0.03 258);
+  --sidebar-accent: oklch(0.93 0.02 219);
+  --sidebar-accent-foreground: oklch(0.28 0.03 219);
   --sidebar-border: oklch(0.89 0.005 285);
-  --sidebar-ring: oklch(0.54 0.21 258);
+  --sidebar-ring: oklch(0.52 0.09 219);
 }
 
 @layer base {

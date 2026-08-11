@@ -22,7 +22,7 @@ export type PdfDoc = {
   logoDataUrl?: string | null;
   footer?: string;
   /** Cor de destaque do Brand Kit da formação ativa (hex). Sem isso, cai no
-   * azul padrão do StageKit. */
+   * ciano padrão do StageKit. */
   accent?: string | undefined;
   /** Paisagem é necessária para mapas de palco de formações complexas, que
    * ficam ilegíveis na largura de uma folha em retrato. */
@@ -32,8 +32,8 @@ export type PdfDoc = {
 
 const M = 18;
 
-// Azul elétrico do app, equivalente ao --primary do tema claro.
-const DEFAULT_ACCENT: [number, number, number] = [37, 99, 235];
+// Ciano-teal do app (#00758C), equivalente ao --primary do tema claro.
+const DEFAULT_ACCENT: [number, number, number] = [0, 117, 140];
 
 function hexToRgb(hex: string): [number, number, number] | null {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
