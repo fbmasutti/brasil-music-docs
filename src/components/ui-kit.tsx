@@ -1,5 +1,5 @@
 import { forwardRef, useState, type ReactNode } from "react";
-import { AlertTriangle, ChevronDown, RefreshCw } from "lucide-react";
+import { AlertTriangle, ChevronDown, RefreshCw, Save, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -479,6 +479,40 @@ export function TextAreaField({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder ?? ""}
       />
+    </div>
+  );
+}
+
+/** Barra de ação fixa no rodapé — aparece só quando há alterações pendentes.
+ *  Posicionar dentro de um elemento `relative` ou no fim de `PageContainer`. */
+export function StickyActionBar({
+  visible,
+  onSave,
+  onDiscard,
+  saving = false,
+}: {
+  visible: boolean;
+  onSave: () => void;
+  onDiscard: () => void;
+  saving?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "sticky bottom-0 z-20 mt-6 flex items-center justify-between gap-3 rounded-t-lg border border-b-0 border-border bg-background/95 px-4 py-3 shadow-lg backdrop-blur-sm transition-all duration-200",
+        visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0",
+      )}
+    >
+      <span className="text-sm text-muted-foreground">Você tem alterações não salvas.</span>
+      <div className="flex gap-2">
+        <Button variant="ghost" size="sm" onClick={onDiscard} disabled={saving}>
+          <Undo2 className="mr-1.5 size-3.5" /> Descartar
+        </Button>
+        <Button size="sm" onClick={onSave} disabled={saving}>
+          <Save className="mr-1.5 size-3.5" />
+          {saving ? "Salvando…" : "Salvar"}
+        </Button>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Save, CalendarDays, Check, Unlink } from "lucide-react";
+import { CalendarDays, Check, Unlink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -11,7 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PageHeader, PageContainer, Section, FieldGrid, TextField } from "@/components/ui-kit";
+import { PageHeader, PageContainer, Section, FieldGrid, TextField, StickyActionBar } from "@/components/ui-kit";
+import { useDirtyForm } from "@/lib/dirty-form";
 import { useProfile, useUpdate } from "@/lib/queries";
 import { maskCpfCnpj, maskCep, CNAE_OPTIONS, ECAD_ASSOCIATIONS } from "@/lib/format";
 import { connectGoogleCalendar } from "@/lib/google-calendar";
@@ -68,16 +69,22 @@ function ProfilePage() {
   const navigate = Route.useNavigate();
   const [form, setForm] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (!profile) return;
+  const baseline = useMemo<Record<string, string>>(() => {
+    if (!profile) return {};
     const next: Record<string, string> = {};
     for (const [key] of FIELDS) next[key] = (profile[key] as string | null) ?? "";
     next["entity_type"] = profile.entity_type ?? "PF";
     next["doc_type"] = profile.doc_type ?? "CPF";
     next["cnae"] = profile.cnae ?? "";
     next["ecad_association"] = profile.ecad_association ?? "";
-    setForm(next);
+    return next;
   }, [profile]);
+
+  useEffect(() => {
+    if (Object.keys(baseline).length > 0) setForm(baseline);
+  }, [baseline]);
+
+  const { isDirty, reset } = useDirtyForm(form, baseline, setForm);
 
   // Volta do consent do Google com ?google_calendar=connected|error — o
   // toast só deve aparecer uma vez, então limpa o parâmetro da URL em seguida.
@@ -104,11 +111,6 @@ function ProfilePage() {
       <PageHeader
         title="Dados do Artista"
         subtitle="Estes dados alimentam automaticamente contratos, recibos, riders e declarações."
-        actions={
-          <Button size="sm" onClick={save} disabled={update.isPending}>
-            <Save className="mr-1 size-4" /> Salvar
-          </Button>
-        }
       />
 
       <Section title="Natureza jurídica" className="mb-5">
@@ -242,6 +244,13 @@ function ProfilePage() {
           })}
         </FieldGrid>
       </Section>
+
+      <StickyActionBar
+        visible={isDirty}
+        onSave={save}
+        onDiscard={reset}
+        saving={update.isPending}
+      />
     </PageContainer>
   );
 }
