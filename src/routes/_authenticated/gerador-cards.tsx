@@ -61,6 +61,23 @@ const EXPORT_WIDTH = 1080;
 
 type FormatKey = keyof typeof FORMATS;
 
+/**
+ * O que separa um post de artista de um post de aplicativo é variação de
+ * composição, não de cor — os 6 brand kits já cobrem cor/fonte/textura, o que
+ * faltava era ter só um jeito de organizar o espaço. Cada layout é uma
+ * hierarquia e um uso do espaço diferentes; a paleta do brand kit entra por
+ * cima de qualquer um deles.
+ */
+type LayoutKey = "BLEED" | "BLOCKS" | "POSTER" | "CENTERED" | "DIAGONAL";
+
+const LAYOUTS: { key: LayoutKey; label: string; hint: string }[] = [
+  { key: "BLEED", label: "Foto em destaque", hint: "Logo e chamada no canto, texto compacto embaixo" },
+  { key: "BLOCKS", label: "Blocos", hint: "Foto em cima, texto num bloco sólido embaixo" },
+  { key: "POSTER", label: "Cartaz tipográfico", hint: "O título domina a peça inteira" },
+  { key: "CENTERED", label: "Minimalista", hint: "Tudo centralizado, com bastante respiro" },
+  { key: "DIAGONAL", label: "Faixa diagonal", hint: "Uma faixa de destaque cruza o card" },
+];
+
 // Select do Radix não aceita string vazia como valor de item.
 const NO_KIT = "__none__";
 
@@ -103,6 +120,7 @@ function CardGeneratorPage() {
   const [eventId, setEventId] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [format, setFormat] = useState<FormatKey>("STORIES");
+  const [layout, setLayout] = useState<LayoutKey>("BLEED");
   const [showPhoto, setShowPhoto] = useState(true);
   const [copy, setCopy] = useState(defaultCopy(undefined, ""));
   const [exporting, setExporting] = useState(false);
@@ -232,6 +250,247 @@ function CardGeneratorPage() {
 
   const setCopyField = (k: keyof typeof copy) => (v: string) => setCopy((c) => ({ ...c, [k]: v }));
 
+  const hasPhoto = showPhoto && Boolean(brandKit?.photo_url);
+  const bg = (
+    <>
+      {!hasPhoto ? (
+        <div
+          className="absolute inset-0"
+          style={patternStyle(palette.pattern, palette.accent)}
+          aria-hidden
+        />
+      ) : (
+        <img
+          src={brandKit!.photo_url!}
+          alt=""
+          crossOrigin="anonymous"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      )}
+    </>
+  );
+  const logo = brandKit?.logo_url ? (
+    <img
+      src={brandKit.logo_url}
+      alt="Logo"
+      crossOrigin="anonymous"
+      className="h-9 max-w-[130px] object-contain"
+    />
+  ) : null;
+  const dateLine = formatDateLine(copy.dateISO, copy.time);
+
+  /** Cada composição usa as mesmas peças (fundo, logo, textos) numa hierarquia
+   * e ocupação de espaço diferentes — é isso, não a paleta, que faz o post
+   * parecer feito por alguém em vez de gerado por um app. */
+  function renderLayout() {
+    switch (layout) {
+      case "BLOCKS":
+        return (
+          <>
+            <div className="relative flex-1 overflow-hidden">{bg}</div>
+            <div
+              className={cn("relative flex flex-col gap-1.5", isCompact ? "p-6" : "p-7")}
+              style={{ background: palette.card }}
+            >
+              {logo}
+              {copy.kicker ? (
+                <p
+                  className="text-xs font-bold uppercase tracking-widest"
+                  style={{ color: palette.accent }}
+                >
+                  {copy.kicker}
+                </p>
+              ) : null}
+              {copy.headline ? (
+                <p
+                  className={cn(
+                    "font-extrabold leading-tight",
+                    isCompact ? "text-xl" : "text-2xl",
+                  )}
+                >
+                  {copy.headline}
+                </p>
+              ) : null}
+              <p className="text-sm opacity-90">{dateLine}</p>
+              {copy.locationLine ? <p className="text-sm opacity-90">{copy.locationLine}</p> : null}
+              {copy.footnote ? <p className="mt-1 text-xs opacity-75">{copy.footnote}</p> : null}
+            </div>
+          </>
+        );
+
+      case "POSTER":
+        return (
+          <>
+            {bg}
+            <div
+              className="absolute inset-0"
+              style={{
+                background: hasPhoto
+                  ? `linear-gradient(180deg, ${palette.bg}b3, ${palette.bg}e6)`
+                  : "transparent",
+              }}
+              aria-hidden
+            />
+            <div
+              className={cn(
+                "relative flex h-full flex-col justify-between",
+                isCompact ? "p-6" : "p-7",
+              )}
+            >
+              <div className="flex items-center gap-2">
+                {logo}
+                {copy.kicker ? (
+                  <span
+                    className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest"
+                    style={{ background: palette.accent, color: palette.bg }}
+                  >
+                    {copy.kicker}
+                  </span>
+                ) : null}
+              </div>
+              {copy.headline ? (
+                <p
+                  className={cn(
+                    "font-extrabold uppercase leading-[0.95]",
+                    isCompact ? "text-4xl" : "text-5xl",
+                  )}
+                >
+                  {copy.headline}
+                </p>
+              ) : null}
+              <div>
+                <p className="text-sm font-semibold opacity-90">{dateLine}</p>
+                {copy.locationLine ? (
+                  <p className="text-sm opacity-90">{copy.locationLine}</p>
+                ) : null}
+                {copy.footnote ? <p className="mt-1 text-xs opacity-75">{copy.footnote}</p> : null}
+              </div>
+            </div>
+          </>
+        );
+
+      case "CENTERED":
+        return (
+          <>
+            {bg}
+            <div className="absolute inset-0" style={{ background: `${palette.bg}cc` }} aria-hidden />
+            <div className="relative flex h-full flex-col items-center justify-center gap-3 p-10 text-center">
+              {logo}
+              {copy.kicker ? (
+                <p
+                  className="text-xs font-bold uppercase tracking-[0.25em]"
+                  style={{ color: palette.accent }}
+                >
+                  {copy.kicker}
+                </p>
+              ) : null}
+              {copy.headline ? (
+                <p
+                  className={cn(
+                    "font-extrabold leading-tight",
+                    isCompact ? "text-2xl" : "text-3xl",
+                  )}
+                >
+                  {copy.headline}
+                </p>
+              ) : null}
+              <div className="mt-1 h-px w-10" style={{ background: palette.accent }} aria-hidden />
+              <p className="text-sm opacity-90">{dateLine}</p>
+              {copy.locationLine ? <p className="text-sm opacity-90">{copy.locationLine}</p> : null}
+              {copy.footnote ? <p className="mt-1 text-xs opacity-70">{copy.footnote}</p> : null}
+            </div>
+          </>
+        );
+
+      case "DIAGONAL":
+        return (
+          <>
+            {bg}
+            <div
+              className="absolute inset-0"
+              style={{
+                background: `linear-gradient(to top, ${palette.bg}f2 15%, ${palette.bg}00 55%)`,
+              }}
+              aria-hidden
+            />
+            {copy.kicker ? (
+              <div
+                className="absolute left-[-12%] top-[16%] flex w-[124%] -rotate-6 items-center justify-center py-2"
+                style={{ background: palette.accent }}
+              >
+                <span
+                  className="text-xs font-extrabold uppercase tracking-[0.3em]"
+                  style={{ color: palette.bg }}
+                >
+                  {copy.kicker}
+                </span>
+              </div>
+            ) : null}
+            <div className={cn("relative flex flex-col gap-1.5", isCompact ? "p-6" : "p-7")}>
+              {logo}
+              {copy.headline ? (
+                <p
+                  className={cn(
+                    "font-extrabold leading-tight",
+                    isCompact ? "text-2xl" : "text-3xl",
+                  )}
+                >
+                  {copy.headline}
+                </p>
+              ) : null}
+              <p className="text-sm opacity-90">{dateLine}</p>
+              {copy.locationLine ? <p className="text-sm opacity-90">{copy.locationLine}</p> : null}
+              {copy.footnote ? <p className="mt-1 text-xs opacity-75">{copy.footnote}</p> : null}
+            </div>
+          </>
+        );
+
+      case "BLEED":
+      default:
+        return (
+          <>
+            {bg}
+            {logo || copy.kicker ? (
+              <div className="absolute left-0 top-0 flex items-center gap-2 p-5">
+                {logo}
+                {copy.kicker ? (
+                  <span
+                    className="text-[11px] font-bold uppercase tracking-widest"
+                    style={{
+                      color: hasPhoto ? "#fff" : palette.accent,
+                      textShadow: hasPhoto ? "0 1px 3px rgba(0,0,0,.5)" : "none",
+                    }}
+                  >
+                    {copy.kicker}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+            <div
+              className={cn("relative flex flex-col gap-1.5", isCompact ? "p-6" : "p-7")}
+              style={{
+                background: `linear-gradient(to top, ${palette.bg}f2 25%, ${palette.bg}00 80%)`,
+              }}
+            >
+              {copy.headline ? (
+                <p
+                  className={cn(
+                    "font-extrabold leading-tight",
+                    isCompact ? "text-2xl" : "text-3xl",
+                  )}
+                >
+                  {copy.headline}
+                </p>
+              ) : null}
+              <p className="text-sm opacity-90">{dateLine}</p>
+              {copy.locationLine ? <p className="text-sm opacity-90">{copy.locationLine}</p> : null}
+              {copy.footnote ? <p className="mt-1 text-xs opacity-75">{copy.footnote}</p> : null}
+            </div>
+          </>
+        );
+    }
+  }
+
   return (
     <PageContainer>
       <PageHeader
@@ -299,6 +558,28 @@ function CardGeneratorPage() {
                         )}
                       >
                         {FORMATS[key].label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-2">
+                  <Label>Composição</Label>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {LAYOUTS.map((l) => (
+                      <button
+                        key={l.key}
+                        type="button"
+                        onClick={() => setLayout(l.key)}
+                        className={cn(
+                          "rounded-lg border px-3 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                          layout === l.key
+                            ? "border-primary bg-primary/10"
+                            : "border-border hover:border-primary/60",
+                        )}
+                      >
+                        <span className="block text-xs font-semibold">{l.label}</span>
+                        <span className="block text-[11px] text-muted-foreground">{l.hint}</span>
                       </button>
                     ))}
                   </div>
@@ -441,65 +722,7 @@ function CardGeneratorPage() {
                       fontFamily: FONT_STACKS[palette.fontFamily],
                     }}
                   >
-                    {/* Grafismo da identidade — só aparece sem foto por cima,
-                    que já traz textura própria. */}
-                    {!(showPhoto && brandKit?.photo_url) ? (
-                      <div
-                        className="absolute inset-0"
-                        style={patternStyle(palette.pattern, palette.accent)}
-                        aria-hidden
-                      />
-                    ) : null}
-                    {showPhoto && brandKit?.photo_url ? (
-                      <img
-                        src={brandKit.photo_url}
-                        alt=""
-                        crossOrigin="anonymous"
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                    ) : null}
-                    <div
-                      className={cn("relative flex flex-col gap-2", isCompact ? "p-6" : "p-7")}
-                      style={{
-                        background: `linear-gradient(to top, ${palette.bg}f2 20%, ${palette.bg}00 75%)`,
-                      }}
-                    >
-                      {brandKit?.logo_url ? (
-                        <img
-                          src={brandKit.logo_url}
-                          alt="Logo"
-                          crossOrigin="anonymous"
-                          className="mb-3 h-10 max-w-[140px] object-contain"
-                        />
-                      ) : null}
-                      {copy.kicker ? (
-                        <p
-                          className="text-xs font-bold uppercase tracking-widest"
-                          style={{ color: palette.accent }}
-                        >
-                          {copy.kicker}
-                        </p>
-                      ) : null}
-                      {copy.headline ? (
-                        <p
-                          className={cn(
-                            "font-extrabold leading-tight",
-                            isCompact ? "text-2xl" : "text-3xl",
-                          )}
-                        >
-                          {copy.headline}
-                        </p>
-                      ) : null}
-                      <p className="text-sm opacity-90">
-                        {formatDateLine(copy.dateISO, copy.time)}
-                      </p>
-                      {copy.locationLine ? (
-                        <p className="text-sm opacity-90">{copy.locationLine}</p>
-                      ) : null}
-                      {copy.footnote ? (
-                        <p className="mt-1 text-xs opacity-75">{copy.footnote}</p>
-                      ) : null}
-                    </div>
+                    {renderLayout()}
                   </div>
                 </div>
               </div>
