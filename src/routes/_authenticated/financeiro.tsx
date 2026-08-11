@@ -417,7 +417,7 @@ function FinanceiroPage() {
                 {roster.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     {selectedEvent.formation_id
-                      ? "Essa formação não tem roster cadastrado."
+                      ? "Essa formação não tem integrantes cadastrados."
                       : "Esse show não tem formação vinculada."}
                   </p>
                 ) : (

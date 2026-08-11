@@ -1,6 +1,8 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Users, Plus, Trash2, Pencil } from "lucide-react";
+import { Users, Plus, Trash2, Pencil, QrCode, Copy } from "lucide-react";
+import { toast } from "sonner";
+import QRCode from "qrcode";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,8 +24,9 @@ import {
   ConfirmDelete,
   ListState,
 } from "@/components/ui-kit";
-import { useList, useInsert, useUpdate, useRemove } from "@/lib/queries";
+import { useList, useInsert, useUpdate, useRemove, useProfile } from "@/lib/queries";
 import { maskCpfCnpj, maskPis } from "@/lib/format";
+import { buildPixPayload } from "@/lib/pix";
 import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/equipe")({
@@ -127,6 +130,7 @@ function TeamPage() {
                     ) : null}
                   </div>
                   <div className="flex items-center gap-1">
+                    {m.pix_key ? <TransferPixDialog member={m} /> : null}
                     <MemberFormDialog
                       member={m}
                       trigger={
@@ -229,6 +233,97 @@ function MemberFormDialog({
         <DialogFooter>
           <Button disabled={!form.name || insert.isPending || update.isPending} onClick={save}>
             {isEdit ? "Salvar alterações" : "Salvar integrante"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/**
+ * Gera um Pix pronto para pagar o parceiro — não uma cobrança, um pagamento
+ * de saída. A chave e o nome são do integrante; a cidade é a do próprio
+ * artista, porque team_members não guarda esse dado e o campo é só
+ * informativo no payload (nenhum banco valida contra a cidade real).
+ */
+function TransferPixDialog({ member }: { member: Tables<"team_members"> }) {
+  const { data: profile } = useProfile();
+  const [open, setOpen] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+
+  const payload = useMemo(() => {
+    if (!member.pix_key) return null;
+    const numericAmount = Number(amount.replace(",", "."));
+    return buildPixPayload({
+      key: member.pix_key,
+      receiverName: member.name,
+      city: profile?.city || "BRASIL",
+      amount: Number.isFinite(numericAmount) && numericAmount > 0 ? numericAmount : null,
+      description: `Repasse - ${member.name}`,
+    });
+  }, [member.pix_key, member.name, profile?.city, amount]);
+
+  useEffect(() => {
+    if (!open || !payload) {
+      setQrDataUrl(null);
+      return;
+    }
+    let cancelled = false;
+    QRCode.toDataURL(payload, { width: 320, margin: 1 })
+      .then((url) => {
+        if (!cancelled) setQrDataUrl(url);
+      })
+      .catch(() => {
+        if (!cancelled) setQrDataUrl(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, payload]);
+
+  function copy() {
+    if (!payload) return;
+    navigator.clipboard.writeText(payload);
+    toast.success("Código Pix copiado — cole no seu banco para confirmar a transferência.");
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label={`Transferir Pix para ${member.name}`}>
+          <QrCode className="size-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Transferir Pix — {member.name}</DialogTitle>
+        </DialogHeader>
+        <p className="text-xs text-muted-foreground">
+          Este é um Pix de saída, para a chave de {member.name} — escaneie no seu próprio banco ou
+          copie o código. Não é uma cobrança.
+        </p>
+        <TextField
+          label="Valor (opcional, R$)"
+          value={amount}
+          onChange={setAmount}
+          type="number"
+          placeholder="500.00"
+        />
+        {payload ? (
+          <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-white p-4">
+            {qrDataUrl ? (
+              <img src={qrDataUrl} alt="QR Code Pix" className="size-48" />
+            ) : (
+              <div className="flex size-48 items-center justify-center text-xs text-zinc-400">
+                Gerando QR Code…
+              </div>
+            )}
+          </div>
+        ) : null}
+        <DialogFooter>
+          <Button variant="outline" onClick={copy} disabled={!payload}>
+            <Copy className="mr-1 size-4" /> Copiar código Pix
           </Button>
         </DialogFooter>
       </DialogContent>

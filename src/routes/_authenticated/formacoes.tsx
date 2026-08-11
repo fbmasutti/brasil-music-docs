@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   ChevronDown,
   Star,
+  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,12 +50,12 @@ export const Route = createFileRoute("/_authenticated/formacoes")({
       {
         name: "description",
         content:
-          "Presets de formação (voz e violão, trio, banda completa) com roster, cachê base e mala de gig.",
+          "Presets de formação (voz e violão, trio, banda completa) com integrantes, cachê base e mala de gig.",
       },
       { property: "og:title", content: "Formações — StageKit" },
       {
         property: "og:description",
-        content: "Cada formação carrega seu roster, cachê base e mala de gig padrão.",
+        content: "Cada formação carrega seus integrantes, cachê base e mala de gig padrão.",
       },
     ],
   }),
@@ -63,6 +64,10 @@ export const Route = createFileRoute("/_authenticated/formacoes")({
 
 const emptyFormation = { name: "", base_fee: "", is_default: false };
 const emptyMemberForm = { team_member_id: "", split_percent: "" };
+
+function rosterTotal(roster: { split_percent: number }[]) {
+  return roster.reduce((sum, m) => sum + Number(m.split_percent), 0);
+}
 
 function FormationsPage() {
   const { data: profile } = useProfile();
@@ -83,6 +88,7 @@ function FormationsPage() {
   const removeFormation = useRemove("formations", "Formação removida");
   const updateFormation = useUpdate("formations", "Identidade vinculada");
   const insertMember = useInsert("formation_members", "Integrante vinculado");
+  const updateMember = useUpdate("formation_members", "Rateio atualizado");
   const removeMember = useRemove("formation_members", "Integrante removido");
   const insertGear = useInsert("gear_checklist_items", "Item adicionado");
   const removeGear = useRemove("gear_checklist_items", "Item removido");
@@ -93,7 +99,14 @@ function FormationsPage() {
     setForm((f) => ({ ...f, [k]: v }) as typeof emptyFormation);
 
   const [memberFor, setMemberFor] = useState<string | null>(null);
+  // id do vínculo sendo editado; null = o mini-formulário está criando um novo
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [memberForm, setMemberForm] = useState(emptyMemberForm);
+  function closeMemberForm() {
+    setMemberFor(null);
+    setEditingMemberId(null);
+    setMemberForm(emptyMemberForm);
+  }
 
   const [gearFor, setGearFor] = useState<string | null>(null);
   const [gearLabel, setGearLabel] = useState("");
@@ -110,7 +123,7 @@ function FormationsPage() {
     <PageContainer>
       <PageHeader
         title="Formações"
-        subtitle="Bandas e projetos, não pessoas — quem integra cada um vem de Equipe. Ao escolher uma formação no evento, o cachê base, o roster e a mala de gig entram sozinhos."
+        subtitle="Bandas e projetos, não pessoas — quem integra cada um vem de Equipe. Ao escolher uma formação no evento, o cachê base, os integrantes e a mala de gig entram sozinhos."
         actions={
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -182,7 +195,7 @@ function FormationsPage() {
             icon={<Layers className="size-5" />}
             title="Nenhuma formação cadastrada"
             onClick={() => setOpen(true)}
-            description="Clique para criar uma formação para cada jeito que você se apresenta — cada uma com seu roster, cachê base e mala de gig."
+            description="Clique para criar uma formação para cada jeito que você se apresenta — cada uma com seus integrantes, cachê base e mala de gig."
           />
         ) : (
           <ul className="space-y-4">
@@ -233,7 +246,7 @@ function FormationsPage() {
                         {f.is_default ? <Badge variant="outline">Padrão</Badge> : null}
                         <ConfirmDelete
                           title={`Remover "${f.name}"?`}
-                          description={`${roster.length ? `${roster.length} integrante(s) do roster e ` : ""}${gear.length ? `${gear.length} item(ns) da mala de gig ` : "a mala de gig "}serão apagados junto com a formação.${riders.length ? ` ${riders.length} rider(s) vinculado(s) não serão apagados, só ficam sem formação.` : ""} Essa ação não pode ser desfeita.`}
+                          description={`${roster.length ? `${roster.length} integrante(s) e ` : ""}${gear.length ? `${gear.length} item(ns) da mala de gig ` : "a mala de gig "}serão apagados junto com a formação.${riders.length ? ` ${riders.length} rider(s) vinculado(s) não serão apagados, só ficam sem formação.` : ""} Essa ação não pode ser desfeita.`}
                           confirmLabel="Remover formação"
                           onConfirm={() => removeFormation.mutate(f.id)}
                           trigger={
@@ -271,9 +284,21 @@ function FormationsPage() {
 
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
                     <div>
-                      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        Roster padrão ({roster.length})
-                      </p>
+                      <div className="mb-2 flex items-center gap-2">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          Integrantes ({roster.length})
+                        </p>
+                        {roster.length ? (
+                          <Badge
+                            variant="outline"
+                            className={
+                              rosterTotal(roster) === 100 ? "text-success" : "text-warning"
+                            }
+                          >
+                            Rateio {rosterTotal(roster)}%
+                          </Badge>
+                        ) : null}
+                      </div>
                       <ul className="space-y-1.5">
                         {roster.map((m) => {
                           const person = teamMembers.find((t) => t.id === m.team_member_id);
@@ -285,21 +310,38 @@ function FormationsPage() {
                               <span className="text-muted-foreground">
                                 {person?.name ?? "Integrante removido"} · {m.split_percent}%
                               </span>
-                              <ConfirmDelete
-                                title={`Tirar ${person?.name ?? "integrante"} desta formação?`}
-                                description={`O rateio de ${m.split_percent}% deixa de ser aplicado nos shows desta formação. O cadastro da pessoa em Equipe não é apagado.`}
-                                confirmLabel="Tirar do roster"
-                                onConfirm={() => removeMember.mutate(m.id)}
-                                trigger={
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    aria-label={`Remover ${person?.name ?? "integrante"} do roster`}
-                                  >
-                                    <Trash2 className="size-3.5" />
-                                  </Button>
-                                }
-                              />
+                              <div className="flex shrink-0 items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  aria-label={`Editar rateio de ${person?.name ?? "integrante"}`}
+                                  onClick={() => {
+                                    setMemberFor(f.id);
+                                    setEditingMemberId(m.id);
+                                    setMemberForm({
+                                      team_member_id: m.team_member_id,
+                                      split_percent: String(m.split_percent ?? ""),
+                                    });
+                                  }}
+                                >
+                                  <Pencil className="size-3.5" />
+                                </Button>
+                                <ConfirmDelete
+                                  title={`Tirar ${person?.name ?? "integrante"} desta formação?`}
+                                  description={`O rateio de ${m.split_percent}% deixa de ser aplicado nos shows desta formação. O cadastro da pessoa em Equipe não é apagado.`}
+                                  confirmLabel="Tirar da formação"
+                                  onConfirm={() => removeMember.mutate(m.id)}
+                                  trigger={
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      aria-label={`Remover ${person?.name ?? "integrante"} da formação`}
+                                    >
+                                      <Trash2 className="size-3.5" />
+                                    </Button>
+                                  }
+                                />
+                              </div>
                             </li>
                           );
                         })}
@@ -334,25 +376,27 @@ function FormationsPage() {
                             <Button
                               size="sm"
                               disabled={!memberForm.team_member_id}
-                              onClick={() =>
-                                insertMember.mutate(
-                                  {
-                                    formation_id: f.id,
-                                    team_member_id: memberForm.team_member_id,
-                                    split_percent: Number(memberForm.split_percent || 0),
-                                  },
-                                  {
-                                    onSuccess: () => {
-                                      setMemberForm(emptyMemberForm);
-                                      setMemberFor(null);
-                                    },
-                                  },
-                                )
-                              }
+                              onClick={() => {
+                                const values = {
+                                  team_member_id: memberForm.team_member_id,
+                                  split_percent: Number(memberForm.split_percent || 0),
+                                };
+                                if (editingMemberId) {
+                                  updateMember.mutate(
+                                    { id: editingMemberId, values },
+                                    { onSuccess: closeMemberForm },
+                                  );
+                                } else {
+                                  insertMember.mutate(
+                                    { formation_id: f.id, ...values },
+                                    { onSuccess: closeMemberForm },
+                                  );
+                                }
+                              }}
                             >
-                              Adicionar
+                              {editingMemberId ? "Salvar rateio" : "Adicionar"}
                             </Button>
-                            <Button size="sm" variant="ghost" onClick={() => setMemberFor(null)}>
+                            <Button size="sm" variant="ghost" onClick={closeMemberForm}>
                               Cancelar
                             </Button>
                           </div>
@@ -364,7 +408,7 @@ function FormationsPage() {
                           className="mt-2"
                           onClick={() => setMemberFor(f.id)}
                         >
-                          <UserPlus className="mr-1 size-4" /> Adicionar ao roster
+                          <UserPlus className="mr-1 size-4" /> Adicionar integrante
                         </Button>
                       )}
                     </div>
