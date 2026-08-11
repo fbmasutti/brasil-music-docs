@@ -32,16 +32,16 @@ import type { Tables } from "@/integrations/supabase/types";
 export const Route = createFileRoute("/_authenticated/magic-paste")({
   head: () => ({
     meta: [
-      { title: "Importar do WhatsApp — StageKit" },
+      { title: "Colar do WhatsApp — StageKit" },
       {
         name: "description",
         content:
-          "Cole a conversa do show e deixe o StageKit sugerir data, local, cachê e contato — você confere e confirma.",
+          "Cole a conversa do WhatsApp em que o show foi combinado. O StageKit lê o texto e sugere data, local, cachê e contato — você confere e confirma antes de salvar.",
       },
-      { property: "og:title", content: "Importar do WhatsApp — StageKit" },
+      { property: "og:title", content: "Colar do WhatsApp — StageKit" },
       {
         property: "og:description",
-        content: "Da conversa pro evento, com revisão antes de salvar.",
+        content: "Da conversa colada direto pro evento, com revisão antes de salvar.",
       },
     ],
   }),
@@ -184,7 +184,7 @@ function MagicPastePage() {
       : null;
     return (
       <div className="mx-auto max-w-2xl">
-        <PageHeader title="Importar do WhatsApp" subtitle="Show criado a partir da conversa." />
+        <PageHeader title="Colar do WhatsApp" subtitle="Show criado a partir da conversa colada." />
         <Section title="Evento salvo">
           <p className="mb-4 text-sm text-muted-foreground">
             <span className="font-medium text-foreground">{savedEvent.title}</span> —{" "}

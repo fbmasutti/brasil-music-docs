@@ -90,7 +90,7 @@ function FormationsPage() {
     <PageContainer>
       <PageHeader
         title="Formações"
-        subtitle="Presets por formação — ao escolher uma no evento, o cachê base, o roster e a mala de gig entram sozinhos."
+        subtitle="Bandas e projetos, não pessoas — quem integra cada um vem de Equipe. Ao escolher uma formação no evento, o cachê base, o roster e a mala de gig entram sozinhos."
         actions={
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -161,7 +161,8 @@ function FormationsPage() {
           <EmptyState
             icon={<Layers className="size-5" />}
             title="Nenhuma formação cadastrada"
-            description="Crie uma formação para cada jeito que você se apresenta — cada uma com seu roster, cachê base e mala de gig."
+            onClick={() => setOpen(true)}
+            description="Clique para criar uma formação para cada jeito que você se apresenta — cada uma com seu roster, cachê base e mala de gig."
           />
         ) : (
           <ul className="space-y-4">

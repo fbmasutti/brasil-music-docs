@@ -245,10 +245,14 @@ function RepertoirePage() {
         <ListState
           query={songsQuery}
           empty={
-            <EmptyState
-              icon={<Music4 className="size-5" />}
-              title="Nenhuma obra cadastrada"
-              description="Cadastre o repertório que você toca — covers e composições próprias."
+            <SongFormDialog
+              trigger={
+                <EmptyState
+                  icon={<Music4 className="size-5" />}
+                  title="Nenhuma obra cadastrada"
+                  description="Clique para cadastrar o repertório que você toca — covers e composições próprias."
+                />
+              }
             />
           }
         >

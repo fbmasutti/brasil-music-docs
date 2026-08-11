@@ -349,7 +349,7 @@ function WizardDone() {
     {
       to: "/magic-paste",
       icon: Wand2,
-      title: "Importar do WhatsApp",
+      title: "Colar do WhatsApp",
       hint: "Cole a conversa do fechamento e confira os dados.",
     },
   ];

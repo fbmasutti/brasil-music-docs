@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { forwardRef, useState, type ReactNode } from "react";
 import { AlertTriangle, ChevronDown, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
@@ -95,19 +95,44 @@ export function StatCard({
   );
 }
 
-export function EmptyState({
-  icon,
-  title,
-  description,
-  action,
-}: {
-  icon?: ReactNode | undefined;
-  title: string;
-  description?: string | undefined;
-  action?: ReactNode;
-}) {
+export const EmptyState = forwardRef<
+  HTMLDivElement,
+  {
+    icon?: ReactNode | undefined;
+    title: string;
+    description?: string | undefined;
+    action?: ReactNode;
+    /** Quando informado, o painel inteiro vira alvo de clique (e de Enter/Espaço
+     * pelo teclado) para criar o primeiro item — não só o botão de ação, que
+     * costuma ser pequeno e passar despercebido num estado vazio. Também aceita
+     * ser passado como `trigger` de um DialogTrigger asChild: o Radix injeta
+     * onClick/ref por cima, sem precisar de nenhuma prop extra aqui. */
+    onClick?: (() => void) | undefined;
+  }
+>(function EmptyState({ icon, title, description, action, onClick }, ref) {
+  const interactive = Boolean(onClick);
   return (
-    <div className="panel flex flex-col items-center justify-center gap-3 px-6 py-14 text-center">
+    <div
+      ref={ref}
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={
+        interactive
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick?.();
+              }
+            }
+          : undefined
+      }
+      className={cn(
+        "panel flex flex-col items-center justify-center gap-3 px-6 py-14 text-center",
+        interactive &&
+          "cursor-pointer transition-colors hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+      )}
+    >
       {icon ? (
         <span className="flex size-12 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
           {icon}
@@ -118,7 +143,7 @@ export function EmptyState({
       {action}
     </div>
   );
-}
+});
 
 /** Largura padrão de página. "narrow" só para fluxos guiados de coluna única. */
 export function PageContainer({

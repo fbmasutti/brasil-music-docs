@@ -93,10 +93,14 @@ function PortfolioPage() {
           query={itemsQuery}
           skeleton="cards"
           empty={
-            <EmptyState
-              icon={<Images className="size-5" />}
-              title="Portfólio vazio"
-              description="Comece registrando matérias e shows importantes da sua trajetória."
+            <ClippingFormDialog
+              trigger={
+                <EmptyState
+                  icon={<Images className="size-5" />}
+                  title="Portfólio vazio"
+                  description="Clique para registrar matérias e shows importantes da sua trajetória."
+                />
+              }
             />
           }
         >

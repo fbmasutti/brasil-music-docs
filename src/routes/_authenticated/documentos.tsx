@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { FileText, Download, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -100,7 +100,7 @@ function DocumentsPage() {
     <PageContainer>
       <PageHeader
         title="Contratos e Documentos"
-        subtitle="Escolha um modelo, complete os campos e exporte o PDF. Seus dados do Dados do Artista entram automaticamente."
+        subtitle="Como usar: 1) escolha o modelo abaixo · 2) complete os campos · 3) baixe o PDF. Seus dados do Dados do Artista entram sozinhos."
         actions={
           <>
             <Button variant="outline" size="sm" onClick={save} disabled={insert.isPending}>
@@ -130,13 +130,21 @@ function DocumentsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {DOC_TEMPLATES.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
+                    <SelectItem key={t.id} value={t.id} title={t.description}>
                       {t.category} · {t.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Precisa do relatório de execução pública ou da ficha de registro de obra para o ECAD?
+              Isso fica em{" "}
+              <Link to="/repertorio" className="text-primary hover:underline">
+                Repertório
+              </Link>
+              , junto com o cadastro das músicas.
+            </p>
 
             {(template.useClient || template.useEvent) && (
               <FieldGrid className="mt-4">

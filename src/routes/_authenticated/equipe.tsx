@@ -86,7 +86,7 @@ function TeamPage() {
     <PageContainer>
       <PageHeader
         title="Equipe"
-        subtitle="Músicos, técnicos e produtores que viajam com você — reaproveitados em riders e rooming lists."
+        subtitle="Cada pessoa — músico, técnico, produtor — cadastrada uma vez. Para organizar quem toca em qual banda ou projeto, use Formações."
         actions={
           <MemberFormDialog
             trigger={
@@ -101,10 +101,14 @@ function TeamPage() {
         <ListState
           query={membersQuery}
           empty={
-            <EmptyState
-              icon={<Users className="size-5" />}
-              title="Nenhum integrante cadastrado"
-              description="Cadastre a banda e a equipe técnica para preencher riders e rooming lists automaticamente."
+            <MemberFormDialog
+              trigger={
+                <EmptyState
+                  icon={<Users className="size-5" />}
+                  title="Nenhum integrante cadastrado"
+                  description="Clique para cadastrar a banda e a equipe técnica — preenche riders e rooming lists sozinho depois."
+                />
+              }
             />
           }
         >

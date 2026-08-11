@@ -85,10 +85,14 @@ function BrandKitPage() {
           query={kitsQuery}
           skeleton="cards"
           empty={
-            <EmptyState
-              icon={<Palette className="size-5" />}
-              title="Nenhuma identidade criada"
-              description="Crie uma identidade com foto, logo e paleta para usar nos posts de divulgação."
+            <BrandKitFormDialog
+              trigger={
+                <EmptyState
+                  icon={<Palette className="size-5" />}
+                  title="Nenhuma identidade criada"
+                  description="Clique para criar uma identidade com foto, logo e paleta para os posts de divulgação."
+                />
+              }
             />
           }
         >

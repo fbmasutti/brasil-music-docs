@@ -142,7 +142,7 @@ function Dashboard() {
           <ToolCard
             to="/magic-paste"
             icon={<Wand2 className="size-5" />}
-            title="Importar do WhatsApp"
+            title="Colar do WhatsApp"
             hint="Extrai os dados do show"
           />
           <ToolCard

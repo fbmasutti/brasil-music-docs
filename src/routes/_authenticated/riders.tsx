@@ -591,7 +591,8 @@ function RidersPage() {
           <EmptyState
             icon={<Sliders className="size-5" />}
             title="Nenhum rider ainda"
-            description="Escolha um formato acima e o rider fica pronto na hora."
+            onClick={() => setFormOpen(true)}
+            description="Clique para começar — escolha um formato pronto e o rider fica pronto na hora."
           />
         ) : (
           <ul className="divide-y divide-border">

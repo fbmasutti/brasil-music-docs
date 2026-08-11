@@ -60,7 +60,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Ferramentas rápidas",
     defaultOpen: true,
     items: [
-      { to: "/magic-paste", label: "Importar do WhatsApp", icon: Wand2 },
+      { to: "/magic-paste", label: "Colar do WhatsApp", icon: Wand2 },
       { to: "/cobrancas", label: "Cobrança via PIX", icon: QrCode },
       { to: "/gerador-cards", label: "Gerador de Posts", icon: Megaphone },
     ],

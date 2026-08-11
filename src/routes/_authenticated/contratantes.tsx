@@ -97,10 +97,14 @@ function ContractorsPage() {
         <ListState
           query={clientsQuery}
           empty={
-            <EmptyState
-              icon={<Building2 className="size-5" />}
-              title="Nenhum contratante cadastrado"
-              description="Cadastre quem contrata seus shows para emitir contratos e recibos em segundos."
+            <ClientFormDialog
+              trigger={
+                <EmptyState
+                  icon={<Building2 className="size-5" />}
+                  title="Nenhum contratante cadastrado"
+                  description="Clique para cadastrar quem contrata seus shows — emite contratos e recibos em segundos."
+                />
+              }
             />
           }
         >

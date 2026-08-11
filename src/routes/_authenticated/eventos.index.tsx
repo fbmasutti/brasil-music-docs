@@ -78,10 +78,14 @@ function EventsPage() {
           <ListState
             query={eventsQuery}
             empty={
-              <EmptyState
-                icon={<CalendarDays className="size-5" />}
-                title="Nenhum evento cadastrado"
-                description="Crie o primeiro evento para gerar contrato, rider e checklist de produção."
+              <EventFormDialog
+                trigger={
+                  <EmptyState
+                    icon={<CalendarDays className="size-5" />}
+                    title="Nenhum evento cadastrado"
+                    description="Clique para criar o primeiro evento — contrato, rider e checklist de produção saem dele."
+                  />
+                }
               />
             }
           >
