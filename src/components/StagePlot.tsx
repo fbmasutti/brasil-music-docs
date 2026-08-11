@@ -11,8 +11,12 @@ import {
   FlipHorizontal,
   Lock,
   Unlock,
+  Undo2,
+  Redo2,
+  Copy,
+  Eraser,
 } from "lucide-react";
-import { useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -617,8 +621,7 @@ function fits(
   return !items.some((i) => i.id !== ignoreId && overlaps(i, col, row, span));
 }
 
-function findSpot(items: StageItem[], kind: StageKind) {
-  const span = spanOf(kind);
+function findSpotForSpan(items: StageItem[], span: { w: number; h: number }) {
   const center = Math.floor(COLS / 2);
   const order = [center, ...Array.from({ length: COLS }, (_, i) => i).filter((c) => c !== center)];
   for (let row = ROWS - 1; row >= 0; row--) {
@@ -629,17 +632,133 @@ function findSpot(items: StageItem[], kind: StageKind) {
   return null;
 }
 
+function findSpot(items: StageItem[], kind: StageKind) {
+  return findSpotForSpan(items, spanOf(kind));
+}
+
+/** Teto do histórico. Um mapa de 30 peças pesa ~4KB em memória; 50 passos é fundo de
+ * gaveta suficiente para desfazer um arrasto errado sem o navegador segurar um MB à toa. */
+const HISTORY_LIMIT = 50;
+
+export type StageHistory = {
+  items: StageItem[];
+  /** Mutação normal: entra no histórico e descarta o "refazer" pendente. */
+  set: (items: StageItem[]) => void;
+  /** Atualiza sem empilhar. Serve para os quadros intermediários de um gesto contínuo
+   * (arrastar a alça de redimensionar): o gesto inteiro vira uma entrada só, senão um
+   * arrasto de 10 células gastaria 10 desfazeres para voltar. */
+  replace: (items: StageItem[]) => void;
+  /** Carrega outro mapa (abrir/duplicar rider, novo em branco) — zera o histórico em vez
+   * de deixar o usuário desfazer para dentro do rider anterior. */
+  reset: (items: StageItem[]) => void;
+  undo: () => void;
+  redo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
+};
+
+/** Histórico do mapa de palco. Fica no dono do estado (a página do rider), não dentro do
+ * canvas, porque a lista de rótulos abaixo da grade edita as mesmas peças — as duas
+ * precisam empilhar no mesmo histórico. */
+export function useStageHistory(initial: StageItem[] = []): StageHistory {
+  const [state, setState] = useState<{
+    past: StageItem[][];
+    present: StageItem[];
+    future: StageItem[][];
+  }>({ past: [], present: initial, future: [] });
+
+  const set = useCallback((next: StageItem[]) => {
+    setState((s) =>
+      next === s.present
+        ? s
+        : { past: [...s.past, s.present].slice(-HISTORY_LIMIT), present: next, future: [] },
+    );
+  }, []);
+
+  const replace = useCallback((next: StageItem[]) => {
+    setState((s) => (next === s.present ? s : { ...s, present: next }));
+  }, []);
+
+  const reset = useCallback((next: StageItem[]) => {
+    setState({ past: [], present: next, future: [] });
+  }, []);
+
+  const undo = useCallback(() => {
+    setState((s) => {
+      const prev = s.past[s.past.length - 1];
+      if (!prev) return s;
+      return { past: s.past.slice(0, -1), present: prev, future: [s.present, ...s.future] };
+    });
+  }, []);
+
+  const redo = useCallback(() => {
+    setState((s) => {
+      const next = s.future[0];
+      if (!next) return s;
+      return { past: [...s.past, s.present], present: next, future: s.future.slice(1) };
+    });
+  }, []);
+
+  return {
+    items: state.present,
+    set,
+    replace,
+    reset,
+    undo,
+    redo,
+    canUndo: state.past.length > 0,
+    canRedo: state.future.length > 0,
+  };
+}
+
 export function StagePlot({
   items,
   onChange,
+  history,
 }: {
   items: StageItem[];
   onChange: (items: StageItem[]) => void;
+  /** Sem histórico o canvas segue funcionando; só some a barra de desfazer/refazer. */
+  history?:
+    | Pick<StageHistory, "undo" | "redo" | "canUndo" | "canRedo" | "replace">
+    | undefined;
 }) {
   const gridRef = useRef<HTMLDivElement>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<StageCategoryKey>("voz_cordas");
   const [searchQuery, setSearchQuery] = useState("");
+  /** Peça em arrasto e as células que ela ocuparia se soltasse agora. O id fica em ref
+   * porque o dataTransfer só libera a leitura do payload no drop, não no dragover. */
+  const draggingId = useRef<string | null>(null);
+  const [dropHint, setDropHint] = useState<{
+    col: number;
+    row: number;
+    w: number;
+    h: number;
+    ok: boolean;
+  } | null>(null);
+
+  // Cmd/Ctrl+Z e Cmd/Ctrl+Shift+Z (ou Ctrl+Y). Ignora quando o foco está num campo de
+  // texto: lá o desfazer nativo do navegador é o comportamento que o usuário espera.
+  useEffect(() => {
+    if (!history) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (!(e.metaKey || e.ctrlKey)) return;
+      const el = e.target as HTMLElement | null;
+      const tag = el?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el?.isContentEditable) return;
+      const key = e.key.toLowerCase();
+      if (key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        history!.undo();
+      } else if ((key === "z" && e.shiftKey) || key === "y") {
+        e.preventDefault();
+        history!.redo();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [history]);
 
   function add(kind: StageKind) {
     const spot = findSpot(items, kind);
@@ -668,9 +787,34 @@ export function StagePlot({
     onChange(items.map((i) => (i.id === id ? { ...i, locked: !i.locked } : i)));
   }
 
+  /** Cópia da peça com o mesmo porte, rotação e espelho — o caso real é encher o palco de
+   * retornos iguais sem reconfigurar cada um. Tenta encostar à direita, depois embaixo,
+   * e só então cai em qualquer vaga. A cópia nasce destravada: acabou de ser criada e
+   * precisa ser posicionada. */
+  function duplicateItem(id: string) {
+    const item = items.find((i) => i.id === id);
+    if (!item) return;
+    const span = itemSpan(item);
+    const spot =
+      [
+        { col: item.col + span.w, row: item.row },
+        { col: item.col, row: item.row + span.h },
+      ].find((c) => fits(items, span, c.col, c.row)) ?? findSpotForSpan(items, span);
+    if (!spot) {
+      setWarning("Não há espaço livre para a cópia. Remova ou reposicione algum elemento.");
+      return;
+    }
+    setWarning(null);
+    const { id: _id, locked: _locked, ...rest } = item;
+    onChange([...items, { ...rest, id: crypto.randomUUID(), col: spot.col, row: spot.row }]);
+  }
+
   /** Redimensiona em células. Recusa o que sairia da grade ou invadiria outra peça, em vez
-   * de deixar o mapa num estado que a impressão não consegue representar. */
-  function setSize(id: string, w: number, h: number) {
+   * de deixar o mapa num estado que a impressão não consegue representar.
+   *
+   * `coalesce` marca um quadro intermediário de arrasto: atualiza a tela sem empilhar no
+   * histórico, para o gesto todo caber num único desfazer. */
+  function setSize(id: string, w: number, h: number, coalesce = false) {
     const item = items.find((i) => i.id === id);
     if (!item || item.locked) return;
     const current = itemSpan(item);
@@ -681,7 +825,9 @@ export function StagePlot({
     if (next.w === current.w && next.h === current.h) return;
     if (!fits(items, next, item.col, item.row, item.id)) return;
     setWarning(null);
-    onChange(items.map((i) => (i.id === id ? { ...i, w: next.w, h: next.h } : i)));
+    const updated = items.map((i) => (i.id === id ? { ...i, w: next.w, h: next.h } : i));
+    if (coalesce && history?.replace) history.replace(updated);
+    else onChange(updated);
   }
 
   /** Arrasta a alça do canto para redimensionar. Usa pointer events em vez do drag HTML5
@@ -699,13 +845,18 @@ export function StagePlot({
     const originY = e.clientY;
     const target = e.currentTarget as HTMLElement;
     target.setPointerCapture(e.pointerId);
+    // O primeiro passo do arrasto empilha (guardando o tamanho de antes); os seguintes só
+    // atualizam a tela. Um arrasto = um desfazer.
+    let pushed = false;
 
     function onMove(ev: PointerEvent) {
       setSize(
         item.id,
         start.w + Math.round((ev.clientX - originX) / cellW),
         start.h + Math.round((ev.clientY - originY) / cellH),
+        pushed,
       );
+      pushed = true;
     }
     function onUp() {
       target.removeEventListener("pointermove", onMove);
@@ -736,25 +887,61 @@ export function StagePlot({
     return { col, row };
   }
 
+  /** Onde a peça encostaria se soltasse neste ponto. A célula sob o cursor vira o canto
+   * SUPERIOR ESQUERDO da peça — é a âncora do mapa inteiro, e o mesmo cálculo alimenta a
+   * prévia e o drop, para o que se vê ser exatamente o que acontece. */
+  function dropTargetAt(clientX: number, clientY: number, item: StageItem) {
+    const cell = cellFromPointer(clientX, clientY);
+    if (!cell) return null;
+    const span = itemSpan(item);
+    // Encostar no limite em vez de recusar: arrastar para fora da borda direita/inferior
+    // acomoda a peça na última posição inteira que cabe.
+    const col = Math.min(cell.col, COLS - span.w);
+    const row = Math.min(cell.row, ROWS - span.h);
+    return { col, row, w: span.w, h: span.h, ok: fits(items, span, col, row, item.id) };
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    const id = draggingId.current;
+    const item = id ? items.find((i) => i.id === id) : null;
+    if (!item || item.locked) return;
+    const target = dropTargetAt(e.clientX, e.clientY, item);
+    // Sem repintar quando nada mudou: o dragover dispara a cada poucos ms.
+    setDropHint((prev) =>
+      prev &&
+      target &&
+      prev.col === target.col &&
+      prev.row === target.row &&
+      prev.ok === target.ok
+        ? prev
+        : target,
+    );
+  }
+
+  function endDrag() {
+    draggingId.current = null;
+    setDropHint(null);
+  }
+
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
-    const id = e.dataTransfer.getData("text/plain");
+    const id = e.dataTransfer.getData("text/plain") || draggingId.current;
     const item = items.find((i) => i.id === id);
-    const cell = cellFromPointer(e.clientX, e.clientY);
-    if (!item || !cell) return;
+    endDrag();
+    if (!item) return;
     if (item.locked) {
       setWarning(`"${item.label}" está travado. Destrave para mover.`);
       return;
     }
-    const span = itemSpan(item);
-    const col = Math.min(cell.col, COLS - span.w);
-    const row = Math.min(cell.row, ROWS - span.h);
-    if (!fits(items, span, col, row, item.id)) {
+    const target = dropTargetAt(e.clientX, e.clientY, item);
+    if (!target) return;
+    if (!target.ok) {
       setWarning(`"${item.label}" não cabe nesse ponto — já tem equipamento no lugar.`);
       return;
     }
     setWarning(null);
-    onChange(items.map((i) => (i.id === id ? { ...i, col, row } : i)));
+    onChange(items.map((i) => (i.id === id ? { ...i, col: target.col, row: target.row } : i)));
   }
 
   function suggestMonitors() {
@@ -872,6 +1059,62 @@ export function StagePlot({
         </div>
       </div>
 
+      {/* Barra de edição do canvas. Fica entre o painel de peças e a grade porque age
+          sobre o mapa, não sobre o catálogo. */}
+      <div className="flex flex-wrap items-center gap-2">
+        {history ? (
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs"
+              disabled={!history.canUndo}
+              onClick={history.undo}
+              title="Desfazer a última alteração no mapa (Ctrl/Cmd + Z)"
+            >
+              <Undo2 className="mr-1 size-3.5" /> Desfazer
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs"
+              disabled={!history.canRedo}
+              onClick={history.redo}
+              title="Refazer o que acabou de ser desfeito (Ctrl/Cmd + Shift + Z)"
+            >
+              <Redo2 className="mr-1 size-3.5" /> Refazer
+            </Button>
+          </div>
+        ) : null}
+
+        <span className="text-xs text-muted-foreground">
+          {items.length === 0
+            ? "Palco vazio"
+            : `${items.length} ${items.length === 1 ? "peça" : "peças"} no palco`}
+          {items.some((i) => i.locked)
+            ? ` · ${items.filter((i) => i.locked).length} travada(s)`
+            : ""}
+        </span>
+
+        {items.length > 0 ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="ml-auto h-8 text-xs text-muted-foreground hover:text-destructive"
+            onClick={() => {
+              setWarning(null);
+              onChange([]);
+            }}
+            title="Tira todas as peças do palco — dá para voltar no Desfazer"
+          >
+            <Eraser className="mr-1 size-3.5" /> Limpar palco
+          </Button>
+        ) : null}
+      </div>
+
       {warning ? <p className="text-xs text-destructive font-medium">{warning}</p> : null}
 
       {/* Grade Interativa do Palco com Moldura Profissional de Rider */}
@@ -890,9 +1133,13 @@ export function StagePlot({
         <div className="overflow-x-auto pb-2">
           <div
             ref={gridRef}
-            onDragOver={(e) => e.preventDefault()}
+            onDragOver={handleDragOver}
+            onDragLeave={(e) => {
+              // O dragleave borbulha de cada célula filha; só interessa sair da grade toda.
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropHint(null);
+            }}
             onDrop={handleDrop}
-            className="relative min-w-[1100px]"
+            className={cn("relative min-w-[1100px]", dropHint && "cursor-crosshair")}
           >
             {/* Linhas da Grade do Palco sem Fundo Roxo */}
             <div
@@ -931,6 +1178,40 @@ export function StagePlot({
                 gridTemplateRows: `repeat(${ROWS}, ${CELL_HEIGHT}px)`,
               }}
             >
+              {/* Prévia do drop: as células exatas que a peça vai ocupar, com o ponto de
+                  âncora marcado no canto superior esquerdo. É o que tira a dúvida de onde
+                  a peça encosta — o cursor sozinho não diz quantas células ela cobre. */}
+              {dropHint ? (
+                <div
+                  aria-hidden
+                  style={{
+                    gridColumn: `${dropHint.col + 1} / span ${dropHint.w}`,
+                    gridRow: `${dropHint.row + 1} / span ${dropHint.h}`,
+                  }}
+                  className={cn(
+                    "pointer-events-none relative z-10 rounded-lg border-2 border-dashed",
+                    dropHint.ok
+                      ? "border-primary bg-primary/20"
+                      : "border-destructive bg-destructive/20",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "absolute -left-1 -top-1 size-2.5 rounded-full ring-2 ring-background",
+                      dropHint.ok ? "bg-primary" : "bg-destructive",
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      "absolute bottom-0.5 left-1/2 -translate-x-1/2 rounded-xs px-1 text-[9px] font-bold tabular-nums text-background",
+                      dropHint.ok ? "bg-primary" : "bg-destructive",
+                    )}
+                  >
+                    {dropHint.ok ? `${dropHint.w}×${dropHint.h}` : "ocupado"}
+                  </span>
+                </div>
+              ) : null}
+
               {items.map((item) => {
                 const span = itemSpan(item);
                 const category =
@@ -944,9 +1225,18 @@ export function StagePlot({
                     title={
                       item.locked
                         ? `${item.label} — travado. Destrave para mover ou redimensionar.`
-                        : `${item.label} — arraste para reposicionar, ou puxe o canto para redimensionar`
+                        : `${item.label} — arraste para reposicionar (a peça encosta o canto superior esquerdo na célula sob o cursor), ou puxe o canto inferior direito para redimensionar`
                     }
-                    onDragStart={(e) => e.dataTransfer.setData("text/plain", item.id)}
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData("text/plain", item.id);
+                      draggingId.current = item.id;
+                      // Prende o fantasma pelo canto superior esquerdo, que é a âncora do
+                      // drop. Sem isso o navegador o segura no ponto onde a peça foi pega,
+                      // e uma bateria pega no meio cai deslocada meia peça para baixo e
+                      // para a direita — a origem da dúvida "qual é o ponto de referência".
+                      e.dataTransfer.setDragImage(e.currentTarget, 0, 0);
+                    }}
+                    onDragEnd={endDrag}
                     style={{
                       gridColumn: `${item.col + 1} / span ${span.w}`,
                       gridRow: `${item.row + 1} / span ${span.h}`,
@@ -956,9 +1246,21 @@ export function StagePlot({
                       item.locked
                         ? "cursor-not-allowed border-dashed opacity-90"
                         : "cursor-grab active:cursor-grabbing hover:scale-[1.02]",
+                      // A peça em trânsito some de vista para a prévia do destino ficar
+                      // legível — senão as duas competem na mesma região da grade.
+                      dropHint && draggingId.current === item.id && "opacity-25",
                       colorStyle,
                     )}
                   >
+                    {/* Marca da âncora: o canto que vai encostar na célula sob o cursor.
+                        Aparece no hover, antes do arrasto começar, para a regra ser
+                        aprendida sem precisar errar uma vez. */}
+                    {!item.locked && (
+                      <span
+                        aria-hidden
+                        className="pointer-events-none absolute -left-0.5 -top-0.5 z-20 size-2 rounded-full bg-primary opacity-0 ring-2 ring-background transition-opacity group-hover:opacity-100"
+                      />
+                    )}
                     <div className="absolute -right-2 -top-2 z-30 flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
                       <button
                         type="button"
@@ -997,6 +1299,15 @@ export function StagePlot({
                         onClick={() => mirror(item.id)}
                       >
                         <FlipHorizontal className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Duplicar ${item.label}`}
+                        title="Duplicar — a cópia mantém porte, rotação e espelho, e entra na vaga mais próxima"
+                        className="rounded-full bg-background text-foreground border border-border p-1 shadow-md"
+                        onClick={() => duplicateItem(item.id)}
+                      >
+                        <Copy className="size-3.5" />
                       </button>
                       <button
                         type="button"
@@ -1070,9 +1381,12 @@ export function StagePlot({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        💡 <strong>Mapa de Palco Profissional:</strong> Arraste os elementos para posicionar.
-        Equipamentos de grande porte (Bateria, Console, P.A.) ocupam proporções maiores na grade
-        para clareza técnica do produtor de áudio.
+        💡 <strong>Como posicionar:</strong> ao arrastar, a peça encosta o{" "}
+        <strong>canto superior esquerdo</strong> na célula sob o cursor — o pontinho{" "}
+        <span className="inline-block size-2 translate-y-px rounded-full bg-primary ring-1 ring-border" />{" "}
+        marca esse ponto, e a área tracejada mostra as células que ela vai ocupar antes de você
+        soltar. Puxe o canto inferior direito para redimensionar.
+        {history ? " Ctrl/Cmd + Z desfaz, Ctrl/Cmd + Shift + Z refaz." : ""}
       </p>
     </div>
   );
