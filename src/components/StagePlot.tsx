@@ -9,6 +9,8 @@ import {
   ArrowUp,
   RotateCw,
   FlipHorizontal,
+  Lock,
+  Unlock,
 } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
@@ -37,6 +39,14 @@ export type StageItem = {
   /** Espelha em relação ao padrão do tipo (XOR), para o monitor direito — que já nasce
    * espelhado — responder ao botão como todo mundo. */
   flipX?: boolean;
+  /** Pegada própria em células, sobrescrevendo o padrão do tipo. Só existe quando o
+   * usuário redimensionou a peça à mão — sem isso, a peça acompanha o padrão do tipo e
+   * herda qualquer reajuste futuro de proporção. */
+  w?: number;
+  h?: number;
+  /** Trava a peça: ignora arrastar, girar, espelhar, redimensionar e excluir. Serve para
+   * fixar bateria e praticável antes de encaixar o resto em volta. */
+  locked?: boolean;
 };
 
 export type StageKind =
@@ -353,7 +363,7 @@ export const STAGE_KINDS: {
     label: "Monitor / Retorno",
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/monitor.svg",
-    footprint: { w: 4, h: 2 },
+    footprint: { w: 3, h: 2 },
     scaleRatio: 0.9,
     darkOutline: true,
   },
@@ -362,7 +372,7 @@ export const STAGE_KINDS: {
     label: "Monitor esquerdo",
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/monitor.svg",
-    footprint: { w: 4, h: 2 },
+    footprint: { w: 3, h: 2 },
     scaleRatio: 0.9,
     darkOutline: true,
   },
@@ -371,7 +381,7 @@ export const STAGE_KINDS: {
     label: "Monitor direito",
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/monitor.svg",
-    footprint: { w: 4, h: 2 },
+    footprint: { w: 3, h: 2 },
     scaleRatio: 0.9,
     darkOutline: true,
     flipX: true,
@@ -399,16 +409,16 @@ export const STAGE_KINDS: {
     label: "Cubo de guitarra",
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/cubo-guitarra.svg",
-    footprint: { w: 3, h: 3 },
-    scaleRatio: 0.9,
+    footprint: { w: 2, h: 2 },
+    scaleRatio: 0.95,
   },
   {
     kind: "cubo_baixo",
     label: "Cubo de baixo",
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/cubo-baixo.svg",
-    footprint: { w: 3, h: 3 },
-    scaleRatio: 0.95,
+    footprint: { w: 2, h: 2 },
+    scaleRatio: 1,
     darkOutline: true,
   },
   {
@@ -416,7 +426,7 @@ export const STAGE_KINDS: {
     label: "Amplificador (cabeçote + caixa)",
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/cabeca-amplificador.svg",
-    footprint: { w: 3, h: 4 },
+    footprint: { w: 2, h: 3 },
     scaleRatio: 1,
     darkOutline: true,
   },
@@ -425,8 +435,8 @@ export const STAGE_KINDS: {
     label: "DI box",
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/di-box.svg",
-    footprint: { w: 2, h: 2 },
-    scaleRatio: 0.5,
+    footprint: { w: 1, h: 1 },
+    scaleRatio: 0.9,
     darkOutline: true,
   },
   {
@@ -564,8 +574,16 @@ function StageIcon({
   );
 }
 
-export const COLS = 18;
+// 22×12 com célula quase quadrada dá uma proporção de ~1,83:1, que é a de um palco real
+// (12 m de boca por 6,5 m de profundidade). Os 18 colunas anteriores davam 1,5:1 e não
+// comportavam banda de 8 integrantes com retorno individual — ver o teste da Lucky 7.
+// Alargar é retrocompatível: as colunas novas entram à direita, então todo col/row já
+// salvo continua válido.
+export const COLS = 22;
 export const ROWS = 12;
+/** Altura da célula no canvas, em px. A largura mínima do canvas acompanha COLS para a
+ * célula continuar quadrada: 22 × 46px + 21 vãos de 4px ≈ 1100px. */
+export const CELL_HEIGHT = 48;
 
 
 export function parseStagePlot(raw: unknown): StageItem[] {
@@ -577,23 +595,35 @@ export function parseStagePlot(raw: unknown): StageItem[] {
   return items;
 }
 
+/** Pegada efetiva da peça: o que o usuário definiu à mão, ou o padrão do tipo. */
+export function itemSpan(item: StageItem) {
+  const base = spanOf(item.kind);
+  return { w: item.w ?? base.w, h: item.h ?? base.h };
+}
+
 function overlaps(a: StageItem, col: number, row: number, span: { w: number; h: number }) {
-  const sa = spanOf(a.kind);
+  const sa = itemSpan(a);
   return col < a.col + sa.w && col + span.w > a.col && row < a.row + sa.h && row + span.h > a.row;
 }
 
-function fits(items: StageItem[], kind: StageKind, col: number, row: number, ignoreId?: string) {
-  const span = spanOf(kind);
+function fits(
+  items: StageItem[],
+  span: { w: number; h: number },
+  col: number,
+  row: number,
+  ignoreId?: string,
+) {
   if (col < 0 || row < 0 || col + span.w > COLS || row + span.h > ROWS) return false;
   return !items.some((i) => i.id !== ignoreId && overlaps(i, col, row, span));
 }
 
 function findSpot(items: StageItem[], kind: StageKind) {
+  const span = spanOf(kind);
   const center = Math.floor(COLS / 2);
   const order = [center, ...Array.from({ length: COLS }, (_, i) => i).filter((c) => c !== center)];
   for (let row = ROWS - 1; row >= 0; row--) {
     for (const col of order) {
-      if (fits(items, kind, col, row)) return { col, row };
+      if (fits(items, span, col, row)) return { col, row };
     }
   }
   return null;
@@ -624,12 +654,76 @@ export function StagePlot({
 
   function rotate(id: string) {
     onChange(
-      items.map((i) => (i.id === id ? { ...i, rotateDeg: ((i.rotateDeg ?? 0) + 45) % 360 } : i)),
+      items.map((i) =>
+        i.id === id && !i.locked ? { ...i, rotateDeg: ((i.rotateDeg ?? 0) + 45) % 360 } : i,
+      ),
     );
   }
 
   function mirror(id: string) {
-    onChange(items.map((i) => (i.id === id ? { ...i, flipX: !i.flipX } : i)));
+    onChange(items.map((i) => (i.id === id && !i.locked ? { ...i, flipX: !i.flipX } : i)));
+  }
+
+  function toggleLock(id: string) {
+    onChange(items.map((i) => (i.id === id ? { ...i, locked: !i.locked } : i)));
+  }
+
+  /** Redimensiona em células. Recusa o que sairia da grade ou invadiria outra peça, em vez
+   * de deixar o mapa num estado que a impressão não consegue representar. */
+  function setSize(id: string, w: number, h: number) {
+    const item = items.find((i) => i.id === id);
+    if (!item || item.locked) return;
+    const current = itemSpan(item);
+    const next = {
+      w: Math.max(1, Math.min(COLS - item.col, w)),
+      h: Math.max(1, Math.min(ROWS - item.row, h)),
+    };
+    if (next.w === current.w && next.h === current.h) return;
+    if (!fits(items, next, item.col, item.row, item.id)) return;
+    setWarning(null);
+    onChange(items.map((i) => (i.id === id ? { ...i, w: next.w, h: next.h } : i)));
+  }
+
+  /** Arrasta a alça do canto para redimensionar. Usa pointer events em vez do drag HTML5
+   * já usado para mover a peça — os dois no mesmo elemento brigariam. */
+  function startResize(e: React.PointerEvent, item: StageItem) {
+    e.preventDefault();
+    e.stopPropagation();
+    const grid = gridRef.current;
+    if (!grid || item.locked) return;
+    const rect = grid.getBoundingClientRect();
+    const cellW = rect.width / COLS;
+    const cellH = rect.height / ROWS;
+    const start = itemSpan(item);
+    const originX = e.clientX;
+    const originY = e.clientY;
+    const target = e.currentTarget as HTMLElement;
+    target.setPointerCapture(e.pointerId);
+
+    function onMove(ev: PointerEvent) {
+      setSize(
+        item.id,
+        start.w + Math.round((ev.clientX - originX) / cellW),
+        start.h + Math.round((ev.clientY - originY) / cellH),
+      );
+    }
+    function onUp() {
+      target.removeEventListener("pointermove", onMove);
+      target.removeEventListener("pointerup", onUp);
+    }
+    target.addEventListener("pointermove", onMove);
+    target.addEventListener("pointerup", onUp);
+  }
+
+  /** Volta a peça ao porte padrão do tipo, descartando o ajuste manual. */
+  function resetSize(id: string) {
+    onChange(
+      items.map((i) => {
+        if (i.id !== id || i.locked) return i;
+        const { w: _w, h: _h, ...rest } = i;
+        return rest;
+      }),
+    );
   }
 
   function cellFromPointer(clientX: number, clientY: number) {
@@ -648,10 +742,14 @@ export function StagePlot({
     const item = items.find((i) => i.id === id);
     const cell = cellFromPointer(e.clientX, e.clientY);
     if (!item || !cell) return;
-    const span = spanOf(item.kind);
+    if (item.locked) {
+      setWarning(`"${item.label}" está travado. Destrave para mover.`);
+      return;
+    }
+    const span = itemSpan(item);
     const col = Math.min(cell.col, COLS - span.w);
     const row = Math.min(cell.row, ROWS - span.h);
-    if (!fits(items, item.kind, col, row, item.id)) {
+    if (!fits(items, span, col, row, item.id)) {
       setWarning(`"${item.label}" não cabe nesse ponto — já tem equipamento no lugar.`);
       return;
     }
@@ -794,14 +892,14 @@ export function StagePlot({
             ref={gridRef}
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
-            className="relative min-w-[900px]"
+            className="relative min-w-[1100px]"
           >
             {/* Linhas da Grade do Palco sem Fundo Roxo */}
             <div
               className="grid gap-1"
               style={{
                 gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-                gridTemplateRows: `repeat(${ROWS}, 48px)`,
+                gridTemplateRows: `repeat(${ROWS}, ${CELL_HEIGHT}px)`,
               }}
             >
               {Array.from({ length: ROWS * COLS }).map((_, index) => {
@@ -830,11 +928,11 @@ export function StagePlot({
               className="pointer-events-none absolute inset-0 grid gap-1"
               style={{
                 gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-                gridTemplateRows: `repeat(${ROWS}, 48px)`,
+                gridTemplateRows: `repeat(${ROWS}, ${CELL_HEIGHT}px)`,
               }}
             >
               {items.map((item) => {
-                const span = spanOf(item.kind);
+                const span = itemSpan(item);
                 const category =
                   STAGE_KINDS.find((k) => k.kind === item.kind)?.category ?? "sopros_infra";
                 const colorStyle = categoryColorStyles(category);
@@ -842,24 +940,50 @@ export function StagePlot({
                 return (
                   <div
                     key={item.id}
-                    draggable
-                    title={`${item.label} — arraste para reposicionar no palco`}
+                    draggable={!item.locked}
+                    title={
+                      item.locked
+                        ? `${item.label} — travado. Destrave para mover ou redimensionar.`
+                        : `${item.label} — arraste para reposicionar, ou puxe o canto para redimensionar`
+                    }
                     onDragStart={(e) => e.dataTransfer.setData("text/plain", item.id)}
                     style={{
                       gridColumn: `${item.col + 1} / span ${span.w}`,
                       gridRow: `${item.row + 1} / span ${span.h}`,
                     }}
                     className={cn(
-                      "group pointer-events-auto relative cursor-grab active:cursor-grabbing rounded-lg border-2 backdrop-blur-2xs shadow-xs hover:shadow-md transition-all hover:scale-[1.02]",
+                      "group pointer-events-auto relative rounded-lg border-2 backdrop-blur-2xs shadow-xs hover:shadow-md transition-all",
+                      item.locked
+                        ? "cursor-not-allowed border-dashed opacity-90"
+                        : "cursor-grab active:cursor-grabbing hover:scale-[1.02]",
                       colorStyle,
                     )}
                   >
                     <div className="absolute -right-2 -top-2 z-30 flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
                       <button
                         type="button"
+                        aria-label={item.locked ? `Destravar ${item.label}` : `Travar ${item.label}`}
+                        title={
+                          item.locked
+                            ? "Destravar — volta a aceitar mover, girar e redimensionar"
+                            : "Travar no lugar — útil para fixar bateria e praticável antes de encaixar o resto"
+                        }
+                        className={cn(
+                          "rounded-full border border-border p-1 shadow-md",
+                          item.locked
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-background text-foreground",
+                        )}
+                        onClick={() => toggleLock(item.id)}
+                      >
+                        {item.locked ? <Lock className="size-3.5" /> : <Unlock className="size-3.5" />}
+                      </button>
+                      <button
+                        type="button"
                         aria-label={`Girar ${item.label} 45 graus`}
                         title={`Girar 45° (está em ${item.rotateDeg ?? 0}°) — aponte a peça para quem ela atende`}
-                        className="rounded-full bg-background text-foreground border border-border p-1 shadow-md"
+                        className="rounded-full bg-background text-foreground border border-border p-1 shadow-md disabled:opacity-40"
+                        disabled={item.locked}
                         onClick={() => rotate(item.id)}
                       >
                         <RotateCw className="size-3.5" />
@@ -868,7 +992,8 @@ export function StagePlot({
                         type="button"
                         aria-label={`Espelhar ${item.label}`}
                         title="Espelhar na horizontal — vira o desenho para o outro lado, sem mudar de lugar"
-                        className="rounded-full bg-background text-foreground border border-border p-1 shadow-md"
+                        className="rounded-full bg-background text-foreground border border-border p-1 shadow-md disabled:opacity-40"
+                        disabled={item.locked}
                         onClick={() => mirror(item.id)}
                       >
                         <FlipHorizontal className="size-3.5" />
@@ -877,12 +1002,44 @@ export function StagePlot({
                         type="button"
                         aria-label={`Remover ${item.label}`}
                         title={`Remover "${item.label}" do palco`}
-                        className="rounded-full bg-destructive text-destructive-foreground p-1 shadow-md"
+                        className="rounded-full bg-destructive text-destructive-foreground p-1 shadow-md disabled:opacity-40"
+                        disabled={item.locked}
                         onClick={() => onChange(items.filter((i) => i.id !== item.id))}
                       >
                         <Trash2 className="size-3.5" />
                       </button>
                     </div>
+
+                    {/* Alça de redimensionar, no canto inferior direito. Fica fora do fluxo
+                        do drag HTML5 (que move a peça) usando pointer events. */}
+                    {!item.locked && (
+                      <div
+                        role="slider"
+                        tabIndex={0}
+                        aria-label={`Redimensionar ${item.label}`}
+                        aria-valuetext={`${span.w} por ${span.h} células`}
+                        aria-valuenow={span.w}
+                        aria-valuemin={1}
+                        aria-valuemax={COLS}
+                        title={`${span.w}×${span.h} células — arraste para redimensionar, duplo clique volta ao padrão`}
+                        draggable={false}
+                        onPointerDown={(e) => startResize(e, item)}
+                        onDoubleClick={() => resetSize(item.id)}
+                        onKeyDown={(e) => {
+                          const step: Record<string, [number, number]> = {
+                            ArrowRight: [1, 0],
+                            ArrowLeft: [-1, 0],
+                            ArrowDown: [0, 1],
+                            ArrowUp: [0, -1],
+                          };
+                          const d = step[e.key];
+                          if (!d) return;
+                          e.preventDefault();
+                          setSize(item.id, span.w + d[0], span.h + d[1]);
+                        }}
+                        className="absolute -bottom-1 -right-1 z-30 size-3.5 cursor-nwse-resize rounded-sm border border-border bg-background opacity-0 shadow-md transition-opacity group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring/60"
+                      />
+                    )}
 
                     {/* A pegada inteira é arte: o rótulo sai dela e flutua por baixo, para o
                         desenho não perder altura para uma faixa de texto. */}
@@ -940,7 +1097,10 @@ export function StagePlotPrintable({
   // 12 linhas + 11 vãos de 3px precisam caber na área entre o cabeçalho e o rodapé
   // da folha (≈802px no retrato, ≈597px no paisagem). O rótulo mora dentro da pegada,
   // então não é preciso reservar calha embaixo.
-  const cellHeight = isLandscape ? 46 : 63;
+  // Com 22 colunas a célula tem ~50px de largura ((1200 − 40 de padding − 21 vãos)/22),
+  // então o retrato usa 50 para ficar quadrada: 12×50 + 33 = 633px, dentro dos 802.
+  // O paisagem fica em 46 porque 12×50 + 33 estouraria os 597 disponíveis.
+  const cellHeight = isLandscape ? 46 : 50;
 
   return (
     <div
@@ -1016,7 +1176,7 @@ export function StagePlotPrintable({
           }}
         >
           {items.map((item) => {
-            const span = spanOf(item.kind);
+            const span = itemSpan(item);
             return (
               <div
                 key={item.id}
@@ -1112,79 +1272,143 @@ export function StageItemLabels({
       <Label className="text-xs font-semibold text-muted-foreground">
         Rótulos dos Equipamentos no Palco:
       </Label>
-      {items.map((item) => (
-        <div key={item.id} className="flex items-center gap-2">
-          <Select
-            value={item.kind}
-            onValueChange={(v) =>
-              onChange(items.map((i) => (i.id === item.id ? { ...i, kind: v as StageKind } : i)))
-            }
-          >
-            <SelectTrigger
-              className="w-44 h-8 text-xs"
-              title="Trocar o tipo desta peça — o desenho e o espaço que ela ocupa mudam junto"
+      {items.map((item) => {
+        const span = itemSpan(item);
+        const resized = item.w !== undefined || item.h !== undefined;
+        return (
+          <div key={item.id} className="flex items-center gap-2">
+            <Select
+              value={item.kind}
+              disabled={Boolean(item.locked)}
+              onValueChange={(v) =>
+                onChange(
+                  items.map((i) => {
+                    if (i.id !== item.id) return i;
+                    // O tamanho manual não sobrevive à troca de tipo: a pegada nova é a
+                    // do tipo escolhido, senão um cubo viraria bateria mantendo 2x2.
+                    const { w: _w, h: _h, ...rest } = i;
+                    return { ...rest, kind: v as StageKind };
+                  }),
+                )
+              }
             >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STAGE_KINDS.map((k) => (
-                <SelectItem key={k.kind} value={k.kind} className="text-xs">
-                  {k.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <input
-            className="h-8 flex-1 rounded-md border border-input bg-background px-3 text-xs"
-            title="Nome que aparece no mapa e no PDF. Nomes curtos cabem melhor dentro da peça"
-            value={item.label}
-            onChange={(e) =>
-              onChange(items.map((i) => (i.id === item.id ? { ...i, label: e.target.value } : i)))
-            }
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            aria-label={`Girar ${item.label} 45 graus`}
-            title={`Girar 45° (está em ${item.rotateDeg ?? 0}°) — aponte a peça para quem ela atende`}
-            onClick={() =>
-              onChange(
-                items.map((i) =>
-                  i.id === item.id ? { ...i, rotateDeg: ((i.rotateDeg ?? 0) + 45) % 360 } : i,
-                ),
-              )
-            }
-          >
-            <RotateCw className="size-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            aria-label={`Espelhar ${item.label}`}
-            title="Espelhar na horizontal — vira o desenho para o outro lado, sem mudar de lugar"
-            onClick={() =>
-              onChange(items.map((i) => (i.id === item.id ? { ...i, flipX: !i.flipX } : i)))
-            }
-          >
-            <FlipHorizontal className="size-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            aria-label="Remover"
-            title={`Remover "${item.label}" do palco`}
-            onClick={() => onChange(items.filter((i) => i.id !== item.id))}
-          >
-            <Trash2 className="size-4 text-destructive" />
-          </Button>
-        </div>
-      ))}
+              <SelectTrigger
+                className="w-44 h-8 text-xs"
+                title="Trocar o tipo desta peça — o desenho e o espaço que ela ocupa mudam junto"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STAGE_KINDS.map((k) => (
+                  <SelectItem key={k.kind} value={k.kind} className="text-xs">
+                    {k.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <input
+              className="h-8 flex-1 rounded-md border border-input bg-background px-3 text-xs"
+              title="Nome que aparece no mapa e no PDF. Nomes curtos cabem melhor dentro da peça"
+              value={item.label}
+              onChange={(e) =>
+                onChange(items.map((i) => (i.id === item.id ? { ...i, label: e.target.value } : i)))
+              }
+            />
+            <button
+              type="button"
+              disabled={!resized || item.locked}
+              title={
+                resized
+                  ? `${span.w}×${span.h} células (ajustado à mão) — clique para voltar ao padrão do tipo`
+                  : `${span.w}×${span.h} células — porte padrão do tipo`
+              }
+              onClick={() =>
+                onChange(
+                  items.map((i) => {
+                    if (i.id !== item.id) return i;
+                    const { w: _w, h: _h, ...rest } = i;
+                    return rest;
+                  }),
+                )
+              }
+              className={cn(
+                "h-8 shrink-0 rounded-md border px-2 font-mono text-[11px] tabular-nums",
+                resized
+                  ? "border-primary/40 bg-primary/10 text-primary"
+                  : "border-input text-muted-foreground",
+                "disabled:cursor-default",
+              )}
+            >
+              {span.w}×{span.h}
+            </button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              aria-label={item.locked ? `Destravar ${item.label}` : `Travar ${item.label}`}
+              title={
+                item.locked
+                  ? "Destravar — volta a aceitar mover, girar e redimensionar"
+                  : "Travar no lugar — útil para fixar bateria e praticável antes de encaixar o resto"
+              }
+              onClick={() =>
+                onChange(items.map((i) => (i.id === item.id ? { ...i, locked: !i.locked } : i)))
+              }
+            >
+              {item.locked ? (
+                <Lock className="size-4 text-primary" />
+              ) : (
+                <Unlock className="size-4" />
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              disabled={item.locked}
+              aria-label={`Girar ${item.label} 45 graus`}
+              title={`Girar 45° (está em ${item.rotateDeg ?? 0}°) — aponte a peça para quem ela atende`}
+              onClick={() =>
+                onChange(
+                  items.map((i) =>
+                    i.id === item.id ? { ...i, rotateDeg: ((i.rotateDeg ?? 0) + 45) % 360 } : i,
+                  ),
+                )
+              }
+            >
+              <RotateCw className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              disabled={item.locked}
+              aria-label={`Espelhar ${item.label}`}
+              title="Espelhar na horizontal — vira o desenho para o outro lado, sem mudar de lugar"
+              onClick={() =>
+                onChange(items.map((i) => (i.id === item.id ? { ...i, flipX: !i.flipX } : i)))
+              }
+            >
+              <FlipHorizontal className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              disabled={item.locked}
+              aria-label="Remover"
+              title={`Remover "${item.label}" do palco`}
+              onClick={() => onChange(items.filter((i) => i.id !== item.id))}
+            >
+              <Trash2 className="size-4 text-destructive" />
+            </Button>
+          </div>
+        );
+      })}
     </div>
   );
 }

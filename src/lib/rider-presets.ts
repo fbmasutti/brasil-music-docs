@@ -15,10 +15,12 @@ export type RiderPreset = {
 };
 
 /**
- * As posições são escritas direto na grade real do mapa (18 colunas x 12 linhas):
+ * As posições são escritas na grade de referência de 18 colunas (PRESET_AUTHORED_COLS).
+ * `presetToStageItems` centraliza automaticamente quando COLS cresce — não é preciso
+ * reescrever coordenadas ao alargar o palco.
  * `row: 0` é o fundo do palco (upstage) e `row: 11` é a boca de cena (downstage).
- * A coluna 8 é o eixo central. Como manda a convenção de mapa de palco, o desenho
- * é a visão da plateia para o palco.
+ * A coluna 8 é o eixo central desta grade. Como manda a convenção de mapa de palco,
+ * o desenho é a visão da plateia para o palco.
  *
  * Convenções seguidas por todos os presets:
  * - **P.A. nas pontas**: um par de `subwoofer` ancorado nas colunas 0-1 e 16-17 das
@@ -321,15 +323,21 @@ export const RIDER_PRESETS: RiderPreset[] = [
   },
 ];
 
-/** As posições já vêm na grade 9x6; o clamp só garante que nada estoure a borda
- * caso o porte (span) de algum elemento mude no futuro. */
+/** Largura de grade em que as posições dos presets foram desenhadas. Quando COLS cresce,
+ * os presets são centralizados no palco novo em vez de ficarem encostados à esquerda. */
+const PRESET_AUTHORED_COLS = 18;
+
+/** As posições vêm na grade em que o preset foi desenhado (PRESET_AUTHORED_COLS). O
+ * deslocamento centraliza no palco atual e o clamp garante que nada estoure a borda caso
+ * o porte (span) de algum elemento mude. */
 export function presetToStageItems(preset: RiderPreset): StageItem[] {
+  const offset = Math.max(0, Math.floor((COLS - PRESET_AUTHORED_COLS) / 2));
   return preset.stage.map((s) => {
     const span = spanOf(s.kind);
     return {
       ...s,
       id: crypto.randomUUID(),
-      col: Math.max(0, Math.min(COLS - span.w, s.col)),
+      col: Math.max(0, Math.min(COLS - span.w, s.col + offset)),
       row: Math.max(0, Math.min(ROWS - span.h, s.row)),
     };
   });
