@@ -105,8 +105,9 @@ function RepertoirePage() {
   // id do autor sendo editado; null = o formulário está criando um novo
   const [editingWriterId, setEditingWriterId] = useState<string | null>(null);
   const [writer, setWriter] = useState(emptyWriter);
-  const [ecadEventId, setEcadEventId] = useState("");
-  // "" = todas as formações
+  // "" = todas as formações. Filtra a lista de obras na tela — é sobre navegar e
+  // organizar o repertório, não sobre o relatório (esse tem o próprio filtro,
+  // no diálogo do botão "Relatório ECAD").
   const [formationFilter, setFormationFilter] = useState("");
   const accent = useDocumentAccent();
 
@@ -127,56 +128,6 @@ function RepertoirePage() {
   }
 
   const ownSongs = songs.filter((s) => s.origin === "autoral");
-
-  function authorsFor(s: Tables<"songs">) {
-    if (s.origin === "cover") return s.original_authors || "—";
-    const list = writers.filter((w) => w.song_id === s.id);
-    return list.map((w) => `${w.name} ${w.share_percent}%`).join("; ") || "—";
-  }
-
-  function exportEcadReport() {
-    const event = events.find((e) => e.id === ecadEventId);
-    downloadPdf(
-      {
-        title: "Relatório de execução pública (ECAD)",
-        brand: profile?.stage_name ?? "StageKit",
-        subtitle: `Associação: ${profile?.ecad_association ?? "não informada"} · CAE/IPI: ${profile?.cae_ipi ?? "—"}`,
-        footer: `${profile?.stage_name ?? "StageKit"} · relatório de execução pública`,
-        accent,
-        blocks: [
-          {
-            type: "kv",
-            rows: [
-              ["Titular", profile?.stage_name ?? "—"],
-              ["Documento", profile?.cpf_cnpj ?? "—"],
-              ["Nº de cliente ECAD", profile?.ecad_client_number ?? "—"],
-              ["Evento", event ? event.title : "Todos os eventos"],
-              ["Data", event ? dateBR(event.event_date) : "—"],
-              ["Local", event ? [event.venue, event.city].filter(Boolean).join(", ") : "—"],
-            ],
-          },
-          { type: "heading", text: "Obras executadas" },
-          {
-            type: "table",
-            head: ["Obra", "Duração", "ISWC", "Autor(es)"],
-            widths: [3, 1, 1.6, 3.4],
-            rows: songs.map((s) => [
-              s.title,
-              duration(s.duration_seconds),
-              s.origin === "autoral" ? s.iswc || "—" : "—",
-              authorsFor(s),
-            ]),
-          },
-          {
-            type: "note",
-            text: "Declaro que as obras acima foram executadas publicamente na apresentação indicada, para fins de distribuição de direitos autorais pelo ECAD.",
-          },
-          { type: "signatures", names: [razaoSocial(profile) || "Titular"] },
-        ],
-      },
-      "relatorio-ecad",
-    );
-  }
 
   function exportRegistrationSheet(s: Tables<"songs">) {
     const list = writers.filter((w) => w.song_id === s.id);
@@ -231,12 +182,23 @@ function RepertoirePage() {
     <PageContainer>
       <PageHeader
         title="Repertório"
-        subtitle="Covers e obras autorais num só lugar. Os relatórios e documentos do ECAD são gerados automaticamente a partir daqui."
+        subtitle="Cadastre o repertório vinculado a cada formação. Quando precisar, gere o relatório de execução pública e as fichas de registro do ECAD."
         actions={
           <>
-            <Button variant="outline" size="sm" onClick={exportEcadReport} disabled={!songs.length}>
-              <Download className="mr-1 size-4" /> Relatório ECAD
-            </Button>
+            <EcadReportDialog
+              trigger={
+                <Button variant="outline" size="sm" disabled={!allSongs.length}>
+                  <Download className="mr-1 size-4" /> Relatório ECAD
+                </Button>
+              }
+              allSongs={allSongs}
+              formations={formations}
+              formationSongs={formationSongs}
+              writers={writers}
+              events={events}
+              profile={profile}
+              accent={accent}
+            />
             <SongFormDialog
               trigger={
                 <Button size="sm">
@@ -249,34 +211,21 @@ function RepertoirePage() {
       />
 
       <Section
-        title="Relatório por evento"
-        description="Escolha um evento para identificar o relatório de execução pública."
-        className="mb-5"
-      >
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label>Evento</Label>
-            <Select value={ecadEventId} onValueChange={setEcadEventId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todos os eventos" />
-              </SelectTrigger>
-              <SelectContent>
-                {events.map((e) => (
-                  <SelectItem key={e.id} value={e.id}>
-                    {e.title} — {dateBR(e.event_date)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {formations.length ? (
-            <div className="space-y-2">
-              <Label>Formação</Label>
+        title={songsQuery.isLoading ? "Obras" : `Obras (${songs.length})`}
+        description={
+          formations.length
+            ? "Filtre por formação para ver e organizar o repertório de cada banda ou projeto."
+            : undefined
+        }
+        actions={
+          formations.length ? (
+            <div className="flex items-center gap-2">
+              <Label className="shrink-0 text-xs text-muted-foreground">Formação</Label>
               <Select
                 value={formationFilter || "all"}
                 onValueChange={(v) => setFormationFilter(v === "all" ? "" : v)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-8 w-44 text-xs">
                   <SelectValue placeholder="Todas as formações" />
                 </SelectTrigger>
                 <SelectContent>
@@ -284,16 +233,15 @@ function RepertoirePage() {
                   {formations.map((f) => (
                     <SelectItem key={f.id} value={f.id}>
                       {f.name}
+                      {f.is_default ? " · padrão" : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          ) : null}
-        </div>
-      </Section>
-
-      <Section title={songsQuery.isLoading ? "Obras" : `Obras (${songs.length})`}>
+          ) : undefined
+        }
+      >
         <ListState
           query={songsQuery}
           empty={
@@ -564,6 +512,164 @@ function RepertoirePage() {
         </p>
       ) : null}
     </PageContainer>
+  );
+}
+
+/**
+ * Fluxo de download do relatório ECAD, separado da navegação do repertório: o
+ * usuário escolhe explicitamente quais obras entram (por formação, com a
+ * padrão pré-selecionada) e, se quiser, um evento — que só entra no cabeçalho
+ * do PDF, não filtra a tabela. Antes os dois selects moravam soltos na página
+ * e pareciam controlar a mesma coisa; aqui fica claro que são independentes.
+ */
+function EcadReportDialog({
+  trigger,
+  allSongs,
+  formations,
+  formationSongs,
+  writers,
+  events,
+  profile,
+  accent,
+}: {
+  trigger: ReactNode;
+  allSongs: Tables<"songs">[];
+  formations: Tables<"formations">[];
+  formationSongs: Tables<"formation_songs">[];
+  writers: Tables<"song_writers">[];
+  events: Tables<"events">[];
+  profile: Tables<"profiles"> | null | undefined;
+  accent: string | undefined;
+}) {
+  const [open, setOpen] = useState(false);
+  const [formationId, setFormationId] = useState("");
+  const [eventId, setEventId] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    setFormationId(formations.find((f) => f.is_default)?.id ?? "");
+    setEventId("");
+  }, [open, formations]);
+
+  const songs = formationId
+    ? allSongs.filter((s) =>
+        formationSongs.some((fs) => fs.song_id === s.id && fs.formation_id === formationId),
+      )
+    : allSongs;
+
+  function authorsFor(s: Tables<"songs">) {
+    if (s.origin === "cover") return s.original_authors || "—";
+    const list = writers.filter((w) => w.song_id === s.id);
+    return list.map((w) => `${w.name} ${w.share_percent}%`).join("; ") || "—";
+  }
+
+  function download() {
+    const event = events.find((e) => e.id === eventId);
+    const formation = formations.find((f) => f.id === formationId);
+    downloadPdf(
+      {
+        title: "Relatório de execução pública (ECAD)",
+        brand: profile?.stage_name ?? "StageKit",
+        subtitle: `Associação: ${profile?.ecad_association ?? "não informada"} · CAE/IPI: ${profile?.cae_ipi ?? "—"}`,
+        footer: `${profile?.stage_name ?? "StageKit"} · relatório de execução pública`,
+        accent,
+        blocks: [
+          {
+            type: "kv",
+            rows: [
+              ["Titular", profile?.stage_name ?? "—"],
+              ["Documento", profile?.cpf_cnpj ?? "—"],
+              ["Nº de cliente ECAD", profile?.ecad_client_number ?? "—"],
+              ["Repertório", formation ? formation.name : "Todo o repertório"],
+              ["Evento", event ? event.title : "Não vinculado a um evento específico"],
+              ["Data", event ? dateBR(event.event_date) : "—"],
+              ["Local", event ? [event.venue, event.city].filter(Boolean).join(", ") : "—"],
+            ],
+          },
+          { type: "heading", text: "Obras executadas" },
+          {
+            type: "table",
+            head: ["Obra", "Duração", "ISWC", "Autor(es)"],
+            widths: [3, 1, 1.6, 3.4],
+            rows: songs.map((s) => [
+              s.title,
+              duration(s.duration_seconds),
+              s.origin === "autoral" ? s.iswc || "—" : "—",
+              authorsFor(s),
+            ]),
+          },
+          {
+            type: "note",
+            text: "Declaro que as obras acima foram executadas publicamente na apresentação indicada, para fins de distribuição de direitos autorais pelo ECAD.",
+          },
+          { type: "signatures", names: [razaoSocial(profile) || "Titular"] },
+        ],
+      },
+      "relatorio-ecad",
+    );
+    setOpen(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Relatório ECAD</DialogTitle>
+        </DialogHeader>
+        <p className="text-xs text-muted-foreground">
+          O repertório decide quais obras entram na tabela. O evento é opcional e só aparece no
+          cabeçalho do PDF — não filtra as obras.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label>Repertório</Label>
+            <Select
+              value={formationId || "all"}
+              onValueChange={(v) => setFormationId(v === "all" ? "" : v)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todo o repertório ({allSongs.length})</SelectItem>
+                {formations.map((f) => (
+                  <SelectItem key={f.id} value={f.id}>
+                    {f.name}
+                    {f.is_default ? " · padrão" : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Evento (opcional)</Label>
+            <Select value={eventId || "none"} onValueChange={(v) => setEventId(v === "none" ? "" : v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sem evento específico" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sem evento específico</SelectItem>
+                {events.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>
+                    {e.title} — {dateBR(e.event_date)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {songs.length} obra{songs.length === 1 ? "" : "s"} entrar{songs.length === 1 ? "á" : "ão"}{" "}
+          no relatório.
+        </p>
+        <DialogFooter>
+          <Button onClick={download} disabled={!songs.length}>
+            <Download className="mr-1 size-4" /> Baixar PDF
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
