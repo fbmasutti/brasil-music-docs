@@ -28,6 +28,7 @@ import { pushEventToGoogleCalendar } from "@/lib/google-calendar";
 import { getTemplate, type EventRow } from "@/lib/documents";
 import { downloadPdf, pdfPreviewUrl, type PdfDoc } from "@/lib/pdf";
 import { dateBR, money } from "@/lib/format";
+import { shareText } from "@/lib/share";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/contrato")({
@@ -157,19 +158,15 @@ function ContractWizard() {
   function sendWhatsApp() {
     downloadPdf(spec, filename);
     persist();
-    const phone = (client?.phone ?? "").replace(/\D/g, "");
-    const text = encodeURIComponent(
-      [
-        `Olá${client?.contact_name ? ` ${client.contact_name}` : ""}! Segue o contrato da apresentação`,
-        venue ? ` no ${venue}` : "",
-        city ? ` em ${city}` : "",
-        date ? ` no dia ${dateBR(date)}` : "",
-        draftEvent.fee_total ? `, com cachê de ${money(Number(draftEvent.fee_total))}` : "",
-        ". O PDF acabou de ser baixado no meu dispositivo — anexo aqui na sequência.",
-      ].join(""),
-    );
-    const base = phone ? `https://wa.me/55${phone}` : "https://wa.me/";
-    window.open(`${base}?text=${text}`, "_blank", "noopener");
+    const message = [
+      `Olá${client?.contact_name ? ` ${client.contact_name}` : ""}! Segue o contrato da apresentação`,
+      venue ? ` no ${venue}` : "",
+      city ? ` em ${city}` : "",
+      date ? ` no dia ${dateBR(date)}` : "",
+      draftEvent.fee_total ? `, com cachê de ${money(Number(draftEvent.fee_total))}` : "",
+      ". O PDF acabou de ser baixado no meu dispositivo — anexo aqui na sequência.",
+    ].join("");
+    shareText({ phone: client?.phone, message });
   }
 
   return (

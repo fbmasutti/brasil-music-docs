@@ -36,6 +36,7 @@ import {
 } from "@/components/ui-kit";
 import { useList, useInsert, useUpdate, useRemove } from "@/lib/queries";
 import { dateBR, money, cacheStatus, CACHE_STATUS } from "@/lib/format";
+import { shareText } from "@/lib/share";
 
 export const Route = createFileRoute("/_authenticated/financeiro")({
   head: () => ({
@@ -66,9 +67,6 @@ const EXPENSE_CATEGORIES: Record<string, string> = {
   OUTRO: "Outro",
 };
 
-function waLink(phone: string, text: string) {
-  return `https://wa.me/55${phone.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`;
-}
 
 function FinanceiroPage() {
   const { data: events = [] } = useList("events", {
@@ -211,14 +209,8 @@ function FinanceiroPage() {
                     <StatusBadge status={cacheStatus(Number(e.fee_total), Number(e.fee_deposit))} map={CACHE_STATUS} />
                     <span className="text-sm font-semibold text-warning">{money(saldo)}</span>
                     {client?.phone ? (
-                      <Button asChild size="sm" variant="outline">
-                        <a
-                          href={waLink(client.phone, message)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <MessageCircle className="mr-1 size-4" /> Enviar Lembrete de Cachê
-                        </a>
+                      <Button size="sm" variant="outline" onClick={() => shareText({ phone: client.phone, message })}>
+                        <MessageCircle className="mr-1 size-4" /> Enviar Lembrete de Cachê
                       </Button>
                     ) : null}
                   </div>
