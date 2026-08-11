@@ -1,4 +1,15 @@
-export type BrandFontFamily = "sans" | "serif" | "display" | "mono" | "rounded" | "condensed";
+export type BrandFontFamily =
+  | "sans"
+  | "serif"
+  | "display"
+  | "mono"
+  | "rounded"
+  | "condensed"
+  | "playfair"
+  | "bebas"
+  | "raleway"
+  | "cinzel"
+  | "orbitron";
 export type BrandPattern = "none" | "grid" | "diagonal" | "dots" | "waves" | "cross" | "sunburst";
 
 export type BrandPalette = {
@@ -17,18 +28,18 @@ export type BrandPreset = {
   palette: BrandPalette;
 };
 
-// Uma família por categoria — cada preset tem uma fonte fisicamente distinta,
-// carregada via Google Fonts em src/routes/__root.tsx.
 export const FONT_STACKS: Record<BrandFontFamily, string> = {
   sans: '"Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif',
   serif: '"Fraunces", ui-serif, Georgia, serif',
-  // Western/circus vintage (referência: cartazes tipo "Country Blues" e "West End").
   display: '"Rye", ui-sans-serif, system-ui, sans-serif',
   mono: '"Space Mono", ui-monospace, "SF Mono", monospace',
-  // Manuscrita/pincel (referência: adesivos e placas pintadas à mão).
   rounded: '"Permanent Marker", ui-rounded, ui-sans-serif, system-ui, sans-serif',
-  // Condensada ultra-bold de cartaz colado no poste (mais impacto que Oswald).
   condensed: '"Anton", ui-sans-serif, system-ui, sans-serif',
+  playfair: '"Playfair Display", ui-serif, Georgia, serif',
+  bebas: '"Bebas Neue", ui-sans-serif, system-ui, sans-serif',
+  raleway: '"Raleway", ui-sans-serif, system-ui, sans-serif',
+  cinzel: '"Cinzel Decorative", ui-serif, Georgia, serif',
+  orbitron: '"Orbitron", ui-sans-serif, system-ui, sans-serif',
 };
 
 export const BRAND_PRESETS: BrandPreset[] = [
@@ -111,6 +122,137 @@ export const BRAND_PRESETS: BrandPreset[] = [
       text: "#FFFFFF",
       fontFamily: "condensed",
       pattern: "cross",
+    },
+  },
+  // ── Gêneros musicais ──────────────────────────────────────────────────────
+  {
+    id: "samba_pagode",
+    label: "Samba & Pagode",
+    description: "Âmbar quente sobre sépia — clima intimista de roda de samba.",
+    palette: {
+      bg: "#1A0A02",
+      card: "#271204",
+      accent: "#C8860A",
+      text: "#FFF3E0",
+      fontFamily: "serif",
+      pattern: "dots",
+    },
+  },
+  {
+    id: "mpb_bossa",
+    label: "MPB / Bossa Nova",
+    description: "Meia-noite e ouro — sofisticação de clube de jazz carioca.",
+    palette: {
+      bg: "#0B1520",
+      card: "#142030",
+      accent: "#D4A853",
+      text: "#F0ECE3",
+      fontFamily: "playfair",
+      pattern: "none",
+    },
+  },
+  {
+    id: "forro_baiao",
+    label: "Forró & Baião",
+    description: "Laranja queimado e amarelo vivo — festa nordestina, bandeira de São João.",
+    palette: {
+      bg: "#5C1000",
+      card: "#791500",
+      accent: "#FFB300",
+      text: "#FFF4DB",
+      fontFamily: "condensed",
+      pattern: "diagonal",
+    },
+  },
+  {
+    id: "axe_carnaval",
+    label: "Axé / Carnaval",
+    description: "Verde elétrico e magenta — energia de trio elétrico e palco de carnaval.",
+    palette: {
+      bg: "#001A12",
+      card: "#002B1E",
+      accent: "#FF0080",
+      text: "#EDFFF7",
+      fontFamily: "bebas",
+      pattern: "sunburst",
+    },
+  },
+  {
+    id: "sertanejo",
+    label: "Sertanejo",
+    description: "Marrom terroso e dourado — tipografia western de cartaz de rodeio.",
+    palette: {
+      bg: "#1E0F06",
+      card: "#2C1710",
+      accent: "#B8860B",
+      text: "#F5EFE0",
+      fontFamily: "display",
+      pattern: "none",
+    },
+  },
+  {
+    id: "rock_alternativo",
+    label: "Rock Alternativo",
+    description: "Azul ardósia e laranja elétrico — palco escuro com refletor quente.",
+    palette: {
+      bg: "#070B12",
+      card: "#0E1520",
+      accent: "#F97316",
+      text: "#F0F4FF",
+      fontFamily: "condensed",
+      pattern: "diagonal",
+    },
+  },
+  {
+    id: "pop_rnb",
+    label: "Pop & R&B",
+    description: "Lilás sobre vinho escuro — estética de capa de streaming contemporânea.",
+    palette: {
+      bg: "#0F0A18",
+      card: "#180F26",
+      accent: "#E879F9",
+      text: "#FAF0FF",
+      fontFamily: "raleway",
+      pattern: "grid",
+    },
+  },
+  {
+    id: "gospel",
+    label: "Gospel & Louvores",
+    description: "Roxo real e ouro — tipografia romana de pergaminho, solenidade e fé.",
+    palette: {
+      bg: "#1A0B2E",
+      card: "#261143",
+      accent: "#D4AF37",
+      text: "#F5F0FF",
+      fontFamily: "cinzel",
+      pattern: "none",
+    },
+  },
+  {
+    id: "jazz_blues",
+    label: "Jazz & Blues",
+    description: "Âmbar quente e latão — clube de jazz, iluminação de palco baixa.",
+    palette: {
+      bg: "#0C0803",
+      card: "#1A120A",
+      accent: "#D97706",
+      text: "#F5EFE4",
+      fontFamily: "serif",
+      pattern: "waves",
+    },
+  },
+  {
+    id: "eletronico",
+    label: "Eletrônico & Funk",
+    description: "Ciano neon sobre preto — LED matrix, pista de dança, sub grave.",
+    palette: {
+      bg: "#000912",
+      card: "#001020",
+      accent: "#06B6D4",
+      text: "#E0F7FF",
+      fontFamily: "orbitron",
+      pattern: "grid",
     },
   },
 ];
