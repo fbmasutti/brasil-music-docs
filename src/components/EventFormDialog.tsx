@@ -114,10 +114,14 @@ export function EventFormDialog({
   event,
   trigger,
   onSaved,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: {
   event?: Tables<"events"> | undefined;
-  trigger: ReactNode;
+  trigger?: ReactNode;
   onSaved?: ((eventId: string) => void) | undefined;
+  open?: boolean;
+  onOpenChange?: (o: boolean) => void;
 }) {
   const isEdit = Boolean(event);
   const { data: profile } = useProfile();
@@ -130,7 +134,10 @@ export function EventFormDialog({
   const updateEvent = useUpdate("events", "Evento atualizado");
   const insertTask = useInsert("event_checklists", "");
 
-  const [open, setOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpenRaw = isControlled ? (controlledOnOpenChange ?? (() => {})) : setInternalOpen;
   const [confirmClose, setConfirmClose] = useState(false);
   const [form, setForm] = useState<FormValues>(event ? toFormValues(event) : empty);
   const set = (k: keyof FormValues) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
@@ -145,7 +152,7 @@ export function EventFormDialog({
       setConfirmClose(true);
       return;
     }
-    setOpen(next);
+    setOpenRaw(next);
   }
 
   // Ao reabrir, parte sempre dos dados atuais do evento (que podem ter mudado
@@ -169,7 +176,7 @@ export function EventFormDialog({
         { id: event.id, values: toPayload(form) },
         {
           onSuccess: () => {
-            setOpen(false);
+            setOpenRaw(false);
             onSaved?.(event.id);
             if (profile?.google_calendar_refresh_token && form.event_date) {
               void pushEventToGoogleCalendar(event.id);
@@ -200,7 +207,7 @@ export function EventFormDialog({
           }),
         );
         setForm(empty);
-        setOpen(false);
+        setOpenRaw(false);
         onSaved?.(created.id);
         if (profile?.google_calendar_refresh_token && form.event_date) {
           void pushEventToGoogleCalendar(created.id);
@@ -213,7 +220,7 @@ export function EventFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Editar evento" : "Novo evento"}</DialogTitle>
@@ -347,7 +354,7 @@ export function EventFormDialog({
         </FieldGrid>
         <DialogFooter className="sm:justify-between">
           {isEdit && event ? (
-            <Button asChild variant="ghost" size="sm" onClick={() => setOpen(false)}>
+            <Button asChild variant="ghost" size="sm" onClick={() => setOpenRaw(false)}>
               <Link to="/gerador-cards" search={{ event: event.id }}>
                 <Megaphone className="mr-1 size-4" /> Gerar post deste show
               </Link>
@@ -377,7 +384,7 @@ export function EventFormDialog({
                 onClick={() => {
                   setConfirmClose(false);
                   setForm(baseline);
-                  setOpen(false);
+                  setOpenRaw(false);
                 }}
               >
                 Descartar

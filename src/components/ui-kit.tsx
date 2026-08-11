@@ -1,5 +1,5 @@
 import { forwardRef, useState, type ReactNode } from "react";
-import { AlertTriangle, ChevronDown, RefreshCw, Save, Undo2 } from "lucide-react";
+import { AlertTriangle, ChevronDown, RefreshCw, Save, Undo2, MoreVertical, Pencil, Copy, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -480,6 +487,86 @@ export function TextAreaField({
         placeholder={placeholder ?? ""}
       />
     </div>
+  );
+}
+
+/** Menu ⋮ unificado para ações de item: Editar, Duplicar, extras e Excluir com confirmação.
+ *  O dialog de edição deve ser controlado externamente (estado `editingId` no pai) para
+ *  evitar conflito entre DropdownMenu e Dialog no Radix. */
+export function ItemActions({
+  onEdit,
+  onDuplicate,
+  onDelete,
+  deleteConfirm,
+  extra = [],
+}: {
+  onEdit?: () => void;
+  onDuplicate?: () => void;
+  onDelete?: () => void;
+  deleteConfirm?: { title: string; description: ReactNode; confirmLabel?: string };
+  extra?: Array<{ label: string; icon?: ReactNode; onClick: () => void }>;
+}) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const hasTop = onEdit || onDuplicate || extra.length > 0;
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="size-8 shrink-0">
+            <MoreVertical className="size-4" />
+            <span className="sr-only">Ações</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {onEdit && (
+            <DropdownMenuItem onClick={onEdit}>
+              <Pencil className="mr-2 size-4" /> Editar
+            </DropdownMenuItem>
+          )}
+          {onDuplicate && (
+            <DropdownMenuItem onClick={onDuplicate}>
+              <Copy className="mr-2 size-4" /> Duplicar
+            </DropdownMenuItem>
+          )}
+          {extra.map((item) => (
+            <DropdownMenuItem key={item.label} onClick={item.onClick}>
+              {item.icon && <span className="mr-2">{item.icon}</span>}
+              {item.label}
+            </DropdownMenuItem>
+          ))}
+          {hasTop && onDelete && <DropdownMenuSeparator />}
+          {onDelete && (
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={() => (deleteConfirm ? setConfirmOpen(true) : onDelete())}
+            >
+              <Trash2 className="mr-2 size-4" /> Excluir
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {deleteConfirm && onDelete && (
+        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{deleteConfirm.title}</AlertDialogTitle>
+              <AlertDialogDescription>{deleteConfirm.description}</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                className={buttonVariants({ variant: "destructive" })}
+                onClick={() => { onDelete(); setConfirmOpen(false); }}
+              >
+                {deleteConfirm.confirmLabel ?? "Excluir"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+    </>
   );
 }
 

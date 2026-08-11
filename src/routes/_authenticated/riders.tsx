@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Sliders, Plus, Download, Trash2, Wand2, Pencil, ChevronDown, Map } from "lucide-react";
+import { Sliders, Plus, Download, Trash2, Wand2, ChevronDown, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,7 +27,7 @@ import {
   FieldGrid,
   TextField,
   TextAreaField,
-  ConfirmDelete,
+  ItemActions,
 } from "@/components/ui-kit";
 import { useList, useInsert, useUpdate, useRemove, useProfile } from "@/lib/queries";
 import { useActiveFormation } from "@/lib/active-formation";
@@ -129,6 +129,7 @@ function RidersPage() {
   const { data: brandKits = [] } = useList("brand_kits");
   const { activeFormationId, activeFormation } = useActiveFormation();
   const insert = useInsert("technical_riders", "Rider salvo");
+  const duplicate = useInsert("technical_riders", "Rider duplicado");
   const update = useUpdate("technical_riders", "Rider atualizado");
   const remove = useRemove("technical_riders", "Rider removido");
 
@@ -636,24 +637,29 @@ function RidersPage() {
                     >
                       <Map className="mr-1 size-4" /> Mapa
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => startEdit(r)}
-                      aria-label={`Editar ${r.name}`}
-                    >
-                      <Pencil className="size-4" />
-                    </Button>
-                    <ConfirmDelete
-                      title={`Remover "${r.name}"?`}
-                      description="A channel list e o mapa de palco deste rider serão apagados. Os shows que usavam ele ficam sem rider vinculado."
-                      confirmLabel="Remover rider"
-                      onConfirm={() => remove.mutate(r.id)}
-                      trigger={
-                        <Button variant="ghost" size="icon" aria-label={`Remover ${r.name}`}>
-                          <Trash2 className="size-4" />
-                        </Button>
+                    <ItemActions
+                      onEdit={() => startEdit(r)}
+                      onDuplicate={() =>
+                        duplicate.mutate({
+                          name: `${r.name} (cópia)`,
+                          formation_id: r.formation_id,
+                          channel_list: r.channel_list,
+                          stage_plot: r.stage_plot,
+                          console_specs: r.console_specs,
+                          pa_specs: r.pa_specs,
+                          monitor_specs: r.monitor_specs,
+                          backline: r.backline,
+                          hospitality: r.hospitality,
+                          lighting_requirements: r.lighting_requirements,
+                        })
                       }
+                      onDelete={() => remove.mutate(r.id)}
+                      deleteConfirm={{
+                        title: `Remover "${r.name}"?`,
+                        description:
+                          "A channel list e o mapa de palco deste rider serão apagados. Os shows que usavam ele ficam sem rider vinculado.",
+                        confirmLabel: "Remover rider",
+                      }}
                     />
                   </div>
                 </li>

@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Building2, Plus, Trash2, Pencil } from "lucide-react";
+import { Building2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,7 +17,7 @@ import {
   EmptyState,
   FieldGrid,
   TextField,
-  ConfirmDelete,
+  ItemActions,
   ListState,
 } from "@/components/ui-kit";
 import { useList, useInsert, useUpdate, useRemove } from "@/lib/queries";
@@ -77,6 +77,8 @@ function ContractorsPage() {
   const clientsQuery = useList("clients", { order: { column: "name" } });
   const clients = clientsQuery.data ?? [];
   const remove = useRemove("clients", "Contratante removido");
+  const duplicate = useInsert("clients", "Contratante duplicado");
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   return (
     <PageContainer>
@@ -120,33 +122,34 @@ function ContractorsPage() {
                         .join(" · ") || "sem detalhes"}
                     </p>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <ClientFormDialog
-                      client={c}
-                      trigger={
-                        <Button variant="ghost" size="icon" aria-label={`Editar ${c.name}`}>
-                          <Pencil className="size-4" />
-                        </Button>
-                      }
-                    />
-                    <ConfirmDelete
-                      title={`Remover "${c.name}"?`}
-                      description="Os shows e documentos ligados a este contratante ficam sem vínculo, mas não são apagados. Essa ação não pode ser desfeita."
-                      confirmLabel="Remover contratante"
-                      onConfirm={() => remove.mutate(c.id)}
-                      trigger={
-                        <Button variant="ghost" size="icon" aria-label={`Remover ${c.name}`}>
-                          <Trash2 className="size-4" />
-                        </Button>
-                      }
-                    />
-                  </div>
+                  <ItemActions
+                    onEdit={() => setEditingId(c.id)}
+                    onDuplicate={() =>
+                      duplicate.mutate({ ...toFormValues(c), name: `${c.name} (cópia)` })
+                    }
+                    onDelete={() => remove.mutate(c.id)}
+                    deleteConfirm={{
+                      title: `Remover "${c.name}"?`,
+                      description:
+                        "Os shows e documentos ligados a este contratante ficam sem vínculo, mas não são apagados. Essa ação não pode ser desfeita.",
+                      confirmLabel: "Remover contratante",
+                    }}
+                  />
                 </li>
               ))}
             </ul>
           )}
         </ListState>
       </Section>
+
+      {/* Dialog de edição controlado externamente — necessário para funcionar dentro de DropdownMenu */}
+      {editingId && (
+        <ClientFormDialog
+          client={clients.find((c) => c.id === editingId)}
+          open={true}
+          onOpenChange={(o) => { if (!o) setEditingId(null); }}
+        />
+      )}
     </PageContainer>
   );
 }
@@ -155,15 +158,23 @@ function ContractorsPage() {
 function ClientFormDialog({
   client,
   trigger,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: {
   client?: Tables<"clients"> | undefined;
-  trigger: ReactNode;
+  trigger?: ReactNode;
+  open?: boolean;
+  onOpenChange?: (o: boolean) => void;
 }) {
   const isEdit = Boolean(client);
   const insert = useInsert("clients", "Contratante adicionado");
   const update = useUpdate("clients", "Contratante atualizado");
 
-  const [open, setOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? (controlledOnOpenChange ?? (() => {})) : setInternalOpen;
+
   const [form, setForm] = useState<FormValues>(client ? toFormValues(client) : empty);
   const set = (k: keyof FormValues) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -186,7 +197,7 @@ function ClientFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Editar contratante" : "Novo contratante"}</DialogTitle>

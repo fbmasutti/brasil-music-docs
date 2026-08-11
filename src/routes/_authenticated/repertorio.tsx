@@ -4,10 +4,8 @@ import { toast } from "sonner";
 import {
   Music4,
   Plus,
-  Trash2,
   Download,
   Users,
-  Pencil,
   FileBadge,
   ExternalLink,
   Wand2,
@@ -38,7 +36,7 @@ import {
   EmptyState,
   FieldGrid,
   TextField,
-  ConfirmDelete,
+  ItemActions,
   ListState,
 } from "@/components/ui-kit";
 import { useList, useInsert, useUpdate, useRemove, useProfile } from "@/lib/queries";
@@ -100,7 +98,9 @@ function RepertoirePage() {
   const updateWriter = useUpdate("song_writers", "Autor atualizado");
   const removeSong = useRemove("songs", "Obra removida");
   const removeWriter = useRemove("song_writers", "Autor removido");
+  const duplicateSong = useInsert("songs", "Obra duplicada");
 
+  const [editingSongId, setEditingSongId] = useState<string | null>(null);
   const [writerFor, setWriterFor] = useState<string | null>(null);
   // id do autor sendo editado; null = o formulário está criando um novo
   const [editingWriterId, setEditingWriterId] = useState<string | null>(null);
@@ -323,28 +323,24 @@ function RepertoirePage() {
                             <FileBadge className="size-4" />
                           </Button>
                         ) : null}
-                        <SongFormDialog
-                          song={s}
-                          trigger={
-                            <Button variant="ghost" size="icon" aria-label={`Editar ${s.title}`}>
-                              <Pencil className="size-4" />
-                            </Button>
+                        <ItemActions
+                          onEdit={() => setEditingSongId(s.id)}
+                          onDuplicate={() =>
+                            duplicateSong.mutate({
+                              title: `${s.title} (cópia)`,
+                              origin: s.origin,
+                              genre: s.genre,
+                              duration_seconds: s.duration_seconds,
+                            })
                           }
-                        />
-                        <ConfirmDelete
-                          title={`Remover "${s.title}"?`}
-                          description={
-                            list.length
+                          onDelete={() => removeSong.mutate(s.id)}
+                          deleteConfirm={{
+                            title: `Remover "${s.title}"?`,
+                            description: list.length
                               ? `${list.length} autor(es) e o split de autoria desta obra serão apagados junto. Essa ação não pode ser desfeita.`
-                              : "A obra será apagada. Essa ação não pode ser desfeita."
-                          }
-                          confirmLabel="Remover obra"
-                          onConfirm={() => removeSong.mutate(s.id)}
-                          trigger={
-                            <Button variant="ghost" size="icon" aria-label={`Remover ${s.title}`}>
-                              <Trash2 className="size-4" />
-                            </Button>
-                          }
+                              : "A obra será apagada. Essa ação não pode ser desfeita.",
+                            confirmLabel: "Remover obra",
+                          }}
                         />
                       </div>
                     </div>
@@ -362,41 +358,25 @@ function RepertoirePage() {
                                 {w.association ? ` · ${w.association}` : ""}
                                 {w.cae_ipi ? ` · CAE ${w.cae_ipi}` : ""}
                               </span>
-                              <div className="flex shrink-0 items-center gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  aria-label={`Editar autor ${w.name}`}
-                                  onClick={() => {
-                                    setWriterFor(s.id);
-                                    setEditingWriterId(w.id);
-                                    setWriter({
-                                      name: w.name ?? "",
-                                      role: w.role ?? "",
-                                      share_percent: String(w.share_percent ?? ""),
-                                      cae_ipi: w.cae_ipi ?? "",
-                                      association: w.association ?? "",
-                                    });
-                                  }}
-                                >
-                                  <Pencil className="size-3.5" />
-                                </Button>
-                                <ConfirmDelete
-                                  title={`Remover ${w.name} da autoria?`}
-                                  description={`O split de ${w.share_percent}% volta a ficar sem dono. Essa ação não pode ser desfeita.`}
-                                  confirmLabel="Remover autor"
-                                  onConfirm={() => removeWriter.mutate(w.id)}
-                                  trigger={
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      aria-label={`Remover autor ${w.name}`}
-                                    >
-                                      <Trash2 className="size-3.5" />
-                                    </Button>
-                                  }
-                                />
-                              </div>
+                              <ItemActions
+                                onEdit={() => {
+                                  setWriterFor(s.id);
+                                  setEditingWriterId(w.id);
+                                  setWriter({
+                                    name: w.name ?? "",
+                                    role: w.role ?? "",
+                                    share_percent: String(w.share_percent ?? ""),
+                                    cae_ipi: w.cae_ipi ?? "",
+                                    association: w.association ?? "",
+                                  });
+                                }}
+                                onDelete={() => removeWriter.mutate(w.id)}
+                                deleteConfirm={{
+                                  title: `Remover ${w.name} da autoria?`,
+                                  description: `O split de ${w.share_percent}% volta a ficar sem dono. Essa ação não pode ser desfeita.`,
+                                  confirmLabel: "Remover autor",
+                                }}
+                              />
                             </li>
                           ))}
                         </ul>
@@ -515,6 +495,14 @@ function RepertoirePage() {
           ficha de registro para ECAD/UBC/ABRAMUS.
         </p>
       ) : null}
+
+      {editingSongId && (
+        <SongFormDialog
+          song={allSongs.find((s) => s.id === editingSongId)}
+          open={true}
+          onOpenChange={(o) => { if (!o) setEditingSongId(null); }}
+        />
+      )}
     </PageContainer>
   );
 }
@@ -681,9 +669,13 @@ function EcadReportDialog({
 function SongFormDialog({
   song,
   trigger,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: {
   song?: Tables<"songs"> | undefined;
-  trigger: ReactNode;
+  trigger?: ReactNode;
+  open?: boolean;
+  onOpenChange?: (o: boolean) => void;
 }) {
   const isEdit = Boolean(song);
   const insert = useInsert("songs", "Obra cadastrada");
@@ -693,7 +685,10 @@ function SongFormDialog({
   const linkFormation = useInsert("formation_songs", "");
   const unlinkFormation = useRemove("formation_songs", "");
 
-  const [open, setOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? (controlledOnOpenChange ?? (() => {})) : setInternalOpen;
   const [form, setForm] = useState(emptySong);
   const [fetchingLink, setFetchingLink] = useState(false);
   const [selectedFormations, setSelectedFormations] = useState<string[]>([]);
@@ -826,7 +821,7 @@ function SongFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Editar obra" : "Nova obra"}</DialogTitle>

@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CalendarDays, CalendarPlus, Plus, Trash2, Pencil, Megaphone } from "lucide-react";
+import { CalendarDays, CalendarPlus, Plus, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -13,11 +14,11 @@ import {
   PageContainer,
   Section,
   EmptyState,
-  ConfirmDelete,
+  ItemActions,
   ListState,
 } from "@/components/ui-kit";
 import { EventFormDialog } from "@/components/EventFormDialog";
-import { useList, useRemove } from "@/lib/queries";
+import { useList, useInsert, useRemove } from "@/lib/queries";
 import { dateBR, money, EVENT_STATUS } from "@/lib/format";
 import { buildGoogleCalendarUrl, downloadICS } from "@/lib/calendar-link";
 import type { Tables } from "@/integrations/supabase/types";
@@ -45,6 +46,8 @@ function EventsPage() {
   const events = eventsQuery.data ?? [];
   const { data: clients = [] } = useList("clients", { order: { column: "name" } });
   const remove = useRemove("events", "Evento removido");
+  const duplicate = useInsert("events", "Evento duplicado");
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const today = new Date().toISOString().slice(0, 10);
   const future = events
@@ -55,7 +58,23 @@ function EventsPage() {
     .filter((e) => e.event_date && e.event_date < today)
     .sort((a, b) => (b.event_date ?? "").localeCompare(a.event_date ?? ""));
 
-  const listProps = { clients, onRemove: (id: string) => remove.mutate(id) };
+  const listProps = {
+    clients,
+    onRemove: (id: string) => remove.mutate(id),
+    onEdit: (id: string) => setEditingId(id),
+    onDuplicate: (e: Tables<"events">) =>
+      duplicate.mutate({
+        title: `${e.title} (cópia)`,
+        event_date: e.event_date,
+        venue: e.venue,
+        city: e.city,
+        state: e.state,
+        fee_total: e.fee_total,
+        client_id: e.client_id,
+        formation_id: e.formation_id,
+        status: "CONFIRMADO",
+      }),
+  };
 
   return (
     <PageContainer>
@@ -114,6 +133,14 @@ function EventsPage() {
           ) : null}
         </div>
       )}
+
+      {editingId && (
+        <EventFormDialog
+          event={events.find((e) => e.id === editingId)}
+          open={true}
+          onOpenChange={(o) => { if (!o) setEditingId(null); }}
+        />
+      )}
     </PageContainer>
   );
 }
@@ -122,10 +149,14 @@ function EventList({
   events,
   clients,
   onRemove,
+  onEdit,
+  onDuplicate,
 }: {
   events: Tables<"events">[];
   clients: Tables<"clients">[];
   onRemove: (id: string) => void;
+  onEdit: (id: string) => void;
+  onDuplicate: (e: Tables<"events">) => void;
 }) {
   return (
     <ul className="divide-y divide-border">
@@ -156,47 +187,36 @@ function EventList({
               <Badge variant="outline" className={status.tone}>
                 {status.label}
               </Badge>
-              <EventFormDialog
-                event={e}
-                trigger={
-                  <Button variant="ghost" size="icon" aria-label={`Editar ${e.title}`}>
-                    <Pencil className="size-4" />
-                  </Button>
-                }
-              />
               <Button asChild variant="ghost" size="icon" aria-label={`Gerar post de ${e.title}`}>
                 <Link to="/gerador-cards" search={{ event: e.id }}>
                   <Megaphone className="size-4" />
                 </Link>
               </Button>
-              {googleCalendarUrl ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" aria-label="Adicionar à agenda">
-                      <CalendarPlus className="size-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <a href={googleCalendarUrl} target="_blank" rel="noopener noreferrer">
-                        Google Calendar
-                      </a>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => downloadICS(e)}>
-                      Baixar .ics (Apple/Outlook)
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : null}
-              <ConfirmDelete
-                title={`Remover "${e.title}"?`}
-                description="O checklist, os custos lançados e os documentos vinculados a este evento também serão removidos. Essa ação não pode ser desfeita."
-                confirmLabel="Remover evento"
-                onConfirm={() => onRemove(e.id)}
-                trigger={
-                  <Button variant="ghost" size="icon" aria-label={`Remover ${e.title}`}>
-                    <Trash2 className="size-4" />
-                  </Button>
+              <ItemActions
+                onEdit={() => onEdit(e.id)}
+                onDuplicate={() => onDuplicate(e)}
+                onDelete={() => onRemove(e.id)}
+                deleteConfirm={{
+                  title: `Remover "${e.title}"?`,
+                  description:
+                    "O checklist, os custos lançados e os documentos vinculados a este evento também serão removidos. Essa ação não pode ser desfeita.",
+                  confirmLabel: "Remover evento",
+                }}
+                extra={
+                  googleCalendarUrl
+                    ? [
+                        {
+                          label: "Google Calendar",
+                          icon: <CalendarPlus className="size-4" />,
+                          onClick: () => window.open(googleCalendarUrl, "_blank"),
+                        },
+                        {
+                          label: "Baixar .ics",
+                          icon: <CalendarDays className="size-4" />,
+                          onClick: () => downloadICS(e),
+                        },
+                      ]
+                    : []
                 }
               />
             </div>

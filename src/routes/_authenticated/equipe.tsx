@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Users, Plus, Trash2, Pencil, QrCode, Copy } from "lucide-react";
+import { Users, Plus, QrCode, Copy } from "lucide-react";
 import { toast } from "sonner";
 import QRCode from "qrcode";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ import {
   EmptyState,
   FieldGrid,
   TextField,
-  ConfirmDelete,
+  ItemActions,
   ListState,
 } from "@/components/ui-kit";
 import { useList, useInsert, useUpdate, useRemove, useProfile } from "@/lib/queries";
@@ -84,6 +84,7 @@ function TeamPage() {
   const membersQuery = useList("team_members", { order: { column: "name" } });
   const members = membersQuery.data ?? [];
   const remove = useRemove("team_members", "Integrante removido");
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   return (
     <PageContainer>
@@ -131,24 +132,15 @@ function TeamPage() {
                   </div>
                   <div className="flex items-center gap-1">
                     {m.pix_key ? <TransferPixDialog member={m} /> : null}
-                    <MemberFormDialog
-                      member={m}
-                      trigger={
-                        <Button variant="ghost" size="icon" aria-label={`Editar ${m.name}`}>
-                          <Pencil className="size-4" />
-                        </Button>
-                      }
-                    />
-                    <ConfirmDelete
-                      title={`Remover "${m.name}"?`}
-                      description="A pessoa sai também das formações em que estava, junto com o rateio configurado. Essa ação não pode ser desfeita."
-                      confirmLabel="Remover integrante"
-                      onConfirm={() => remove.mutate(m.id)}
-                      trigger={
-                        <Button variant="ghost" size="icon" aria-label={`Remover ${m.name}`}>
-                          <Trash2 className="size-4" />
-                        </Button>
-                      }
+                    <ItemActions
+                      onEdit={() => setEditingId(m.id)}
+                      onDelete={() => remove.mutate(m.id)}
+                      deleteConfirm={{
+                        title: `Remover "${m.name}"?`,
+                        description:
+                          "A pessoa sai também das formações em que estava, junto com o rateio configurado. Essa ação não pode ser desfeita.",
+                        confirmLabel: "Remover integrante",
+                      }}
                     />
                   </div>
                 </li>
@@ -157,6 +149,14 @@ function TeamPage() {
           )}
         </ListState>
       </Section>
+
+      {editingId && (
+        <MemberFormDialog
+          member={members.find((m) => m.id === editingId)}
+          open={true}
+          onOpenChange={(o) => { if (!o) setEditingId(null); }}
+        />
+      )}
     </PageContainer>
   );
 }
@@ -165,15 +165,22 @@ function TeamPage() {
 function MemberFormDialog({
   member,
   trigger,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: {
   member?: Tables<"team_members"> | undefined;
-  trigger: ReactNode;
+  trigger?: ReactNode;
+  open?: boolean;
+  onOpenChange?: (o: boolean) => void;
 }) {
   const isEdit = Boolean(member);
   const insert = useInsert("team_members", "Integrante adicionado");
   const update = useUpdate("team_members", "Integrante atualizado");
 
-  const [open, setOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? (controlledOnOpenChange ?? (() => {})) : setInternalOpen;
   const [form, setForm] = useState<FormValues>(member ? toFormValues(member) : empty);
   const set = (k: keyof FormValues) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -196,7 +203,7 @@ function MemberFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Editar integrante" : "Novo integrante"}</DialogTitle>

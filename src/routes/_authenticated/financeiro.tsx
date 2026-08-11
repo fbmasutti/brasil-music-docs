@@ -6,8 +6,6 @@ import {
   MessageCircle,
   Copy,
   Plus,
-  Pencil,
-  Trash2,
   PiggyBank,
   Guitar,
   TrendingUp,
@@ -32,6 +30,7 @@ import {
   EmptyState,
   FieldGrid,
   TextField,
+  ItemActions,
   ConfirmDelete,
 } from "@/components/ui-kit";
 import { useList, useInsert, useUpdate, useRemove } from "@/lib/queries";
@@ -310,34 +309,22 @@ function FinanceiroPage() {
                         {money(Number(exp.amount))}
                         {exp.notes ? ` · ${exp.notes}` : ""}
                       </span>
-                      <div className="flex shrink-0 items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Editar custo"
-                          onClick={() => {
-                            setEditingExpenseId(exp.id);
-                            setExpenseForm({
-                              category: exp.category ?? "OUTRO",
-                              amount: String(exp.amount ?? ""),
-                              notes: exp.notes ?? "",
-                            });
-                          }}
-                        >
-                          <Pencil className="size-3.5" />
-                        </Button>
-                        <ConfirmDelete
-                          title="Remover este custo?"
-                          description={`${EXPENSE_CATEGORIES[exp.category] ?? exp.category} de ${money(Number(exp.amount))} sai do cálculo de lucro real deste show.`}
-                          confirmLabel="Remover custo"
-                          onConfirm={() => removeExpense.mutate(exp.id)}
-                          trigger={
-                            <Button variant="ghost" size="icon" aria-label="Remover custo">
-                              <Trash2 className="size-3.5" />
-                            </Button>
-                          }
-                        />
-                      </div>
+                      <ItemActions
+                        onEdit={() => {
+                          setEditingExpenseId(exp.id);
+                          setExpenseForm({
+                            category: exp.category ?? "OUTRO",
+                            amount: String(exp.amount ?? ""),
+                            notes: exp.notes ?? "",
+                          });
+                        }}
+                        onDelete={() => removeExpense.mutate(exp.id)}
+                        deleteConfirm={{
+                          title: "Remover este custo?",
+                          description: `${EXPENSE_CATEGORIES[exp.category] ?? exp.category} de ${money(Number(exp.amount))} sai do cálculo de lucro real deste show.`,
+                          confirmLabel: "Remover custo",
+                        }}
+                      />
                     </li>
                   ))}
                 </ul>
@@ -541,34 +528,23 @@ function FinanceiroPage() {
                       {g.name}
                       {g.category ? ` · ${g.category}` : ""} · {money(Number(g.value))}
                     </span>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Editar ${g.name}`}
-                        onClick={() => {
-                          setEditingGearId(g.id);
-                          setGearForm({
-                            name: g.name ?? "",
-                            category: g.category ?? "",
-                            value: String(g.value ?? ""),
-                          });
-                        }}
-                      >
-                        <Pencil className="size-3.5" />
-                      </Button>
-                      <ConfirmDelete
-                        title={`Remover "${g.name}"?`}
-                        description="O instrumento sai da sua lista de equipamentos. Os lançamentos já feitos na reserva não são afetados."
-                        confirmLabel="Remover instrumento"
-                        onConfirm={() => removeGear.mutate(g.id)}
-                        trigger={
-                          <Button variant="ghost" size="icon" aria-label={`Remover ${g.name}`}>
-                            <Trash2 className="size-3.5" />
-                          </Button>
-                        }
-                      />
-                    </div>
+                    <ItemActions
+                      onEdit={() => {
+                        setEditingGearId(g.id);
+                        setGearForm({
+                          name: g.name ?? "",
+                          category: g.category ?? "",
+                          value: String(g.value ?? ""),
+                        });
+                      }}
+                      onDelete={() => removeGear.mutate(g.id)}
+                      deleteConfirm={{
+                        title: `Remover "${g.name}"?`,
+                        description:
+                          "O instrumento sai da sua lista de equipamentos. Os lançamentos já feitos na reserva não são afetados.",
+                        confirmLabel: "Remover instrumento",
+                      }}
+                    />
                   </li>
                 ))}
               </ul>

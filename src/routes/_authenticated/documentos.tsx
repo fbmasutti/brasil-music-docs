@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { FileText, Download, Save, Trash2 } from "lucide-react";
+import { FileText, Download, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -18,7 +18,7 @@ import {
   FieldGrid,
   TextField,
   TextAreaField,
-  ConfirmDelete,
+  ItemActions,
 } from "@/components/ui-kit";
 import { QuickAddClientDialog } from "@/components/QuickAddClientDialog";
 
@@ -257,16 +257,14 @@ function DocumentsPage() {
                       <Badge variant="outline" className={NEUTRAL_TONE}>
                         {d.status}
                       </Badge>
-                      <ConfirmDelete
-                        title={`Remover "${d.title}"?`}
-                        description="O registro sai do histórico de documentos gerados. O PDF que você já baixou não é afetado."
-                        confirmLabel="Remover documento"
-                        onConfirm={() => remove.mutate(d.id)}
-                        trigger={
-                          <Button variant="ghost" size="icon" aria-label={`Remover ${d.title}`}>
-                            <Trash2 className="size-4" />
-                          </Button>
-                        }
+                      <ItemActions
+                        onDelete={() => remove.mutate(d.id)}
+                        deleteConfirm={{
+                          title: `Remover "${d.title}"?`,
+                          description:
+                            "O registro sai do histórico de documentos gerados. O PDF que você já baixou não é afetado.",
+                          confirmLabel: "Remover documento",
+                        }}
                       />
                     </div>
                   </li>
