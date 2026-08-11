@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   CalendarDays,
@@ -15,6 +16,7 @@ import {
   Wand2,
   Sparkles,
   Receipt,
+  Briefcase,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -57,6 +59,10 @@ function Dashboard() {
   const { data: clients = [] } = useList("clients");
   const { data: formations = [] } = useList("formations");
   const { data: formationMembers = [] } = useList("formation_members");
+  const { data: gearItems = [] } = useList("gear_checklist_items", {
+    order: { column: "position" },
+  });
+  const [checkedGear, setCheckedGear] = useState<Set<string>>(new Set());
 
   // Apenas o que é permanente do artista — nada de "cadastre um show" ou
   // "cadastre equipe": o toolkit já funciona sem isso.
@@ -78,6 +84,12 @@ function Dashboard() {
     0,
   );
   const openTasks = checklists.filter((c) => !c.done);
+
+  const activeFormation =
+    formations.find((f) => f.id === profile?.active_formation_id) ??
+    formations.find((f) => f.is_default) ??
+    formations[0];
+  const activeGear = gearItems.filter((g) => g.formation_id === activeFormation?.id);
 
   // Pendências reais (algo vencido ou pendente de ação), nunca "você ainda não
   // usa Y" — quem não usa um recurso não deveria ser cobrado por ele.
@@ -346,6 +358,61 @@ function Dashboard() {
           icon={<AlertTriangle className="size-5" />}
         />
       </div>
+
+      {activeGear.length > 0 && (
+        <Section
+          title="Mala de gig"
+          description={`${activeFormation?.name ?? "Formação ativa"} · ${checkedGear.size}/${activeGear.length} itens`}
+          className="mt-5"
+          collapsible
+          defaultOpen={false}
+          actions={
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCheckedGear(checkedGear.size === activeGear.length ? new Set() : new Set(activeGear.map((g) => g.id)))}
+              >
+                {checkedGear.size === activeGear.length ? "Desmarcar tudo" : "Marcar tudo"}
+              </Button>
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/formacoes">Editar</Link>
+              </Button>
+            </div>
+          }
+        >
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {activeGear.map((g) => {
+              const checked = checkedGear.has(g.id);
+              return (
+                <li key={g.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = new Set(checkedGear);
+                      checked ? next.delete(g.id) : next.add(g.id);
+                      setCheckedGear(next);
+                    }}
+                    className={cn(
+                      "flex w-full items-center gap-2 rounded-md border px-3 py-2 text-sm transition",
+                      checked
+                        ? "border-success/30 bg-success/5 text-muted-foreground line-through"
+                        : "border-border hover:border-primary/40",
+                    )}
+                  >
+                    {checked ? (
+                      <CheckCircle2 className="size-4 shrink-0 text-success" />
+                    ) : (
+                      <Circle className="size-4 shrink-0 text-muted-foreground" />
+                    )}
+                    {g.label}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </Section>
+      )}
 
       <div className="mt-5 flex flex-wrap gap-2">
         <MiniLink
