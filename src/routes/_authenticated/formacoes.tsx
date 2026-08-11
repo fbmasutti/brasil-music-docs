@@ -40,7 +40,7 @@ import {
   TextField,
   ConfirmDelete,
 } from "@/components/ui-kit";
-import { useList, useInsert, useRemove, useUpdate, useProfile } from "@/lib/queries";
+import { useList, useInsert, useRemove, useUpdate, useProfile, useSetDefaultFormation } from "@/lib/queries";
 import { money } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -141,6 +141,7 @@ function FormationsPage() {
   const insertFormation = useInsert("formations", "Formação criada");
   const removeFormation = useRemove("formations", "Formação removida");
   const updateFormation = useUpdate("formations", "Identidade vinculada");
+  const setDefaultFormation = useSetDefaultFormation();
   const insertMember = useInsert("formation_members", "Integrante vinculado");
   const updateMember = useUpdate("formation_members", "Rateio atualizado");
   const removeMember = useRemove("formation_members", "Integrante removido");
@@ -218,12 +219,15 @@ function FormationsPage() {
                       {
                         name: form.name,
                         base_fee: Number(form.base_fee || 0),
-                        is_default: form.is_default,
+                        is_default: false,
                       },
                       {
-                        onSuccess: () => {
+                        onSuccess: (created) => {
                           setForm(emptyFormation);
                           setOpen(false);
+                          if (form.is_default && created?.id) {
+                            setDefaultFormation.mutate(created.id);
+                          }
                         },
                       },
                     )
@@ -297,7 +301,20 @@ function FormationsPage() {
                             Tocando agora
                           </Badge>
                         ) : null}
-                        {f.is_default ? <Badge variant="outline">Padrão</Badge> : null}
+                        {f.is_default ? (
+                          <Badge variant="outline">Padrão</Badge>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs text-muted-foreground"
+                            disabled={setDefaultFormation.isPending}
+                            onClick={() => setDefaultFormation.mutate(f.id)}
+                            aria-label={`Definir ${f.name} como padrão`}
+                          >
+                            Definir como padrão
+                          </Button>
+                        )}
                         <ConfirmDelete
                           title={`Remover "${f.name}"?`}
                           description={`${roster.length ? `${roster.length} integrante(s) e ` : ""}${gear.length ? `${gear.length} item(ns) da mala de gig ` : "a mala de gig "}serão apagados junto com a formação.${riders.length ? ` ${riders.length} rider(s) vinculado(s) não serão apagados, só ficam sem formação.` : ""} Essa ação não pode ser desfeita.`}

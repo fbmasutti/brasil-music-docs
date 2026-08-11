@@ -157,6 +157,34 @@ export function useRemove<T extends TableName>(table: T, successMessage = "Remov
   });
 }
 
+/** Define uma formação como padrão, removendo o flag de todas as outras do usuário. */
+export function useSetDefaultFormation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) throw new Error("Sessão expirada. Entre novamente.");
+      // Desativa todas e depois ativa a escolhida em sequência para garantir exclusividade.
+      const { error: clearError } = await db
+        .from("formations")
+        .update({ is_default: false })
+        .eq("user_id", userId);
+      if (clearError) throw clearError;
+      const { error: setError } = await db
+        .from("formations")
+        .update({ is_default: true })
+        .eq("id", id);
+      if (setError) throw setError;
+    },
+    onSuccess: () => {
+      invalidate(qc, "formations");
+      toast.success("Formação padrão atualizada");
+    },
+    onError: (error: Error) => toast.error(friendlyErrorMessage(error)),
+  });
+}
+
 export async function signOutEverywhere() {
   await supabase.auth.signOut();
 }
