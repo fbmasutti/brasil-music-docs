@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Sliders, Plus, Download, Trash2, Wand2, ChevronDown, Map } from "lucide-react";
+import { Sliders, Plus, Download, Trash2, Wand2, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +11,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -38,10 +38,10 @@ import {
   StageItemLabels,
   StagePlotPrintable,
   parseStagePlot,
+  useStageHistory,
   PRINT_PLOT_WIDTH,
   PRINT_PLOT_HEIGHT_PORTRAIT,
   PRINT_PLOT_HEIGHT_LANDSCAPE,
-  type StageItem,
 } from "@/components/StagePlot";
 import { toPng } from "html-to-image";
 import { RIDER_PRESETS, presetToStageItems } from "@/lib/rider-presets";
@@ -83,7 +83,8 @@ type RiderRow = {
   rooming_list: string | null;
 };
 
-type ChannelRow = { id: string; instrument: string; mic: string };
+type ChannelRow = { id: string; instrument: string; mic: string; phantom: boolean; pedestal: boolean; monitor: string };
+type BacklineRow = { id: string; item: string };
 
 // Curada de propósito — cobre o que a maioria dos riders realmente usa, sem
 // virar um catálogo de microfones. "Outro" cobre o resto por texto livre.
@@ -97,16 +98,58 @@ const MIC_OPTIONS = [
   "DI (ativo/passivo)",
 ];
 
-/** "Instrumento — Microfone" -> linha estruturada; sem separador, tudo vira instrumento. */
-function parseChannelLine(line: string): ChannelRow {
+type ChannelRecord = {
+  instrument: string;
+  mic: string;
+  phantom?: boolean;
+  pedestal?: boolean;
+  monitor?: string;
+};
+
+function parseChannelEntry(entry: unknown): ChannelRow {
+  if (entry && typeof entry === "object" && "instrument" in entry) {
+    const r = entry as ChannelRecord;
+    return {
+      id: crypto.randomUUID(),
+      instrument: r.instrument ?? "",
+      mic: r.mic ?? "",
+      phantom: Boolean(r.phantom),
+      pedestal: Boolean(r.pedestal),
+      monitor: r.monitor ?? "",
+    };
+  }
+  const line = String(entry ?? "");
   const [instrument, ...rest] = line.split(" — ");
-  return { id: crypto.randomUUID(), instrument: instrument ?? "", mic: rest.join(" — ") };
+  return { id: crypto.randomUUID(), instrument: instrument ?? "", mic: rest.join(" — "), phantom: false, pedestal: false, monitor: "" };
 }
 
-function channelRowsToList(rows: ChannelRow[]): string[] {
+function parseChannelLine(line: string): ChannelRow {
+  return parseChannelEntry(line);
+}
+
+function channelRowsToList(rows: ChannelRow[]): ChannelRecord[] {
   return rows
     .filter((r) => r.instrument.trim() || r.mic.trim())
-    .map((r) => (r.mic.trim() ? `${r.instrument.trim()} — ${r.mic.trim()}` : r.instrument.trim()));
+    .map((r) => ({
+      instrument: r.instrument.trim(),
+      mic: r.mic.trim(),
+      phantom: r.phantom,
+      pedestal: r.pedestal,
+      monitor: r.monitor.trim(),
+    }));
+}
+
+function parseBacklineRows(value: string | null | undefined): BacklineRow[] {
+  if (!value) return [];
+  return value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => ({ id: crypto.randomUUID(), item: line }));
+}
+
+function backlineRowsToText(rows: BacklineRow[]): string {
+  return rows.filter((r) => r.item.trim()).map((r) => r.item.trim()).join("\n");
 }
 
 const empty = {
@@ -122,6 +165,8 @@ const empty = {
   rooming_list: "",
 };
 
+type RiderTab = "channels" | "som" | "luz" | "hospitality" | "mapa";
+
 function RidersPage() {
   const { data: profile } = useProfile();
   const { data: riders = [] } = useList("technical_riders", { order: { column: "name" } });
@@ -135,30 +180,40 @@ function RidersPage() {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [form, setForm] = useState(empty);
-  // Rider aguardando exportação: enquanto está setado, o mapa é renderizado
-  // fora da tela para ser capturado como imagem e entrar no PDF.
   const [pendingExport, setPendingExport] = useState<{
     rider: RiderRow;
     orientation: PdfOrientation;
   } | null>(null);
-  // Aba ativa do modal — o mapa de palco em aba própria deixa de depender de
-  // rolagem para ser descoberto.
-  const [tab, setTab] = useState<"rider" | "mapa">("rider");
+  const [tab, setTab] = useState<RiderTab>("channels");
   const printRef = useRef<HTMLDivElement>(null);
-  const [stage, setStage] = useState<StageItem[]>([]);
+  // O histórico mora aqui, não dentro do canvas: a grade e a lista de rótulos editam as
+  // mesmas peças e precisam empilhar no mesmo desfazer.
+  const stageHistory = useStageHistory([]);
+  const stage = stageHistory.items;
+  const setStage = stageHistory.set;
   const [channels, setChannels] = useState<ChannelRow[]>([]);
+  const [backlineRows, setBacklineRows] = useState<BacklineRow[]>([]);
   const set = (k: keyof typeof empty) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   function addChannelRow() {
-    setChannels((rows) => [...rows, { id: crypto.randomUUID(), instrument: "", mic: "" }]);
+    setChannels((rows) => [...rows, { id: crypto.randomUUID(), instrument: "", mic: "", phantom: false, pedestal: false, monitor: "" }]);
   }
   function updateChannelRow(id: string, patch: Partial<ChannelRow>) {
     setChannels((rows) => rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   }
   function removeChannelRow(id: string) {
     setChannels((rows) => rows.filter((r) => r.id !== id));
+  }
+
+  function addBacklineRow() {
+    setBacklineRows((rows) => [...rows, { id: crypto.randomUUID(), item: "" }]);
+  }
+  function updateBacklineRow(id: string, item: string) {
+    setBacklineRows((rows) => rows.map((r) => (r.id === id ? { ...r, item } : r)));
+  }
+  function removeBacklineRow(id: string) {
+    setBacklineRows((rows) => rows.filter((r) => r.id !== id));
   }
 
   /** O preset pré-preenche o formulário e abre o modal — o usuário revisa
@@ -170,8 +225,7 @@ function RidersPage() {
     const taken = riders.filter((r) => r.name.startsWith(preset.label)).length;
     setEditingId(null);
     setFormOpen(true);
-    setTab("rider");
-    setAdvancedOpen(false);
+    setTab("channels");
     setForm({
       ...empty,
       name: taken ? `${preset.label} (${taken + 1})` : preset.label,
@@ -181,8 +235,9 @@ function RidersPage() {
       backline: preset.backline,
       hospitality: preset.hospitality,
     });
-    setStage(presetToStageItems(preset));
+    stageHistory.reset(presetToStageItems(preset));
     setChannels(preset.channels.map(parseChannelLine));
+    setBacklineRows(parseBacklineRows(preset.backline));
   }
 
   useEffect(() => {
@@ -219,11 +274,10 @@ function RidersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingExport]);
 
-  function startEdit(rider: RiderRow) {
+  function startEdit(rider: RiderRow, openTab: RiderTab = "channels") {
     setEditingId(rider.id);
     setFormOpen(true);
-    setTab("rider");
-    setAdvancedOpen(false);
+    setTab(openTab);
     setForm({
       name: rider.name,
       formation_id: rider.formation_id ?? "",
@@ -236,35 +290,36 @@ function RidersPage() {
       hospitality: rider.hospitality ?? "",
       rooming_list: rider.rooming_list ?? "",
     });
-    setStage(parseStagePlot(rider.stage_plot));
+    stageHistory.reset(parseStagePlot(rider.stage_plot));
     setChannels(
       Array.isArray(rider.channel_list)
-        ? (rider.channel_list as string[]).map(parseChannelLine)
+        ? (rider.channel_list as unknown[]).map(parseChannelEntry)
         : [],
     );
+    setBacklineRows(parseBacklineRows(rider.backline));
   }
 
   function startBlank() {
     setEditingId(null);
     setFormOpen(true);
-    setTab("rider");
-    setAdvancedOpen(false);
-    // Novo rider já nasce com a formação "tocando como" do header, em vez de
-    // pedir pra escolher de novo algo que já está definido globalmente.
+    setTab("channels");
     setForm({ ...empty, formation_id: activeFormationId ?? "" });
-    setStage([]);
+    stageHistory.reset([]);
     setChannels([]);
+    setBacklineRows([]);
   }
 
   function closeForm() {
     setFormOpen(false);
     setEditingId(null);
     setForm(empty);
-    setStage([]);
+    stageHistory.reset([]);
     setChannels([]);
+    setBacklineRows([]);
   }
 
   function save() {
+    const backlineText = backlineRowsToText(backlineRows) || form.backline || null;
     const values = {
       name: form.name.trim() || "Rider técnico",
       formation_id: form.formation_id || null,
@@ -275,7 +330,7 @@ function RidersPage() {
       pa_specs: form.pa_specs || null,
       monitor_specs: form.monitor_specs || null,
       lighting_requirements: form.lighting_requirements || null,
-      backline: form.backline || null,
+      backline: backlineText,
       hospitality: form.hospitality || null,
       rooming_list: form.rooming_list || null,
     };
@@ -294,7 +349,9 @@ function RidersPage() {
   }
 
   function exportRider(rider: RiderRow, plotImage: string | null, orientation: PdfOrientation) {
-    const channels = Array.isArray(rider.channel_list) ? (rider.channel_list as string[]) : [];
+    const rawChannels = Array.isArray(rider.channel_list) ? (rider.channel_list as unknown[]) : [];
+    const parsedChannels = rawChannels.map(parseChannelEntry);
+    const hasExtended = parsedChannels.some((c) => c.phantom || c.pedestal || c.monitor);
     const plot = parseStagePlot(rider.stage_plot);
     const plotHeight =
       orientation === "paisagem" ? PRINT_PLOT_HEIGHT_LANDSCAPE : PRINT_PLOT_HEIGHT_PORTRAIT;
@@ -307,13 +364,19 @@ function RidersPage() {
         accent: accentForRider(rider),
         orientation: "retrato",
         blocks: [
-          ...(channels.length
+          ...(parsedChannels.length
             ? ([
                 { type: "heading", text: "Channel list" },
                 {
                   type: "table",
-                  head: ["Canal", "Fonte / microfone"],
-                  rows: channels.map((c, i) => [String(i + 1), c]),
+                  head: hasExtended
+                    ? ["Canal", "Instrumento", "Microfone", "+48V", "Pedestal", "Retorno"]
+                    : ["Canal", "Instrumento", "Microfone"],
+                  rows: parsedChannels.map((c, i) =>
+                    hasExtended
+                      ? [String(i + 1), c.instrument, c.mic, c.phantom ? "Sim" : "—", c.pedestal ? "Sim" : "—", c.monitor || "—"]
+                      : [String(i + 1), c.instrument, c.mic],
+                  ),
                 },
               ] as PdfBlock[])
             : []),
@@ -459,124 +522,181 @@ function RidersPage() {
             </div>
           </FieldGrid>
 
-          <Tabs value={tab} onValueChange={(v) => setTab(v as "rider" | "mapa")} className="mt-4">
-            <TabsList>
-              <TabsTrigger value="rider">Rider</TabsTrigger>
-              <TabsTrigger value="mapa">Mapa de palco ({stage.length})</TabsTrigger>
+          <Tabs value={tab} onValueChange={(v) => setTab(v as RiderTab)} className="mt-4">
+            <TabsList className="flex-wrap">
+              <TabsTrigger value="channels">
+                Channel list
+                {channels.length > 0 && (
+                  <Badge variant="secondary" className="ml-1.5 px-1.5 py-0 text-[10px]">{channels.length}</Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="som">Som</TabsTrigger>
+              <TabsTrigger value="luz">Luz & Backline</TabsTrigger>
+              <TabsTrigger value="hospitality">Hospitality</TabsTrigger>
+              <TabsTrigger value="mapa">
+                Mapa
+                {stage.length > 0 && (
+                  <Badge variant="secondary" className="ml-1.5 px-1.5 py-0 text-[10px]">{stage.length}</Badge>
+                )}
+              </TabsTrigger>
             </TabsList>
-            <TabsContent value="rider" className="space-y-4">
-              <div className="space-y-2">
-                <Label>Channel list</Label>
-                {channels.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">Nenhum canal ainda.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {channels.map((row) => (
-                      <div
-                        key={row.id}
-                        className="flex flex-wrap items-center gap-2 sm:flex-nowrap"
+
+            {/* ─── Channel list ─── */}
+            <TabsContent value="channels" className="space-y-3 pt-2">
+              {channels.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Nenhum canal ainda. Clique para adicionar.</p>
+              ) : (
+                <div className="space-y-2">
+                  <div className="hidden items-center gap-2 sm:flex">
+                    <span className="w-5 shrink-0" />
+                    <span className="flex-1 text-[10px] uppercase tracking-wide text-muted-foreground/60">Instrumento</span>
+                    <span className="w-40 shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground/60">Microfone</span>
+                    <span className="w-8 shrink-0 text-center text-[10px] uppercase tracking-wide text-muted-foreground/60">+48V</span>
+                    <span className="w-8 shrink-0 text-center text-[10px] uppercase tracking-wide text-muted-foreground/60">Ped.</span>
+                    <span className="w-20 shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground/60">Retorno</span>
+                    <span className="w-8 shrink-0" />
+                  </div>
+                  {channels.map((row, i) => (
+                    <div key={row.id} className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+                      <span className="w-5 shrink-0 text-center text-xs text-muted-foreground">{i + 1}</span>
+                      <Input
+                        value={row.instrument}
+                        onChange={(e) => updateChannelRow(row.id, { instrument: e.target.value })}
+                        placeholder="Instrumento"
+                        className="flex-1"
+                      />
+                      <Select
+                        value={MIC_OPTIONS.includes(row.mic) ? row.mic : ""}
+                        onValueChange={(v) => updateChannelRow(row.id, { mic: v })}
                       >
+                        <SelectTrigger className="w-40 shrink-0">
+                          <SelectValue placeholder="Microfone" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MIC_OPTIONS.map((m) => (
+                            <SelectItem key={m} value={m}>{m}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <button
+                        type="button"
+                        title="+48V Phantom power"
+                        onClick={() => updateChannelRow(row.id, { phantom: !row.phantom })}
+                        className={`w-8 shrink-0 rounded border py-1 text-center text-[10px] font-mono transition ${row.phantom ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:border-primary/50"}`}
+                      >
+                        48V
+                      </button>
+                      <button
+                        type="button"
+                        title="Pedestal"
+                        onClick={() => updateChannelRow(row.id, { pedestal: !row.pedestal })}
+                        className={`w-8 shrink-0 rounded border py-1 text-center text-[10px] font-mono transition ${row.pedestal ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:border-primary/50"}`}
+                      >
+                        Ped
+                      </button>
+                      <Input
+                        value={row.monitor}
+                        onChange={(e) => updateChannelRow(row.id, { monitor: e.target.value })}
+                        placeholder="M1, IEM..."
+                        className="w-20 shrink-0"
+                        title="Via de retorno"
+                      />
+                      <Button variant="ghost" size="icon" aria-label="Remover canal" onClick={() => removeChannelRow(row.id)}>
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Button type="button" variant="outline" size="sm" onClick={addChannelRow}>
+                <Plus className="mr-1 size-4" /> Adicionar canal
+              </Button>
+            </TabsContent>
+
+            {/* ─── Som ─── */}
+            <TabsContent value="som" className="space-y-4 pt-2">
+              <FieldGrid>
+                <TextField
+                  label="Mesa / Console"
+                  value={form.console_specs}
+                  onChange={set("console_specs")}
+                  placeholder="Digital, mínimo 16 canais"
+                />
+                <TextField
+                  label="P.A."
+                  value={form.pa_specs}
+                  onChange={set("pa_specs")}
+                  placeholder="Line array, compatível com o público"
+                />
+                <TextField
+                  label="Monitores"
+                  value={form.monitor_specs}
+                  onChange={set("monitor_specs")}
+                  placeholder="4 vias independentes ou in-ear"
+                />
+              </FieldGrid>
+              <TextAreaField
+                label="Observações gerais de som"
+                value={form.sound_requirements}
+                onChange={set("sound_requirements")}
+                placeholder="Detalhes de setup, palco próprio, etc."
+              />
+            </TabsContent>
+
+            {/* ─── Luz & Backline ─── */}
+            <TabsContent value="luz" className="space-y-4 pt-2">
+              <TextAreaField
+                label="Iluminação"
+                value={form.lighting_requirements}
+                onChange={set("lighting_requirements")}
+                placeholder="Ex.: 4 PAR LED frontais, 2 spots laterais, strobo..."
+              />
+              <div className="space-y-2">
+                <Label>Backline — lista de equipamentos</Label>
+                {backlineRows.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Nenhum item ainda.</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {backlineRows.map((row) => (
+                      <div key={row.id} className="flex items-center gap-2">
                         <Input
-                          value={row.instrument}
-                          onChange={(e) => updateChannelRow(row.id, { instrument: e.target.value })}
-                          placeholder="Instrumento (ex.: Bumbo)"
+                          value={row.item}
+                          onChange={(e) => updateBacklineRow(row.id, e.target.value)}
+                          placeholder="Ex.: Bateria acústica 5 peças c/ bumbo 22pol"
                           className="flex-1"
                         />
-                        <Select
-                          value={MIC_OPTIONS.includes(row.mic) ? row.mic : ""}
-                          onValueChange={(v) => updateChannelRow(row.id, { mic: v })}
-                        >
-                          <SelectTrigger className="w-44 shrink-0">
-                            <SelectValue placeholder="Microfone" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {MIC_OPTIONS.map((m) => (
-                              <SelectItem key={m} value={m}>
-                                {m}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          value={row.mic}
-                          onChange={(e) => updateChannelRow(row.id, { mic: e.target.value })}
-                          placeholder="Ou digite (ex.: Beta 91 sob o bumbo)"
-                          className="flex-1"
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Remover canal"
-                          onClick={() => removeChannelRow(row.id)}
-                        >
+                        <Button variant="ghost" size="icon" aria-label="Remover item" onClick={() => removeBacklineRow(row.id)}>
                           <Trash2 className="size-4" />
                         </Button>
                       </div>
                     ))}
                   </div>
                 )}
-                <Button type="button" variant="outline" size="sm" onClick={addChannelRow}>
-                  <Plus className="mr-1 size-4" /> Adicionar canal
+                <Button type="button" variant="outline" size="sm" onClick={addBacklineRow}>
+                  <Plus className="mr-1 size-4" /> Adicionar equipamento
                 </Button>
               </div>
-              <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
-                <CollapsibleTrigger className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
-                  <ChevronDown
-                    className={`size-4 transition-transform ${advancedOpen ? "rotate-180" : ""}`}
-                  />
-                  {advancedOpen ? "Ocultar" : "+ Adicionar"} detalhes avançados (opcional)
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-3 space-y-4">
-                  <FieldGrid>
-                    <TextField
-                      label="Mesa / Console"
-                      value={form.console_specs}
-                      onChange={set("console_specs")}
-                      placeholder="Digital, mínimo 16 canais"
-                    />
-                    <TextField
-                      label="P.A."
-                      value={form.pa_specs}
-                      onChange={set("pa_specs")}
-                      placeholder="Line array, compatível com o público"
-                    />
-                    <TextField
-                      label="Monitores"
-                      value={form.monitor_specs}
-                      onChange={set("monitor_specs")}
-                      placeholder="4 vias independentes ou in-ear"
-                    />
-                  </FieldGrid>
-                  <TextAreaField
-                    label="Observações gerais de som"
-                    value={form.sound_requirements}
-                    onChange={set("sound_requirements")}
-                  />
-                  <TextAreaField
-                    label="Iluminação"
-                    value={form.lighting_requirements}
-                    onChange={set("lighting_requirements")}
-                  />
-                  <TextAreaField
-                    label="Backline"
-                    value={form.backline}
-                    onChange={set("backline")}
-                  />
-                  <TextAreaField
-                    label="Hospitality / camarim"
-                    value={form.hospitality}
-                    onChange={set("hospitality")}
-                  />
-                  <TextAreaField
-                    label="Rooming list / transporte"
-                    value={form.rooming_list}
-                    onChange={set("rooming_list")}
-                  />
-                </CollapsibleContent>
-              </Collapsible>
             </TabsContent>
-            <TabsContent value="mapa" className="space-y-3">
-              <StagePlot items={stage} onChange={setStage} />
+
+            {/* ─── Hospitality ─── */}
+            <TabsContent value="hospitality" className="space-y-4 pt-2">
+              <TextAreaField
+                label="Hospitality / camarim"
+                value={form.hospitality}
+                onChange={set("hospitality")}
+                placeholder="Água mineral, chá, snacks, espaço reservado..."
+              />
+              <TextAreaField
+                label="Rooming list / transporte"
+                value={form.rooming_list}
+                onChange={set("rooming_list")}
+                placeholder="Número de quartos, van, meia-passagem..."
+              />
+            </TabsContent>
+
+            {/* ─── Mapa de palco ─── */}
+            <TabsContent value="mapa" className="space-y-3 pt-2">
+              <StagePlot items={stage} onChange={setStage} history={stageHistory} />
               <StageItemLabels items={stage} onChange={setStage} />
             </TabsContent>
           </Tabs>
@@ -630,10 +750,7 @@ function RidersPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
-                        startEdit(r);
-                        setTab("mapa");
-                      }}
+                      onClick={() => startEdit(r, "mapa")}
                     >
                       <Map className="mr-1 size-4" /> Mapa
                     </Button>

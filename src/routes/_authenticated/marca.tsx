@@ -1,29 +1,17 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { toast } from "sonner";
-import { Palette, Plus, Trash2, ImagePlus, Loader2, Check, Pencil } from "lucide-react";
+import { Palette, Plus, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import {
   PageHeader,
   PageContainer,
   Section,
   EmptyState,
-  TextField,
   ConfirmDelete,
   ListState,
 } from "@/components/ui-kit";
-import { useList, useInsert, useUpdate, useRemove, useSession } from "@/lib/queries";
-import { uploadBrandAsset, UploadError } from "@/lib/storage";
-import { BRAND_PRESETS, presetPalette, patternStyle, FONT_STACKS } from "@/lib/brand-presets";
-import { cn } from "@/lib/utils";
+import { useList, useRemove } from "@/lib/queries";
+import { BRAND_PRESETS } from "@/lib/brand-presets";
+import { BrandKitFormDialog } from "@/components/BrandKitFormDialog";
 import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/marca")({
@@ -44,18 +32,6 @@ export const Route = createFileRoute("/_authenticated/marca")({
   }),
   component: BrandKitPage,
 });
-
-const empty = { name: "", preset: BRAND_PRESETS[0]!.id, photo_url: "", logo_url: "" };
-type FormValues = typeof empty;
-
-function toFormValues(kit: Tables<"brand_kits">): FormValues {
-  return {
-    name: kit.name ?? "",
-    preset: kit.preset ?? BRAND_PRESETS[0]!.id,
-    photo_url: kit.photo_url ?? "",
-    logo_url: kit.logo_url ?? "",
-  };
-}
 
 function BrandKitPage() {
   const kitsQuery = useList("brand_kits", {
@@ -159,223 +135,3 @@ function BrandKitPage() {
   );
 }
 
-/** Formulário único de brand kit — cria um novo ou edita um existente. */
-function BrandKitFormDialog({
-  kit,
-  trigger,
-}: {
-  kit?: Tables<"brand_kits"> | undefined;
-  trigger: ReactNode;
-}) {
-  const isEdit = Boolean(kit);
-  const { data: session } = useSession();
-  const insert = useInsert("brand_kits", "Identidade criada");
-  const update = useUpdate("brand_kits", "Identidade atualizada");
-
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<FormValues>(kit ? toFormValues(kit) : empty);
-  const [uploading, setUploading] = useState<"photo" | "logo" | null>(null);
-  const photoInput = useRef<HTMLInputElement>(null);
-  const logoInput = useRef<HTMLInputElement>(null);
-  const set = (k: keyof FormValues) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
-
-  useEffect(() => {
-    if (open) setForm(kit ? toFormValues(kit) : empty);
-  }, [open, kit]);
-
-  async function handleUpload(kind: "photo" | "logo", file: File | undefined) {
-    if (!file) return;
-    if (!session) {
-      toast.error("Sessão expirada. Atualize a página e entre novamente.");
-      return;
-    }
-    setUploading(kind);
-    try {
-      const url = await uploadBrandAsset(file, session.id, kind);
-      set(kind === "photo" ? "photo_url" : "logo_url")(url);
-      toast.success(kind === "photo" ? "Foto enviada." : "Logo enviado.");
-    } catch (error) {
-      toast.error(error instanceof UploadError ? error.message : "Falha ao enviar imagem.");
-    } finally {
-      setUploading(null);
-    }
-  }
-
-  function save() {
-    const values = {
-      name: form.name,
-      preset: form.preset,
-      palette: presetPalette(form.preset),
-      photo_url: form.photo_url || null,
-      logo_url: form.logo_url || null,
-    };
-    if (isEdit && kit) {
-      update.mutate({ id: kit.id, values }, { onSuccess: () => setOpen(false) });
-      return;
-    }
-    insert.mutate(values, {
-      onSuccess: () => {
-        setForm(empty);
-        setOpen(false);
-      },
-    });
-  }
-
-  const pending = insert.isPending || update.isPending;
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "Editar identidade" : "Nova identidade"}</DialogTitle>
-        </DialogHeader>
-
-        <TextField
-          label="Nome"
-          value={form.name}
-          onChange={set("name")}
-          placeholder="Neon Night — banda completa"
-        />
-
-        <div className="mt-4 space-y-2">
-          <p className="text-sm font-medium">Preset visual</p>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {BRAND_PRESETS.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => set("preset")(p.id)}
-                className={cn(
-                  "rounded-lg border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                  form.preset === p.id
-                    ? "border-primary bg-primary/10"
-                    : "border-border bg-card/60 hover:border-primary/60",
-                )}
-              >
-                <span className="flex items-center gap-1.5 text-xs font-semibold">
-                  {form.preset === p.id ? <Check className="size-3.5 text-primary" /> : null}
-                  {p.label}
-                </span>
-                {/* Amostra com a fonte e o grafismo reais do preset, não só a
-                cor — com 6 opções, uma barra lisa não diferencia mais nada. */}
-                <span
-                  className="mt-2 flex h-14 items-center justify-center rounded"
-                  style={{
-                    background: p.palette.bg,
-                    color: p.palette.text,
-                    ...patternStyle(p.palette.pattern, p.palette.accent),
-                  }}
-                  aria-hidden
-                >
-                  <span
-                    className="text-sm font-bold"
-                    style={{
-                      fontFamily: FONT_STACKS[p.palette.fontFamily],
-                      color: p.palette.accent,
-                    }}
-                  >
-                    Aa
-                  </span>
-                </span>
-                <span className="mt-2 block text-[11px] text-muted-foreground">
-                  {p.description}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <UploadSlot
-            label="Foto do artista"
-            imageUrl={form.photo_url}
-            uploading={uploading === "photo"}
-            inputRef={photoInput}
-            onPick={(file) => handleUpload("photo", file)}
-            onClear={() => set("photo_url")("")}
-          />
-          <UploadSlot
-            label="Logo (PNG transparente)"
-            imageUrl={form.logo_url}
-            uploading={uploading === "logo"}
-            inputRef={logoInput}
-            onPick={(file) => handleUpload("logo", file)}
-            onClear={() => set("logo_url")("")}
-          />
-        </div>
-
-        <DialogFooter>
-          <Button disabled={!form.name || pending || uploading !== null} onClick={save}>
-            {isEdit ? "Salvar alterações" : "Salvar identidade"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function UploadSlot({
-  label,
-  imageUrl,
-  uploading,
-  inputRef,
-  onPick,
-  onClear,
-}: {
-  label: string;
-  imageUrl: string;
-  uploading: boolean;
-  inputRef: React.RefObject<HTMLInputElement | null>;
-  onPick: (file: File | undefined) => void;
-  onClear: () => void;
-}) {
-  return (
-    <div className="space-y-2">
-      <p className="text-sm font-medium">{label}</p>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => {
-          onPick(e.target.files?.[0]);
-          // Permite reenviar o mesmo arquivo depois de limpar.
-          e.target.value = "";
-        }}
-      />
-      {imageUrl ? (
-        <div className="relative">
-          <img
-            src={imageUrl}
-            alt={label}
-            className="h-28 w-full rounded-lg border border-border object-cover"
-          />
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            className="absolute right-2 top-2"
-            onClick={onClear}
-          >
-            Trocar
-          </Button>
-        </div>
-      ) : (
-        <button
-          type="button"
-          disabled={uploading}
-          onClick={() => inputRef.current?.click()}
-          className="flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border text-xs text-muted-foreground transition hover:border-primary/60 hover:text-foreground disabled:opacity-60"
-        >
-          {uploading ? (
-            <Loader2 className="size-5 animate-spin" />
-          ) : (
-            <ImagePlus className="size-5" />
-          )}
-          {uploading ? "Enviando..." : "Escolher imagem"}
-        </button>
-      )}
-    </div>
-  );
-}

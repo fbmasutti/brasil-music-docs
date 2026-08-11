@@ -28,22 +28,27 @@ export function longDateBR(value?: string | null) {
 
 type RazaoSocialInput = {
   entity_type?: string | null;
+  // novos blocos pj_*/pf_*
+  pj_razao_social?: string | null;
+  pf_full_name?: string | null;
+  // campos legados (mantidos para compatibilidade com documentos.tsx / pdf)
   legal_name?: string | null;
   stage_name?: string | null;
   cpf_cnpj?: string | null;
+  pj_cnpj?: string | null;
 };
 
-/**
- * Razão social do MEI é, por regra, "Nome completo do titular" + CPF — nunca
- * digitada à mão (é assim que alguém acaba salvando "Nome 12345678900" junto
- * no cadastro). Composta aqui, na hora de gerar o documento, a partir do nome
- * civil puro guardado em legal_name; PF e PJ usam o campo como está.
- */
+// Retorna o nome oficial para PIX/documentos. Prioriza pj_razao_social/pf_full_name;
+// cai em legal_name/stage_name se os novos campos estiverem vazios.
 export function razaoSocial(profile: RazaoSocialInput | null | undefined): string {
   if (!profile) return "";
-  const name = profile.legal_name?.trim() || profile.stage_name?.trim() || "";
-  if (profile.entity_type === "MEI" && profile.cpf_cnpj) {
-    return name ? `${name} ${profile.cpf_cnpj}` : profile.cpf_cnpj;
+  const isPj = profile.entity_type === "PJ" || profile.entity_type === "MEI";
+  const name = isPj
+    ? (profile.pj_razao_social?.trim() || profile.legal_name?.trim() || profile.stage_name?.trim() || "")
+    : (profile.pf_full_name?.trim() || profile.legal_name?.trim() || profile.stage_name?.trim() || "");
+  if (profile.entity_type === "MEI") {
+    const cnpj = profile.pj_cnpj?.trim() || profile.cpf_cnpj?.trim();
+    return cnpj ? `${name} ${cnpj}` : name;
   }
   return name;
 }
@@ -179,11 +184,11 @@ export const DOCUMENT_STATUS: Record<string, { label: string; tone: string }> = 
 };
 
 export const CHARGE_STATUS: Record<string, { label: string; tone: string }> = {
-  PENDENTE: { label: "Pendente", tone: "bg-warning/15 text-warning border-warning/30" },
-  PARCIAL: { label: "Parcial", tone: "bg-cyan/15 text-cyan border-cyan/30" },
-  PAGO: { label: "Pago", tone: "bg-success/15 text-success border-success/30" },
-  CANCELADO: { label: "Cancelado", tone: "bg-destructive/15 text-destructive border-destructive/30" },
-  INADIMPLENTE: { label: "Inadimplente", tone: "bg-destructive/15 text-destructive border-destructive/30" },
+  PENDENTE:  { label: "Pendente",  tone: "bg-warning/15 text-warning border-warning/30" },
+  ENVIADA:   { label: "Enviada",   tone: "bg-cyan-500/15 text-cyan-600 border-cyan-500/30" },
+  PAGA:      { label: "Paga",      tone: "bg-success/15 text-success border-success/30" },
+  VENCIDA:   { label: "Vencida",   tone: "bg-destructive/15 text-destructive border-destructive/30" },
+  CANCELADA: { label: "Cancelada", tone: "bg-zinc-500/15 text-zinc-500 border-zinc-500/30" },
 };
 
 export function cacheStatus(feeTotal: number, feeDeposit: number): CacheStatusKey {

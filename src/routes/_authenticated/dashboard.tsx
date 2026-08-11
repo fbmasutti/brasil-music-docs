@@ -381,36 +381,45 @@ function Dashboard() {
             </div>
           }
         >
-          <ul className="grid gap-2 sm:grid-cols-2">
-            {activeGear.map((g) => {
-              const checked = checkedGear.has(g.id);
-              return (
-                <li key={g.id}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const next = new Set(checkedGear);
-                      checked ? next.delete(g.id) : next.add(g.id);
-                      setCheckedGear(next);
-                    }}
-                    className={cn(
-                      "flex w-full items-center gap-2 rounded-md border px-3 py-2 text-sm transition",
-                      checked
-                        ? "border-success/30 bg-success/5 text-muted-foreground line-through"
-                        : "border-border hover:border-primary/40",
-                    )}
-                  >
-                    {checked ? (
-                      <CheckCircle2 className="size-4 shrink-0 text-success" />
-                    ) : (
-                      <Circle className="size-4 shrink-0 text-muted-foreground" />
-                    )}
-                    {g.label}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+          {/* Agrupado por categoria; itens sem categoria vão para "Geral" */}
+          {Array.from(new Set(activeGear.map((g) => g.category || "Geral"))).map((cat) => {
+            const catItems = activeGear.filter((g) => (g.category || "Geral") === cat);
+            return (
+              <div key={cat} className="mb-4 last:mb-0">
+                <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">{cat}</p>
+                <ul className="grid gap-2 sm:grid-cols-2">
+                  {catItems.map((g) => {
+                    const checked = checkedGear.has(g.id);
+                    return (
+                      <li key={g.id}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next = new Set(checkedGear);
+                            checked ? next.delete(g.id) : next.add(g.id);
+                            setCheckedGear(next);
+                          }}
+                          className={cn(
+                            "flex w-full items-center gap-2 rounded-md border px-3 py-2 text-sm transition",
+                            checked
+                              ? "border-success/30 bg-success/5 text-muted-foreground line-through"
+                              : "border-border hover:border-primary/40",
+                          )}
+                        >
+                          {checked ? (
+                            <CheckCircle2 className="size-4 shrink-0 text-success" />
+                          ) : (
+                            <Circle className="size-4 shrink-0 text-muted-foreground" />
+                          )}
+                          {g.label}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          })}
         </Section>
       )}
 

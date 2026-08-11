@@ -29,7 +29,8 @@ type TableName =
   | "gear_checklist_items"
   | "event_expenses"
   | "gear_assets"
-  | "maintenance_fund_entries";
+  | "maintenance_fund_entries"
+  | "charges";
 
 export function useSession() {
   return useQuery({

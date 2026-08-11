@@ -44,6 +44,69 @@ export type Database = {
         };
         Relationships: [];
       };
+      charges: {
+        Row: {
+          amount: number | null;
+          client_id: string | null;
+          created_at: string;
+          description: string | null;
+          due_date: string | null;
+          event_id: string | null;
+          id: string;
+          paid_at: string | null;
+          pix_payload: string | null;
+          status: string;
+          txid: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          amount?: number | null;
+          client_id?: string | null;
+          created_at?: string;
+          description?: string | null;
+          due_date?: string | null;
+          event_id?: string | null;
+          id?: string;
+          paid_at?: string | null;
+          pix_payload?: string | null;
+          status?: string;
+          txid?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          amount?: number | null;
+          client_id?: string | null;
+          created_at?: string;
+          description?: string | null;
+          due_date?: string | null;
+          event_id?: string | null;
+          id?: string;
+          paid_at?: string | null;
+          pix_payload?: string | null;
+          status?: string;
+          txid?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "charges_client_id_fkey";
+            columns: ["client_id"];
+            isOneToOne: false;
+            referencedRelation: "clients";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "charges_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       clients: {
         Row: {
           address: string | null;
@@ -283,6 +346,7 @@ export type Database = {
           formation_id: string;
           id: string;
           split_percent: number;
+          split_type: string;
           team_member_id: string;
           user_id: string;
         };
@@ -291,6 +355,7 @@ export type Database = {
           formation_id: string;
           id?: string;
           split_percent?: number;
+          split_type?: string;
           team_member_id: string;
           user_id: string;
         };
@@ -299,6 +364,7 @@ export type Database = {
           formation_id?: string;
           id?: string;
           split_percent?: number;
+          split_type?: string;
           team_member_id?: string;
           user_id?: string;
         };
@@ -431,6 +497,7 @@ export type Database = {
       };
       gear_checklist_items: {
         Row: {
+          category: string;
           created_at: string;
           formation_id: string;
           id: string;
@@ -439,6 +506,7 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          category?: string;
           created_at?: string;
           formation_id: string;
           id?: string;
@@ -447,6 +515,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          category?: string;
           created_at?: string;
           formation_id?: string;
           id?: string;
