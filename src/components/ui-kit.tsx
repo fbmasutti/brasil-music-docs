@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 export function StatusBadge({ status, map }: { status: string; map: Record<string, { label: string; tone: string }> }) {
   const meta = map[status] ?? { label: status, tone: "bg-muted/50 text-muted-foreground border-border" };
@@ -573,6 +574,25 @@ export function ItemActions({
         </AlertDialog>
       )}
     </>
+  );
+}
+
+/** Barra de progresso de cadastro de módulo — mostra quantas checagens estão concluídas. */
+export function ModuleHealth({ checks }: { checks: { label: string; done: boolean }[] }) {
+  const done = checks.filter((c) => c.done).length;
+  const pct = checks.length === 0 ? 0 : Math.round((done / checks.length) * 100);
+  const missing = checks.filter((c) => !c.done);
+  if (checks.length === 0) return null;
+  return (
+    <div className="mb-5 space-y-2 rounded-lg border border-border bg-muted/30 p-4">
+      <div className="flex items-center justify-between text-sm">
+        <span className="font-medium">{pct}% concluído</span>
+        {missing.length > 0 && (
+          <span className="text-muted-foreground">falta: {missing.map((c) => c.label).join(", ")}</span>
+        )}
+      </div>
+      <Progress value={pct} />
+    </div>
   );
 }
 

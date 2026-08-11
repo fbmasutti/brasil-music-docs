@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PageHeader, PageContainer, Section, FieldGrid, TextField, StickyActionBar } from "@/components/ui-kit";
+import { PageHeader, PageContainer, Section, FieldGrid, TextField, StickyActionBar, ModuleHealth } from "@/components/ui-kit";
 import { useDirtyForm } from "@/lib/dirty-form";
 import { useProfile, useUpdate } from "@/lib/queries";
 import { maskCpfCnpj, maskCep, CNAE_OPTIONS, ECAD_ASSOCIATIONS } from "@/lib/format";
@@ -106,12 +106,26 @@ function ProfilePage() {
     update.mutate({ id: profile.id, values: values as never });
   }
 
+  const today = new Date().toISOString().slice(0, 10);
+  const healthChecks = [
+    { label: "Nome artístico", done: Boolean(form["stage_name"]) },
+    { label: "CPF/CNPJ", done: Boolean(form["cpf_cnpj"]) },
+    { label: "Chave PIX", done: Boolean(form["pix_key"]) },
+    { label: "Dados bancários", done: Boolean(form["bank_name"] && form["bank_account"]) },
+    { label: "ECAD", done: Boolean(form["ecad_association"]) },
+    ...(profile?.cnd_expires_at
+      ? [{ label: "CND na validade", done: profile.cnd_expires_at >= today }]
+      : []),
+  ];
+
   return (
     <PageContainer>
       <PageHeader
         title="Dados do Artista"
         subtitle="Estes dados alimentam automaticamente contratos, recibos, riders e declarações."
       />
+
+      <ModuleHealth checks={healthChecks} />
 
       <Section title="Natureza jurídica" className="mb-5">
         <FieldGrid>
