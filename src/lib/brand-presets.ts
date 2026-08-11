@@ -257,6 +257,12 @@ export const BRAND_PRESETS: BrandPreset[] = [
   },
 ];
 
+/** Presets oferecidos para NOVAS identidades. Studio Mono saiu da vitrine
+ * (redundante com Neon Night — os dois são "preto + um acento") mas segue em
+ * BRAND_PRESETS para identidades já salvas com esse preset continuarem
+ * renderizando normalmente. */
+export const PICKABLE_BRAND_PRESETS = BRAND_PRESETS.filter((p) => p.id !== "studio_mono");
+
 export function presetPalette(id: string): BrandPalette {
   return (BRAND_PRESETS.find((p) => p.id === id) ?? BRAND_PRESETS[0]!).palette;
 }

@@ -10,7 +10,7 @@ import {
   ListState,
 } from "@/components/ui-kit";
 import { useList, useRemove } from "@/lib/queries";
-import { BRAND_PRESETS } from "@/lib/brand-presets";
+import { BRAND_PRESETS, patternStyle, FONT_STACKS } from "@/lib/brand-presets";
 import { BrandKitFormDialog } from "@/components/BrandKitFormDialog";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -79,11 +79,26 @@ function BrandKitPage() {
                 return (
                   <li key={kit.id} className="overflow-hidden rounded-lg border border-border">
                     <div
-                      className="flex h-24 items-center justify-center"
-                      style={{ background: preset?.palette.accent ?? "var(--primary)" }}
+                      className="flex h-24 items-center justify-center px-3 text-center"
+                      style={{
+                        background: preset?.palette.bg ?? "var(--primary)",
+                        ...(preset
+                          ? patternStyle(preset.palette.pattern, preset.palette.accent)
+                          : {}),
+                      }}
                     >
                       {kit.photo_url ? (
                         <img src={kit.photo_url} alt="" className="h-full w-full object-cover" />
+                      ) : preset ? (
+                        <span
+                          className="text-sm font-bold leading-tight"
+                          style={{
+                            fontFamily: FONT_STACKS[preset.palette.fontFamily],
+                            color: preset.palette.accent,
+                          }}
+                        >
+                          {preset.label}
+                        </span>
                       ) : (
                         <Palette className="size-6 text-white/70" />
                       )}
@@ -134,4 +149,3 @@ function BrandKitPage() {
     </PageContainer>
   );
 }
-

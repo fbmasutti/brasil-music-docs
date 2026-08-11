@@ -19,7 +19,8 @@ import { Button } from "@/components/ui/button";
 import { PageHeader, PageContainer, Section, FieldGrid, TextField } from "@/components/ui-kit";
 import { useList, useProfile, useInsert, useUpdate, useSession } from "@/lib/queries";
 import { uploadBrandAsset, UploadError } from "@/lib/storage";
-import { BRAND_PRESETS, presetPalette, patternStyle, FONT_STACKS } from "@/lib/brand-presets";
+import { PICKABLE_BRAND_PRESETS, presetPalette } from "@/lib/brand-presets";
+import { PresetPicker } from "@/components/PresetPicker";
 import { maskCpfCnpj } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -193,14 +194,14 @@ function StepMarca() {
   const update = useUpdate("brand_kits", "Identidade visual atualizada");
   const kit = kits[0];
 
-  const [preset, setPreset] = useState(BRAND_PRESETS[0]!.id);
+  const [preset, setPreset] = useState(PICKABLE_BRAND_PRESETS[0]!.id);
   const [logoUrl, setLogoUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!kit) return;
-    setPreset(kit.preset ?? BRAND_PRESETS[0]!.id);
+    setPreset(kit.preset ?? PICKABLE_BRAND_PRESETS[0]!.id);
     setLogoUrl(kit.logo_url ?? "");
   }, [kit?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -239,44 +240,13 @@ function StepMarca() {
         estilo escolhido — trocar leva um clique.
       </p>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {BRAND_PRESETS.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            onClick={() => {
-              setPreset(p.id);
-              persist({ preset: p.id });
-            }}
-            className={cn(
-              "rounded-lg border p-3 text-left transition",
-              preset === p.id
-                ? "border-primary bg-primary/5"
-                : "border-border hover:border-primary/40",
-            )}
-          >
-            <span className="flex items-center justify-between gap-2">
-              <span
-                className="flex h-10 flex-1 items-center justify-center rounded"
-                style={{
-                  background: p.palette.bg,
-                  ...patternStyle(p.palette.pattern, p.palette.accent),
-                }}
-                aria-hidden
-              >
-                <span
-                  className="text-sm font-bold"
-                  style={{ fontFamily: FONT_STACKS[p.palette.fontFamily], color: p.palette.accent }}
-                >
-                  Aa
-                </span>
-              </span>
-              {preset === p.id ? <Check className="size-3.5 shrink-0 text-primary" /> : null}
-            </span>
-            <span className="mt-2 block text-sm font-semibold">{p.label}</span>
-          </button>
-        ))}
-      </div>
+      <PresetPicker
+        value={preset}
+        onChange={(id) => {
+          setPreset(id);
+          persist({ preset: id });
+        }}
+      />
 
       <div className="mt-5 flex flex-wrap items-center gap-3">
         {logoUrl ? (
