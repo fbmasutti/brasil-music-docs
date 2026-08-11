@@ -14,7 +14,7 @@ import {
 import { PageHeader, PageContainer, Section, FieldGrid, TextField, StickyActionBar, ModuleHealth } from "@/components/ui-kit";
 import { useDirtyForm } from "@/lib/dirty-form";
 import { useProfile, useUpdate } from "@/lib/queries";
-import { maskCpfCnpj, maskCep, CNAE_OPTIONS, ECAD_ASSOCIATIONS } from "@/lib/format";
+import { maskCpfCnpj, maskCep, maskPhone, isValidCpf, isValidCnpj, CNAE_OPTIONS, ECAD_ASSOCIATIONS } from "@/lib/format";
 import { connectGoogleCalendar } from "@/lib/google-calendar";
 
 export const Route = createFileRoute("/_authenticated/perfil")({
@@ -244,15 +244,28 @@ function ProfilePage() {
                 </div>
               );
             }
+            const val = form[key] ?? "";
+            const cpfCnpjError =
+              key === "cpf_cnpj" && val
+                ? val.replace(/\D/g, "").length <= 11
+                  ? isValidCpf(val) ? undefined : "CPF inválido"
+                  : isValidCnpj(val) ? undefined : "CNPJ inválido"
+                : undefined;
             return (
               <TextField
                 key={key}
                 label={label}
-                value={form[key] ?? ""}
+                value={val}
                 onChange={(v) =>
-                  set(key)(key === "cpf_cnpj" ? maskCpfCnpj(v) : key === "cep" ? maskCep(v) : v)
+                  set(key)(
+                    key === "cpf_cnpj" ? maskCpfCnpj(v)
+                    : key === "cep" ? maskCep(v)
+                    : key === "phone" ? maskPhone(v)
+                    : v
+                  )
                 }
                 type={key === "cnd_expires_at" ? "date" : "text"}
+                error={cpfCnpjError}
               />
             );
           })}

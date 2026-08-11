@@ -21,7 +21,7 @@ import {
   ListState,
 } from "@/components/ui-kit";
 import { useList, useInsert, useUpdate, useRemove } from "@/lib/queries";
-import { maskCpfCnpj } from "@/lib/format";
+import { maskCpfCnpj, maskPhone } from "@/lib/format";
 import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/contratantes")({
@@ -211,7 +211,7 @@ function ClientFormDialog({
             onChange={(v) => set("doc")(maskCpfCnpj(v))}
           />
           <TextField label="Responsável" value={form.contact_name} onChange={set("contact_name")} />
-          <TextField label="Telefone" value={form.phone} onChange={set("phone")} />
+          <TextField label="Telefone" value={form.phone} onChange={(v) => set("phone")(maskPhone(v))} />
           <TextField label="E-mail" value={form.email} onChange={set("email")} />
           <TextField label="Endereço" value={form.address} onChange={set("address")} />
           <TextField label="Cidade" value={form.city} onChange={set("city")} />

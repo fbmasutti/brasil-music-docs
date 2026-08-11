@@ -380,22 +380,35 @@ export function TextField({
   onChange,
   placeholder,
   type = "text",
+  error,
+  hint,
+  required,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string | undefined;
   type?: string | undefined;
+  error?: string | undefined;
+  hint?: string | undefined;
+  required?: boolean | undefined;
 }) {
   return (
     <div className="space-y-2">
-      <Label>{label}</Label>
+      <Label>
+        {label}
+        {required && <span className="ml-0.5 text-destructive" aria-hidden>*</span>}
+      </Label>
       <Input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder ?? ""}
+        aria-invalid={Boolean(error)}
+        className={error ? "border-destructive focus-visible:ring-destructive" : undefined}
       />
+      {error && <p className="text-xs text-destructive">{error}</p>}
+      {!error && hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 }

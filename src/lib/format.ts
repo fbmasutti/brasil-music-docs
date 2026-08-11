@@ -75,6 +75,24 @@ export function maskCpfCnpj(raw: string) {
     .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
 }
 
+export function maskPhone(raw: string) {
+  const v = raw.replace(/\D/g, "").slice(0, 11);
+  if (v.length <= 10) {
+    return v.replace(/(\d{2})(\d)/, "($1) $2").replace(/(\d{4})(\d{1,4})$/, "$1-$2");
+  }
+  return v.replace(/(\d{2})(\d)/, "($1) $2").replace(/(\d{5})(\d{1,4})$/, "$1-$2");
+}
+
+export function maskMoney(raw: string) {
+  const digits = raw.replace(/\D/g, "");
+  const num = Number(digits) / 100;
+  return num.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+export function parseMoney(masked: string) {
+  return Number(masked.replace(/\./g, "").replace(",", ".")) || 0;
+}
+
 export function maskCep(raw: string) {
   return raw
     .replace(/\D/g, "")
