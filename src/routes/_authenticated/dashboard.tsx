@@ -54,6 +54,9 @@ function Dashboard() {
   const { data: team = [] } = useList("team_members");
   const { data: brandKits = [] } = useList("brand_kits");
   const { data: checklists = [] } = useList("event_checklists");
+  const { data: clients = [] } = useList("clients");
+  const { data: formations = [] } = useList("formations");
+  const { data: formationMembers = [] } = useList("formation_members");
 
   // Apenas o que é permanente do artista — nada de "cadastre um show" ou
   // "cadastre equipe": o toolkit já funciona sem isso.
@@ -76,9 +79,8 @@ function Dashboard() {
   );
   const openTasks = checklists.filter((c) => !c.done);
 
-  // Só entram aqui pendências reais (algo vencido ou pendente de ação) — nunca
-  // "você ainda não cadastrou X" ou "você ainda não usa Y", que é ruído para
-  // quem simplesmente não usa aquele recurso.
+  // Pendências reais (algo vencido ou pendente de ação), nunca "você ainda não
+  // usa Y" — quem não usa um recurso não deveria ser cobrado por ele.
   const alerts: { text: string; to: string }[] = [];
   if (profile?.cnd_expires_at && profile.cnd_expires_at < today)
     alerts.push({
@@ -91,6 +93,35 @@ function Dashboard() {
       alerts.push({
         text: `${ecadPending.length} evento(s) realizado(s) sem relatório de ECAD enviado.`,
         to: "/repertorio",
+      });
+  }
+
+  // Diferente dos alertas acima, isso não é "vencido" — é cadastro que trava o
+  // uso fluido do resto do app (contrato sem contratante, evento sem
+  // formação para herdar cachê/roster/mala de gig). Vale mais completar UMA
+  // formação de verdade do que ter várias pela metade, então só aponta a
+  // formação atual quando ela está sem gente — nunca sugere criar mais uma.
+  const setupGaps: { text: string; to: string }[] = [];
+  if (!clients.length)
+    setupGaps.push({
+      text: "Nenhum contratante cadastrado — agiliza a geração de contratos e recibos.",
+      to: "/contratantes",
+    });
+  if (!formations.length) {
+    setupGaps.push({
+      text: "Nenhuma formação cadastrada — uma formação completa herda cachê, roster e mala de gig nos shows.",
+      to: "/formacoes",
+    });
+  } else {
+    const current =
+      formations.find((f) => f.id === profile?.active_formation_id) ??
+      formations.find((f) => f.is_default) ??
+      formations[0];
+    const hasRoster = formationMembers.some((m) => m.formation_id === current?.id);
+    if (current && !hasRoster)
+      setupGaps.push({
+        text: `"${current.name}" ainda não tem integrantes — complete o roster para riders e rateio saírem sozinhos.`,
+        to: "/formacoes",
       });
   }
 
@@ -257,11 +288,11 @@ function Dashboard() {
           )}
         </Section>
 
-        <Section title="Alertas de conformidade">
-          {alerts.length === 0 ? (
+        <Section title={`Pendências${alerts.length + setupGaps.length ? ` (${alerts.length + setupGaps.length})` : ""}`}>
+          {alerts.length + setupGaps.length === 0 ? (
             <div className="flex items-start gap-2 text-sm text-muted-foreground">
               <CheckCircle2 className="mt-0.5 size-4 text-success" />
-              Nenhuma pendência crítica no momento.
+              Nenhuma pendência no momento.
             </div>
           ) : (
             <ul className="space-y-3">
@@ -270,6 +301,14 @@ function Dashboard() {
                   <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
                   <Link to={a.to} className="hover:text-primary">
                     {a.text}
+                  </Link>
+                </li>
+              ))}
+              {setupGaps.map((g) => (
+                <li key={g.text} className="flex items-start gap-2 text-sm">
+                  <Circle className="mt-0.5 size-4 shrink-0 text-primary" />
+                  <Link to={g.to} className="hover:text-primary">
+                    {g.text}
                   </Link>
                 </li>
               ))}
@@ -300,9 +339,9 @@ function Dashboard() {
           icon={<FileText className="size-5" />}
         />
         <StatCard
-          label="Pendências"
-          value={String(alerts.length + openTasks.length)}
-          hint={`${openTasks.length} tarefas de checklist`}
+          label="Tarefas em aberto"
+          value={String(openTasks.length)}
+          hint="Itens de checklist dos eventos"
           tone="amber"
           icon={<AlertTriangle className="size-5" />}
         />

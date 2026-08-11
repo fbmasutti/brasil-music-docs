@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Layers, Plus, Trash2, UserPlus, Luggage, AlertTriangle } from "lucide-react";
+import {
+  Layers,
+  Plus,
+  Trash2,
+  UserPlus,
+  Luggage,
+  AlertTriangle,
+  ChevronDown,
+  Star,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,6 +28,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   PageHeader,
   PageContainer,
@@ -28,8 +38,9 @@ import {
   TextField,
   ConfirmDelete,
 } from "@/components/ui-kit";
-import { useList, useInsert, useRemove, useUpdate } from "@/lib/queries";
+import { useList, useInsert, useRemove, useUpdate, useProfile } from "@/lib/queries";
 import { money } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/formacoes")({
   head: () => ({
@@ -54,6 +65,7 @@ const emptyFormation = { name: "", base_fee: "", is_default: false };
 const emptyMemberForm = { team_member_id: "", split_percent: "" };
 
 function FormationsPage() {
+  const { data: profile } = useProfile();
   const {
     data: formations = [],
     isError: formationsError,
@@ -85,6 +97,14 @@ function FormationsPage() {
 
   const [gearFor, setGearFor] = useState<string | null>(null);
   const [gearLabel, setGearLabel] = useState("");
+
+  // "Formação atual" é a que está tocando agora (o switcher do cabeçalho),
+  // caindo para a padrão e por fim a primeira — sempre alguma, nunca nenhuma.
+  const currentFormationId =
+    profile?.active_formation_id ?? formations.find((f) => f.is_default)?.id ?? formations[0]?.id;
+  const sortedFormations = [...formations].sort((a, b) =>
+    a.id === currentFormationId ? -1 : b.id === currentFormationId ? 1 : 0,
+  );
 
   return (
     <PageContainer>
@@ -166,36 +186,66 @@ function FormationsPage() {
           />
         ) : (
           <ul className="space-y-4">
-            {formations.map((f) => {
+            {sortedFormations.map((f) => {
               const roster = members.filter((m) => m.formation_id === f.id);
               const gear = gearItems.filter((g) => g.formation_id === f.id);
               const riders = allRiders.filter((r) => r.formation_id === f.id);
+              const isCurrent = f.id === currentFormationId;
+              // A atual sempre abre; as demais só ficam abertas de cara quando
+              // são poucas — a partir de 3 formações a rolagem já incomoda.
+              const defaultOpen = isCurrent || formations.length < 3;
               return (
-                <li key={f.id} className="rounded-lg border border-border p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="font-medium">{f.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Cachê base {money(Number(f.base_fee))}
-                        {f.is_default ? " · formação padrão" : ""}
-                      </p>
+                <li
+                  key={f.id}
+                  className={cn(
+                    "rounded-lg border p-4",
+                    isCurrent ? "border-primary/40 bg-primary/[0.03]" : "border-border",
+                  )}
+                >
+                  <Collapsible defaultOpen={defaultOpen}>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <CollapsibleTrigger asChild>
+                        <button
+                          type="button"
+                          className="group flex min-w-0 items-start gap-2 text-left"
+                        >
+                          <ChevronDown className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=closed]:-rotate-90" />
+                          <span className="min-w-0">
+                            <span className="flex items-center gap-1.5">
+                              <span className="font-medium">{f.name}</span>
+                              {isCurrent ? (
+                                <Star className="size-3.5 shrink-0 fill-primary text-primary" />
+                              ) : null}
+                            </span>
+                            <span className="block text-xs text-muted-foreground">
+                              Cachê base {money(Number(f.base_fee))}
+                              {f.is_default ? " · formação padrão" : ""}
+                            </span>
+                          </span>
+                        </button>
+                      </CollapsibleTrigger>
+                      <div className="flex items-center gap-2">
+                        {isCurrent ? (
+                          <Badge className="border-primary/30 bg-primary/10 text-primary">
+                            Tocando agora
+                          </Badge>
+                        ) : null}
+                        {f.is_default ? <Badge variant="outline">Padrão</Badge> : null}
+                        <ConfirmDelete
+                          title={`Remover "${f.name}"?`}
+                          description={`${roster.length ? `${roster.length} integrante(s) do roster e ` : ""}${gear.length ? `${gear.length} item(ns) da mala de gig ` : "a mala de gig "}serão apagados junto com a formação.${riders.length ? ` ${riders.length} rider(s) vinculado(s) não serão apagados, só ficam sem formação.` : ""} Essa ação não pode ser desfeita.`}
+                          confirmLabel="Remover formação"
+                          onConfirm={() => removeFormation.mutate(f.id)}
+                          trigger={
+                            <Button variant="ghost" size="icon" aria-label={`Remover ${f.name}`}>
+                              <Trash2 className="size-4" />
+                            </Button>
+                          }
+                        />
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {f.is_default ? <Badge variant="outline">Padrão</Badge> : null}
-                      <ConfirmDelete
-                        title={`Remover "${f.name}"?`}
-                        description={`${roster.length ? `${roster.length} integrante(s) do roster e ` : ""}${gear.length ? `${gear.length} item(ns) da mala de gig ` : "a mala de gig "}serão apagados junto com a formação.${riders.length ? ` ${riders.length} rider(s) vinculado(s) não serão apagados, só ficam sem formação.` : ""} Essa ação não pode ser desfeita.`}
-                        confirmLabel="Remover formação"
-                        onConfirm={() => removeFormation.mutate(f.id)}
-                        trigger={
-                          <Button variant="ghost" size="icon" aria-label={`Remover ${f.name}`}>
-                            <Trash2 className="size-4" />
-                          </Button>
-                        }
-                      />
-                    </div>
-                  </div>
 
+                    <CollapsibleContent>
                   <div className="mt-3 max-w-xs space-y-1.5">
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Identidade visual
@@ -394,6 +444,8 @@ function FormationsPage() {
                       )}
                     </div>
                   </div>
+                    </CollapsibleContent>
+                  </Collapsible>
                 </li>
               );
             })}
