@@ -20,6 +20,16 @@ const PATTERNS: { test: RegExp; message: string }[] = [
     message: "Sua sessão expirou. Atualize a página e entre novamente.",
   },
   {
+    // "JWT issued at future" é a mensagem literal do PostgREST quando o iat do token
+    // parece adiantado em relação ao relógio dele — folga de segundos entre quem emite o
+    // token e quem o valida, típica logo depois de uma renovação. É passageiro e resolve
+    // na tentativa seguinte, então a mensagem manda repetir em vez de mandar entrar de
+    // novo: a sessão não expirou, e sugerir logout faria o usuário perder o formulário
+    // aberto à toa.
+    test: /issued at future|token used before issued/i,
+    message: "Não deu para validar sua sessão neste instante. Tente salvar de novo.",
+  },
+  {
     test: /row-level security|permission denied/i,
     message: "Você não tem permissão para fazer isso.",
   },
