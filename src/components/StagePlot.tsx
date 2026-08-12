@@ -799,7 +799,9 @@ export function StagePlot({
   /** Ponteiros encostados no quadro. Serve para distinguir arrasto de peça (um dedo) de
    * pinça (dois) e para abortar o arrasto quando o segundo dedo chega. */
   const pointers = useRef(new Map<number, { x: number; y: number }>());
-  const pinch = useRef<{ dist: number; zoom: number } | null>(null);
+  /** Zero da pinça: distância e zoom quando ela começou, mais o último meio entre os dois
+   * dedos — é a diferença desse meio que desloca o mapa enquanto se aproxima. */
+  const pinch = useRef<{ dist: number; zoom: number; cx: number; cy: number } | null>(null);
   /** Cancela o arrasto de peça em curso, se houver. Preenchido por startMove. */
   const cancelDrag = useRef<(() => void) | null>(null);
   const autoFitDone = useRef(false);
@@ -1067,7 +1069,12 @@ export function StagePlot({
   function rebasearPinca() {
     const par = doisPonteiros();
     pinch.current = par
-      ? { dist: Math.hypot(par.a.x - par.b.x, par.a.y - par.b.y), zoom: zoomRef.current }
+      ? {
+          dist: Math.hypot(par.a.x - par.b.x, par.a.y - par.b.y),
+          zoom: zoomRef.current,
+          cx: (par.a.x + par.b.x) / 2,
+          cy: (par.a.y + par.b.y) / 2,
+        }
       : null;
   }
 
@@ -1080,7 +1087,55 @@ export function StagePlot({
     if (!par) return;
     const { a, b } = par;
     const dist = Math.hypot(a.x - b.x, a.y - b.y);
-    zoomTo(inicio.zoom * (dist / inicio.dist), (a.x + b.x) / 2, (a.y + b.y) / 2);
+    const cx = (a.x + b.x) / 2;
+    const cy = (a.y + b.y) / 2;
+    // Aproxima segurando o meio da pinça...
+    zoomTo(inicio.zoom * (dist / inicio.dist), cx, cy);
+    // ...e o quanto esse meio andou desloca o mapa junto. É o único jeito de alcançar as
+    // bordas do palco ampliado no toque, agora que o quadro não rola sozinho.
+    deslocar(inicio.cx - cx, inicio.cy - cy);
+    inicio.cx = cx;
+    inicio.cy = cy;
+  }
+
+  /** Move a vista do mapa. Usa scrollLeft/scrollTop, que continuam válidos mesmo com
+   * overflow hidden — o quadro só não rola por gesto do navegador. */
+  function deslocar(dx: number, dy: number) {
+    const vp = viewportRef.current;
+    if (!vp) return;
+    vp.scrollLeft += dx;
+    vp.scrollTop += dy;
+  }
+
+  /** Arrastar o vazio da grade desloca o mapa — só no mouse. No toque esse mesmo gesto é a
+   * rolagem da página (o motivo de o quadro ter deixado de rolar sozinho), e lá quem
+   * desloca o mapa são os dois dedos. */
+  function startPan(e: React.PointerEvent<HTMLElement>) {
+    if (e.pointerType !== "mouse" || e.button !== 0) return;
+    if (zoomRef.current <= ZOOM_MIN) return; // nada a deslocar: o palco cabe inteiro
+    e.preventDefault();
+    const target = e.currentTarget;
+    let ultimoX = e.clientX;
+    let ultimoY = e.clientY;
+    try {
+      target.setPointerCapture(e.pointerId);
+    } catch {
+      /* segue sem captura */
+    }
+
+    function onMove(ev: PointerEvent) {
+      deslocar(ultimoX - ev.clientX, ultimoY - ev.clientY);
+      ultimoX = ev.clientX;
+      ultimoY = ev.clientY;
+    }
+    function onUp() {
+      target.removeEventListener("pointermove", onMove);
+      target.removeEventListener("pointerup", onUp);
+      target.removeEventListener("pointercancel", onUp);
+    }
+    target.addEventListener("pointermove", onMove);
+    target.addEventListener("pointerup", onUp);
+    target.addEventListener("pointercancel", onUp);
   }
 
   function onViewportPointerEnd(e: React.PointerEvent) {
@@ -1412,7 +1467,7 @@ export function StagePlot({
             disabled={zoom >= ZOOM_MAX}
             onClick={() => zoomTo(zoomRef.current + 0.25)}
             aria-label="Aproximar"
-            title="Aproximar — no celular também dá para usar pinça de dois dedos"
+            title="Aproximar — no celular, pinça de dois dedos; para deslocar o mapa, arraste o vazio com o mouse ou use dois dedos"
           >
             <Plus className="size-3.5" />
           </Button>
@@ -1459,24 +1514,30 @@ export function StagePlot({
           <span className="text-[10px] text-muted-foreground/70">LATERAIS / SIDE FILL DIREITO</span>
         </div>
 
-        {/* Quadro de visualização: mantém a área do palco inteiro (aspect COLS/ROWS) e rola
-            quando a grade cresce além dele. O min-height segura o caso do celular, onde
+        {/* Quadro de visualização: mantém a área do palco inteiro (aspect COLS/ROWS) e corta
+            o que sobra quando a grade cresce. O min-height segura o caso do celular, onde
             22/12 de 300px daria uma fresta de 164px de altura.
 
-            Arrastar com um dedo no vazio da grade já rola aqui por conta do navegador: só
-            as peças levam touch-action none, o fundo não. */}
+            overflow-hidden, e não auto, de propósito: um quadro rolável no meio de um
+            formulário longo sequestra a rolagem da página — o dedo (ou a roda) some dentro
+            do mapa em vez de chegar nos controles logo abaixo. Aqui o quadro NUNCA rola por
+            gesto do usuário; ele só é reposicionado por código (scrollLeft/scrollTop
+            continuam funcionando com overflow hidden), o que mantém o zoom com ponto de
+            referência intacto. Para deslocar o mapa: dois dedos no toque, arrastar o vazio
+            com o mouse. */}
         <div
           ref={viewportRef}
           onPointerDown={onViewportPointerDown}
           onPointerMove={onViewportPointerMove}
           onPointerUp={onViewportPointerEnd}
           onPointerCancel={onViewportPointerEnd}
-          className="mb-2 min-h-[260px] overflow-auto overscroll-contain rounded-lg sm:min-h-0"
+          className="mb-2 min-h-[260px] overflow-hidden rounded-lg sm:min-h-0"
           style={{
             aspectRatio: `${COLS} / ${ROWS}`,
-            // pan-x pan-y deixa a rolagem de um dedo com o navegador (é o nosso "arrastar o
-            // palco") e tira dele a pinça, que é nossa. Sem isso as duas disputam o gesto.
-            touchAction: "pan-x pan-y",
+            // pan-y deixa o arrasto de um dedo rolar a PÁGINA (o quadro não rola sozinho,
+            // então a rolagem sobe direto para o modal) e ao mesmo tempo tira do navegador
+            // a pinça, que é nossa. Sem o pan-y, a pinça viraria zoom da página inteira.
+            touchAction: "pan-y",
           }}
         >
           {/* Largura em % da aproximação + aspect-ratio COLS/ROWS: a célula fica sempre
@@ -1486,11 +1547,18 @@ export function StagePlot({
           <div
             ref={gridRef}
             onPointerDown={(e) => {
+              if ((e.target as HTMLElement).closest("[data-stage-item]")) return;
               // Tocar no vazio da grade tira a seleção — é como o usuário "fecha" os botões
               // da peça no celular, onde não existe sair-com-o-mouse.
-              if (!(e.target as HTMLElement).closest("[data-stage-item]")) setSelectedId(null);
+              setSelectedId(null);
+              startPan(e);
             }}
-            className={cn("relative", dropHint && "cursor-grabbing")}
+            className={cn(
+              "relative",
+              dropHint && "cursor-grabbing",
+              // A mão só aparece quando há para onde deslocar.
+              !dropHint && zoom > ZOOM_MIN && "cursor-grab",
+            )}
             style={{ aspectRatio: `${COLS} / ${ROWS}`, width: `${zoom * 100}%` }}
           >
             {/* Linhas da Grade do Palco sem Fundo Roxo */}
