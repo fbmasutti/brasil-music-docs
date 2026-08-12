@@ -15,6 +15,9 @@ import {
   Redo2,
   Copy,
   Eraser,
+  Minus,
+  Type,
+  Pencil,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
@@ -95,6 +98,7 @@ export type StageKind =
   | "toca_discos"
   | "mpc"
   | "mesa_som"
+  | "texto"
   | "outro";
 
 export type StageCategoryKey =
@@ -507,6 +511,16 @@ export const STAGE_KINDS: {
     darkOutline: true,
   },
   {
+    kind: "texto",
+    label: "Texto livre",
+    category: "infra",
+    // Sem arte: a peça É o texto. O recado que não cabe em nenhum ícone — "DI da casa",
+    // "praticável 2m", "entrada pela coxia" — passava a virar um ícone genérico com nome
+    // comprido; aqui ele fica legível na própria caixa.
+    icon: <Type className="size-8 text-primary" />,
+    footprint: { w: 4, h: 2 },
+  },
+  {
     kind: "outro",
     label: "Outro",
     category: "infra",
@@ -515,6 +529,12 @@ export const STAGE_KINDS: {
     scaleRatio: 0.7,
   },
 ];
+
+/** A peça de texto se desenha sozinha (o rótulo ocupa a caixa toda), então ela pula o
+ * ícone e a faixinha de nome nas duas vistas: a interativa e a do PDF. */
+export function isTextItem(item: StageItem) {
+  return item.kind === "texto";
+}
 
 /** Pegada da peça na grade, em células. A razão largura/altura segue a proporção do
  * desenho, para a arte preencher a caixa em vez de sobrar nas laterais. */
@@ -599,6 +619,19 @@ function StageIcon({
 export const COLS = 22;
 export const ROWS = 12;
 
+/** Quanto o ponteiro precisa andar para o gesto virar arrasto em vez de toque. Precisa
+ * absorver o tremor natural do dedo: abaixo disso, tocar numa peça para selecioná-la
+ * acabaria arrastando ela alguns pixels sem querer. */
+const DRAG_THRESHOLD_PX = 6;
+
+/** Limites da aproximação. O mínimo é 1 porque "ajustar à tela" já mostra o palco inteiro:
+ * afastar mais só encolheria o desenho no meio de um quadro vazio. */
+const ZOOM_MIN = 1;
+const ZOOM_MAX = 4;
+/** Lado de célula, em px, abaixo do qual posicionar com o dedo vira sorteio. Um palco de 22
+ * colunas num celular de 375px dá célula de ~13px: é o caso que a aproximação automática
+ * resolve ao abrir. */
+const MIN_COMFORTABLE_CELL_PX = 26;
 
 export function parseStagePlot(raw: unknown): StageItem[] {
   if (!Array.isArray(raw)) return [];
@@ -737,9 +770,16 @@ export function StagePlot({
   const [warning, setWarning] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<StageCategoryKey>("voz_cordas");
   const [searchQuery, setSearchQuery] = useState("");
-  /** Peça em arrasto e as células que ela ocuparia se soltasse agora. O id fica em ref
-   * porque o dataTransfer só libera a leitura do payload no drop, não no dragover. */
-  const draggingId = useRef<string | null>(null);
+  /** Peça selecionada. Existe por causa do toque: no celular não há hover, então sem uma
+   * seleção explícita os botões de travar/girar/espelhar/duplicar/remover e a alça de
+   * redimensionar nunca apareceriam. Um toque curto na peça seleciona. */
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  /** Caixa de texto sendo editada na própria grade. Duplo clique entra, Enter ou sair do
+   * campo grava, Esc desiste. */
+  const [editingId, setEditingId] = useState<string | null>(null);
+  /** Peça em arrasto e o quanto ela já andou em px, para acompanhar o dedo/cursor em tempo
+   * real enquanto a prévia mostra, encaixada na grade, onde ela vai parar. */
+  const [drag, setDrag] = useState<{ id: string; dx: number; dy: number } | null>(null);
   const [dropHint, setDropHint] = useState<{
     col: number;
     row: number;
@@ -747,6 +787,22 @@ export function StagePlot({
     h: number;
     ok: boolean;
   } | null>(null);
+  /** Aproximação da grade. 1 = palco inteiro na largura disponível ("ajustar à tela"); daí
+   * para cima a grade cresce além do quadro e o quadro rola. Não existe menos que 1 porque
+   * abaixo disso sobraria espaço vazio em volta de um palco que já cabia inteiro. */
+  const [zoom, setZoom] = useState(1);
+  /** Espelho síncrono do zoom. Uma pinça dispara vários ajustes dentro do mesmo tique, e o
+   * estado do React só chega no render seguinte — usar o estado ali faria cada ajuste
+   * calcular a razão a partir de um valor velho e a rolagem se acumular fora de lugar. */
+  const zoomRef = useRef(1);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  /** Ponteiros encostados no quadro. Serve para distinguir arrasto de peça (um dedo) de
+   * pinça (dois) e para abortar o arrasto quando o segundo dedo chega. */
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const pinch = useRef<{ dist: number; zoom: number } | null>(null);
+  /** Cancela o arrasto de peça em curso, se houver. Preenchido por startMove. */
+  const cancelDrag = useRef<(() => void) | null>(null);
+  const autoFitDone = useRef(false);
 
   // Cmd/Ctrl+Z e Cmd/Ctrl+Shift+Z (ou Ctrl+Y). Ignora quando o foco está num campo de
   // texto: lá o desfazer nativo do navegador é o comportamento que o usuário espera.
@@ -779,6 +835,14 @@ export function StagePlot({
     setWarning(null);
     const label = STAGE_KINDS.find((k) => k.kind === kind)?.label ?? "Outro";
     onChange([...items, { id: crypto.randomUUID(), kind, label, col: spot.col, row: spot.row }]);
+  }
+
+  /** Grava o texto da caixa. Texto vazio volta ao rótulo padrão em vez de virar uma caixa
+   * invisível que o usuário não consegue mais pegar. */
+  function commitText(id: string, texto: string) {
+    const limpo = texto.trim();
+    setEditingId(null);
+    onChange(items.map((i) => (i.id === id ? { ...i, label: limpo || "Texto livre" } : i)));
   }
 
   function rotate(id: string) {
@@ -854,7 +918,11 @@ export function StagePlot({
     const originX = e.clientX;
     const originY = e.clientY;
     const target = e.currentTarget as HTMLElement;
-    target.setPointerCapture(e.pointerId);
+    try {
+      target.setPointerCapture(e.pointerId);
+    } catch {
+      /* segue sem captura — ver startMove */
+    }
     // O primeiro passo do arrasto empilha (guardando o tamanho de antes); os seguintes só
     // atualizam a tela. Um arrasto = um desfazer.
     let pushed = false;
@@ -887,71 +955,282 @@ export function StagePlot({
     );
   }
 
+  /** Aproxima mantendo fixo o ponto de referência (centro do quadro, cursor da roda ou meio
+   * da pinça). Sem isso, aproximar joga o palco para um canto e obriga a reencontrar onde
+   * se estava — o efeito de "perdi minha bateria de vista".
+   *
+   * A grade é medida por getBoundingClientRect, então toda a matemática de arrasto e
+   * redimensionamento continua valendo em qualquer aproximação, sem conversão nenhuma. */
+  function zoomTo(next: number, focalX?: number, focalY?: number) {
+    const vp = viewportRef.current;
+    const grid = gridRef.current;
+    const anterior = zoomRef.current;
+    const alvo = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, next));
+    zoomRef.current = alvo;
+    setZoom(alvo);
+    if (!vp || !grid || alvo === anterior) return;
+
+    const rect = vp.getBoundingClientRect();
+    const fx = (focalX ?? rect.left + rect.width / 2) - rect.left;
+    const fy = (focalY ?? rect.top + rect.height / 2) - rect.top;
+    const conteudoX = vp.scrollLeft + fx;
+    const conteudoY = vp.scrollTop + fy;
+    const razao = alvo / anterior;
+
+    // A largura é aplicada na mão antes de mexer na rolagem, e só depois o React repinta o
+    // mesmo valor. É o que garante que a grade já esteja maior na hora do ajuste: o
+    // scrollLeft de um quadro que ainda não transbordou é ceifado para 0, e a vista
+    // pularia para o canto — exatamente o "perdi minha bateria de vista" que o ponto de
+    // referência existe para evitar.
+    grid.style.width = `${alvo * 100}%`;
+    vp.scrollLeft = conteudoX * razao - fx;
+    vp.scrollTop = conteudoY * razao - fy;
+  }
+
+  /** Ao abrir num quadro estreito, já entra aproximado o bastante para a célula dar conta de
+   * um dedo. Roda uma vez só: depois disso a aproximação é do usuário, e refazer a conta a
+   * cada redimensionamento desfaria a escolha dele. */
+  useEffect(() => {
+    const vp = viewportRef.current;
+    if (!vp) return;
+
+    function tentar() {
+      if (autoFitDone.current) return true;
+      const largura = vp!.clientWidth;
+      // Largura 0 acontece quando o quadro ainda não tem layout — aba oculta, modal em
+      // transição de entrada. Não é "não precisa aproximar", é "ainda não dá para medir":
+      // por isso o observer segue ligado até a primeira medida válida, em vez de o efeito
+      // rodar uma vez e desistir para sempre.
+      if (!largura) return false;
+      autoFitDone.current = true;
+      const celula = largura / COLS;
+      if (celula >= MIN_COMFORTABLE_CELL_PX) return true;
+      const inicial = Math.min(ZOOM_MAX, (MIN_COMFORTABLE_CELL_PX * COLS) / largura);
+      zoomRef.current = inicial;
+      setZoom(inicial);
+      return true;
+    }
+
+    if (tentar()) return;
+    const observer = new ResizeObserver(() => {
+      if (tentar()) observer.disconnect();
+    });
+    observer.observe(vp);
+    return () => observer.disconnect();
+  }, []);
+
+  /** Ctrl/Cmd + roda aproxima, que é o gesto consagrado em editor — e é também o que o
+   * trackpad manda quando se faz pinça nele.
+   *
+   * Precisa ser listener nativo com passive:false: o onWheel do React entra como passivo,
+   * onde preventDefault não tem efeito, e sem preventDefault quem aproxima é o navegador,
+   * na página inteira. O ref carrega o estado mais novo para o listener poder ser montado
+   * uma vez só. */
+  const rodaRef = useRef(zoomTo);
+  useEffect(() => {
+    rodaRef.current = zoomTo;
+  });
+  useEffect(() => {
+    const vp = viewportRef.current;
+    if (!vp) return;
+    function onWheel(e: WheelEvent) {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      rodaRef.current(zoomRef.current * (e.deltaY < 0 ? 1.1 : 1 / 1.1), e.clientX, e.clientY);
+    }
+    vp.addEventListener("wheel", onWheel, { passive: false });
+    return () => vp.removeEventListener("wheel", onWheel);
+  }, []);
+
+  /** Pinça de dois dedos. Precisa ser nossa: as peças usam touch-action none (senão o
+   * navegador entende o arrasto como rolagem), e isso também tira a pinça nativa em cima
+   * delas. */
+  function onViewportPointerDown(e: React.PointerEvent) {
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.current.size !== 2) return;
+    // Chegou o segundo dedo: o que estava valendo como arrasto de peça vira pinça.
+    cancelDrag.current?.();
+    rebasearPinca();
+  }
+
+  /** Os dois ponteiros encostados, quando são exatamente dois. */
+  function doisPonteiros() {
+    if (pointers.current.size !== 2) return null;
+    const [a, b] = [...pointers.current.values()];
+    return a && b ? { a, b } : null;
+  }
+
+  /** (Re)marca o zero da pinça a partir dos dois dedos que estão na tela agora. Precisa ser
+   * refeito sempre que o par muda — com três dedos, largar um deixava a distância de
+   * referência medida entre OUTRO par, e a aproximação dava um pulo. Lê zoomRef, e não o
+   * estado, pelo mesmo motivo de sempre: o estado chega um render atrasado. */
+  function rebasearPinca() {
+    const par = doisPonteiros();
+    pinch.current = par
+      ? { dist: Math.hypot(par.a.x - par.b.x, par.a.y - par.b.y), zoom: zoomRef.current }
+      : null;
+  }
+
+  function onViewportPointerMove(e: React.PointerEvent) {
+    if (!pointers.current.has(e.pointerId)) return;
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const inicio = pinch.current;
+    if (!inicio || !inicio.dist) return;
+    const par = doisPonteiros();
+    if (!par) return;
+    const { a, b } = par;
+    const dist = Math.hypot(a.x - b.x, a.y - b.y);
+    zoomTo(inicio.zoom * (dist / inicio.dist), (a.x + b.x) / 2, (a.y + b.y) / 2);
+  }
+
+  function onViewportPointerEnd(e: React.PointerEvent) {
+    pointers.current.delete(e.pointerId);
+    // Sobrando exatamente dois, a pinça continua — mas a partir de um zero novo, medido
+    // entre os dedos que restaram.
+    if (pointers.current.size === 2) rebasearPinca();
+    else if (pointers.current.size < 2) pinch.current = null;
+  }
+
+  /** Célula sob o ponteiro, presa aos limites da grade: arrastar para fora da borda desliza
+   * a peça pela lateral em vez de cancelar o gesto no meio do caminho. */
   function cellFromPointer(clientX: number, clientY: number) {
     const el = gridRef.current;
     if (!el) return null;
     const rect = el.getBoundingClientRect();
     const col = Math.floor(((clientX - rect.left) / rect.width) * COLS);
     const row = Math.floor(((clientY - rect.top) / rect.height) * ROWS);
-    if (col < 0 || row < 0 || col >= COLS || row >= ROWS) return null;
-    return { col, row };
+    return {
+      col: Math.max(0, Math.min(COLS - 1, col)),
+      row: Math.max(0, Math.min(ROWS - 1, row)),
+    };
   }
 
-  /** Onde a peça encostaria se soltasse neste ponto. A célula sob o cursor vira o canto
-   * SUPERIOR ESQUERDO da peça — é a âncora do mapa inteiro, e o mesmo cálculo alimenta a
-   * prévia e o drop, para o que se vê ser exatamente o que acontece. */
-  function dropTargetAt(clientX: number, clientY: number, item: StageItem) {
+  /** Onde a peça encostaria se soltasse neste ponto. `grab` é a distância, em células, entre
+   * o canto da peça e a célula onde ela foi pega — preservá-la é o que faz a peça andar
+   * junto do dedo em vez de pular para debaixo dele. O mesmo cálculo alimenta a prévia e o
+   * commit, para o que se vê ser exatamente o que acontece. */
+  function dropTargetAt(
+    clientX: number,
+    clientY: number,
+    item: StageItem,
+    grab: { col: number; row: number },
+  ) {
     const cell = cellFromPointer(clientX, clientY);
     if (!cell) return null;
     const span = itemSpan(item);
-    // Encostar no limite em vez de recusar: arrastar para fora da borda direita/inferior
-    // acomoda a peça na última posição inteira que cabe.
-    const col = Math.min(cell.col, COLS - span.w);
-    const row = Math.min(cell.row, ROWS - span.h);
+    const col = Math.max(0, Math.min(COLS - span.w, cell.col - grab.col));
+    const row = Math.max(0, Math.min(ROWS - span.h, cell.row - grab.row));
     return { col, row, w: span.w, h: span.h, ok: fits(items, span, col, row, item.id) };
   }
 
-  function handleDragOver(e: React.DragEvent) {
-    e.preventDefault();
-    const id = draggingId.current;
-    const item = id ? items.find((i) => i.id === id) : null;
-    if (!item || item.locked) return;
-    const target = dropTargetAt(e.clientX, e.clientY, item);
-    // Sem repintar quando nada mudou: o dragover dispara a cada poucos ms.
-    setDropHint((prev) =>
-      prev &&
-      target &&
-      prev.col === target.col &&
-      prev.row === target.row &&
-      prev.ok === target.ok
-        ? prev
-        : target,
-    );
-  }
-
-  function endDrag() {
-    draggingId.current = null;
-    setDropHint(null);
-  }
-
-  function handleDrop(e: React.DragEvent) {
-    e.preventDefault();
-    const id = e.dataTransfer.getData("text/plain") || draggingId.current;
+  /** Move a peça em células. Serve às setas do teclado quando ela está selecionada — o
+   * ajuste fino que o arrasto não dá, e o único caminho para quem não usa mouse. */
+  function moveBy(id: string, dCol: number, dRow: number) {
     const item = items.find((i) => i.id === id);
-    endDrag();
-    if (!item) return;
-    if (item.locked) {
-      setWarning(`"${item.label}" está travado. Destrave para mover.`);
-      return;
-    }
-    const target = dropTargetAt(e.clientX, e.clientY, item);
-    if (!target) return;
-    if (!target.ok) {
+    if (!item || item.locked) return;
+    const span = itemSpan(item);
+    const col = Math.max(0, Math.min(COLS - span.w, item.col + dCol));
+    const row = Math.max(0, Math.min(ROWS - span.h, item.row + dRow));
+    if (col === item.col && row === item.row) return;
+    if (!fits(items, span, col, row, item.id)) {
       setWarning(`"${item.label}" não cabe nesse ponto — já tem equipamento no lugar.`);
       return;
     }
     setWarning(null);
-    onChange(items.map((i) => (i.id === id ? { ...i, col: target.col, row: target.row } : i)));
+    onChange(items.map((i) => (i.id === id ? { ...i, col, row } : i)));
+  }
+
+  /** Arrasta a peça com pointer events, e não com o drag-and-drop do HTML5: o HTML5 só
+   * responde a mouse, então no celular o mapa era intransportável — dava para adicionar e
+   * remover peça, mas não para posicionar nenhuma. Pointer events cobrem dedo, caneta e
+   * mouse pelo mesmo caminho.
+   *
+   * Só vira arrasto depois de andar alguns pixels; abaixo disso o gesto é um toque, que
+   * apenas seleciona a peça e revela os botões dela. */
+  function startMove(e: React.PointerEvent<HTMLElement>, item: StageItem) {
+    // Os botões de ação e a alça de redimensionar têm gesto próprio.
+    if ((e.target as HTMLElement).closest("[data-stage-control]")) return;
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    // Qualquer ponteiro já encostado significa que este é o segundo dedo, e dois dedos é
+    // pinça, não arrasto. Precisa ser >= 1: este handler roda ANTES do handler do quadro
+    // (a peça está dentro dele), então o ponteiro atual ainda não entrou no mapa. Com > 1
+    // o segundo dedo abria um arrasto novo, sobrescrevia o cancelDrag do primeiro, e o
+    // primeiro sobrevivia à pinça inteira para dar commit ao soltar.
+    if (pointers.current.size >= 1) return;
+
+    // Travada, a peça ainda seleciona (é assim que se chega ao botão de destravar), mas o
+    // gesto segue sendo do navegador — no celular é o que deixa a rolagem passar por cima
+    // dela.
+    setSelectedId(item.id);
+    if (item.locked) return;
+
+    // Sem isto o navegador entende o gesto como arrastar a arte da peça (ou selecionar o
+    // rótulo), abre o drag nativo dele e encerra o nosso na hora com um pointercancel —
+    // era o motivo de a peça não sair do lugar nem no mouse.
+    e.preventDefault();
+    // preventDefault também cancela o foco automático; devolver o foco é o que mantém as
+    // setas do teclado funcionando depois de clicar na peça. preventScroll é obrigatório:
+    // com aproximação o quadro rola, e um focus() comum traria a peça para dentro da vista
+    // deslocando a grade DEPOIS de `grab` já ter sido medido — a peça saltaria o tamanho da
+    // rolagem no primeiro quadro do arrasto.
+    e.currentTarget.focus({ preventScroll: true });
+
+    const cell = cellFromPointer(e.clientX, e.clientY);
+    if (!cell) return;
+    const grab = { col: cell.col - item.col, row: cell.row - item.row };
+    const originX = e.clientX;
+    const originY = e.clientY;
+    const target = e.currentTarget as HTMLElement;
+    // A captura mantém o gesto vivo quando o dedo sai de cima da peça — que é o caso
+    // normal, já que a peça anda junto. Se o navegador recusar (ponteiro já solto),
+    // seguir sem captura é melhor do que abortar o arrasto.
+    try {
+      target.setPointerCapture(e.pointerId);
+    } catch {
+      /* segue sem captura */
+    }
+    let moved = false;
+
+    function onMove(ev: PointerEvent) {
+      const dx = ev.clientX - originX;
+      const dy = ev.clientY - originY;
+      if (!moved && Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
+      moved = true;
+      setDrag({ id: item.id, dx, dy });
+      setDropHint(dropTargetAt(ev.clientX, ev.clientY, item, grab));
+    }
+
+    function finish(ev: PointerEvent | null, commit: boolean) {
+      target.removeEventListener("pointermove", onMove);
+      target.removeEventListener("pointerup", onUp);
+      target.removeEventListener("pointercancel", onCancel);
+      cancelDrag.current = null;
+      setDrag(null);
+      setDropHint(null);
+      if (!commit || !moved || !ev) return;
+      const drop = dropTargetAt(ev.clientX, ev.clientY, item, grab);
+      if (!drop) return;
+      if (!drop.ok) {
+        setWarning(`"${item.label}" não cabe nesse ponto — já tem equipamento no lugar.`);
+        return;
+      }
+      setWarning(null);
+      onChange(items.map((i) => (i.id === item.id ? { ...i, col: drop.col, row: drop.row } : i)));
+    }
+
+    function onUp(ev: PointerEvent) {
+      finish(ev, true);
+    }
+    function onCancel(ev: PointerEvent) {
+      finish(ev, false);
+    }
+
+    // A pinça precisa conseguir abortar este arrasto quando o segundo dedo encosta.
+    cancelDrag.current = () => finish(null, false);
+
+    target.addEventListener("pointermove", onMove);
+    target.addEventListener("pointerup", onUp);
+    target.addEventListener("pointercancel", onCancel);
   }
 
   function suggestMonitors() {
@@ -1099,6 +1378,46 @@ export function StagePlot({
           </div>
         ) : null}
 
+        {/* Aproximação. Fica junto do desfazer porque as duas agem sobre a vista do mapa, e
+            não sobre o catálogo de peças. */}
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="size-8 p-0"
+            disabled={zoom <= ZOOM_MIN}
+            onClick={() => zoomTo(zoomRef.current - 0.25)}
+            aria-label="Afastar"
+            title="Afastar"
+          >
+            <Minus className="size-3.5" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 min-w-14 px-1 text-xs tabular-nums"
+            disabled={zoom === ZOOM_MIN}
+            onClick={() => zoomTo(ZOOM_MIN)}
+            title="Ajustar à tela — mostra o palco inteiro de uma vez"
+          >
+            {zoom === ZOOM_MIN ? "Ajustado" : `${Math.round(zoom * 100)}%`}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="size-8 p-0"
+            disabled={zoom >= ZOOM_MAX}
+            onClick={() => zoomTo(zoomRef.current + 0.25)}
+            aria-label="Aproximar"
+            title="Aproximar — no celular também dá para usar pinça de dois dedos"
+          >
+            <Plus className="size-3.5" />
+          </Button>
+        </div>
+
         <span className="text-xs text-muted-foreground">
           {items.length === 0
             ? "Palco vazio"
@@ -1140,20 +1459,39 @@ export function StagePlot({
           <span className="text-[10px] text-muted-foreground/70">LATERAIS / SIDE FILL DIREITO</span>
         </div>
 
-        <div className="pb-2">
-          {/* Largura 100% + aspect-ratio COLS/ROWS: a célula fica sempre quadrada, em
-              qualquer tamanho de tela, sem precisar de uma largura mínima fixa nem de
-              rolagem horizontal — o mapa inteiro encolhe e cresce junto com o modal. */}
+        {/* Quadro de visualização: mantém a área do palco inteiro (aspect COLS/ROWS) e rola
+            quando a grade cresce além dele. O min-height segura o caso do celular, onde
+            22/12 de 300px daria uma fresta de 164px de altura.
+
+            Arrastar com um dedo no vazio da grade já rola aqui por conta do navegador: só
+            as peças levam touch-action none, o fundo não. */}
+        <div
+          ref={viewportRef}
+          onPointerDown={onViewportPointerDown}
+          onPointerMove={onViewportPointerMove}
+          onPointerUp={onViewportPointerEnd}
+          onPointerCancel={onViewportPointerEnd}
+          className="mb-2 min-h-[260px] overflow-auto overscroll-contain rounded-lg sm:min-h-0"
+          style={{
+            aspectRatio: `${COLS} / ${ROWS}`,
+            // pan-x pan-y deixa a rolagem de um dedo com o navegador (é o nosso "arrastar o
+            // palco") e tira dele a pinça, que é nossa. Sem isso as duas disputam o gesto.
+            touchAction: "pan-x pan-y",
+          }}
+        >
+          {/* Largura em % da aproximação + aspect-ratio COLS/ROWS: a célula fica sempre
+              quadrada e a grade inteira cresce junto, sem transform — assim os rótulos e as
+              bordas continuam nítidos, e a matemática do arrasto (que mede o retângulo real)
+              segue valendo sem nenhuma conversão. */}
           <div
             ref={gridRef}
-            onDragOver={handleDragOver}
-            onDragLeave={(e) => {
-              // O dragleave borbulha de cada célula filha; só interessa sair da grade toda.
-              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropHint(null);
+            onPointerDown={(e) => {
+              // Tocar no vazio da grade tira a seleção — é como o usuário "fecha" os botões
+              // da peça no celular, onde não existe sair-com-o-mouse.
+              if (!(e.target as HTMLElement).closest("[data-stage-item]")) setSelectedId(null);
             }}
-            onDrop={handleDrop}
-            className={cn("relative w-full", dropHint && "cursor-crosshair")}
-            style={{ aspectRatio: `${COLS} / ${ROWS}` }}
+            className={cn("relative", dropHint && "cursor-grabbing")}
+            style={{ aspectRatio: `${COLS} / ${ROWS}`, width: `${zoom * 100}%` }}
           >
             {/* Linhas da Grade do Palco sem Fundo Roxo */}
             <div
@@ -1192,9 +1530,23 @@ export function StagePlot({
                 gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
               }}
             >
-              {/* Prévia do drop: as células exatas que a peça vai ocupar, com o ponto de
-                  âncora marcado no canto superior esquerdo. É o que tira a dúvida de onde
-                  a peça encosta — o cursor sozinho não diz quantas células ela cobre. */}
+              {/* Palco vazio não diz o que fazer: a grade tracejada sozinha não sugere que o
+                  próximo passo está no catálogo lá em cima. A dica some no instante em que
+                  a primeira peça entra, então não estorva quem já sabe. */}
+              {items.length === 0 ? (
+                <div
+                  className="pointer-events-none z-10 flex items-center justify-center"
+                  style={{ gridColumn: "1 / -1", gridRow: "1 / -1" }}
+                >
+                  <p className="rounded-lg border border-dashed border-border bg-background/90 px-3 py-2 text-center text-xs font-medium text-muted-foreground shadow-xs">
+                    Escolha um instrumento no catálogo acima para começar o mapa
+                  </p>
+                </div>
+              ) : null}
+
+              {/* Prévia do drop: as células exatas que a peça vai ocupar quando soltar. A
+                  peça em si acompanha o dedo livremente, então é esta marca que mostra
+                  onde ela de fato encaixa na grade. */}
               {dropHint ? (
                 <div
                   aria-hidden
@@ -1211,12 +1563,6 @@ export function StagePlot({
                 >
                   <span
                     className={cn(
-                      "absolute -left-1 -top-1 size-2.5 rounded-full ring-2 ring-background",
-                      dropHint.ok ? "bg-primary" : "bg-destructive",
-                    )}
-                  />
-                  <span
-                    className={cn(
                       "absolute bottom-0.5 left-1/2 -translate-x-1/2 rounded-xs px-1 text-[9px] font-bold tabular-nums text-background",
                       dropHint.ok ? "bg-primary" : "bg-destructive",
                     )}
@@ -1231,51 +1577,103 @@ export function StagePlot({
                 const category =
                   STAGE_KINDS.find((k) => k.kind === item.kind)?.category ?? "infra";
                 const colorStyle = categoryColorStyles(category);
+                const selected = selectedId === item.id;
+                const dragging = drag?.id === item.id;
+                // Os controles seguem aparecendo no hover (mouse) e passam a aparecer
+                // também quando a peça está selecionada — o único caminho no toque.
+                const controlsVisible = selected
+                  ? "opacity-100"
+                  : "opacity-0 group-hover:opacity-100";
 
                 return (
                   <div
                     key={item.id}
-                    draggable={!item.locked}
+                    data-stage-item
+                    data-selected={selected || undefined}
+                    // group, e não button: a peça contém cinco botões, a alça de
+                    // redimensionar e o campo de texto. Um role="button" achataria tudo isso
+                    // no nome acessível e sumiria com os controles para quem usa leitor de
+                    // tela — além de prometer uma reação a Enter/Space que a peça não tem.
+                    role="group"
+                    tabIndex={0}
+                    aria-label={`${item.label}${item.locked ? " (travado)" : ""}`}
+                    aria-roledescription="peça do mapa de palco"
                     title={
                       item.locked
                         ? `${item.label} — travado. Destrave para mover ou redimensionar.`
-                        : `${item.label} — arraste para reposicionar (a peça encosta o canto superior esquerdo na célula sob o cursor), ou puxe o canto inferior direito para redimensionar`
+                        : isTextItem(item)
+                          ? `${item.label} — duplo clique para editar o texto; arraste para reposicionar`
+                          : `${item.label} — arraste para onde quiser (a peça acompanha o ponto onde você pegou); com ela selecionada, as setas do teclado ajustam célula a célula`
                     }
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData("text/plain", item.id);
-                      draggingId.current = item.id;
-                      // Prende o fantasma pelo canto superior esquerdo, que é a âncora do
-                      // drop. Sem isso o navegador o segura no ponto onde a peça foi pega,
-                      // e uma bateria pega no meio cai deslocada meia peça para baixo e
-                      // para a direita — a origem da dúvida "qual é o ponto de referência".
-                      e.dataTransfer.setDragImage(e.currentTarget, 0, 0);
+                    onPointerDown={(e) => startMove(e, item)}
+                    onDoubleClick={() => {
+                      if (isTextItem(item) && !item.locked) setEditingId(item.id);
                     }}
-                    onDragEnd={endDrag}
+                    onKeyDown={(e) => {
+                      const step: Record<string, [number, number]> = {
+                        ArrowRight: [1, 0],
+                        ArrowLeft: [-1, 0],
+                        ArrowDown: [0, 1],
+                        ArrowUp: [0, -1],
+                      };
+                      const d = step[e.key];
+                      if (!d) return;
+                      e.preventDefault();
+                      setSelectedId(item.id);
+                      moveBy(item.id, d[0], d[1]);
+                    }}
+                    onFocus={() => setSelectedId(item.id)}
                     style={{
                       gridColumn: `${item.col + 1} / span ${span.w}`,
                       gridRow: `${item.row + 1} / span ${span.h}`,
+                      // A peça acompanha o ponteiro em px durante o gesto; ao soltar volta
+                      // ao fluxo da grade, já na célula nova.
+                      ...(dragging
+                        ? { transform: `translate(${drag.dx}px, ${drag.dy}px)`, zIndex: 40 }
+                        : null),
                     }}
                     className={cn(
-                      "group pointer-events-auto relative rounded-lg border backdrop-blur-2xs shadow-xs hover:shadow-md transition-all",
+                      // transition-shadow, e não transition-all: animar o transform faria a
+                      // peça arrastar atrasada em relação ao dedo.
+                      "group pointer-events-auto relative select-none rounded-lg border backdrop-blur-2xs shadow-xs transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                       item.locked
                         ? "cursor-not-allowed border-dashed opacity-90"
-                        : "cursor-grab active:cursor-grabbing hover:scale-[1.02]",
-                      // A peça em trânsito some de vista para a prévia do destino ficar
-                      // legível — senão as duas competem na mesma região da grade.
-                      dropHint && draggingId.current === item.id && "opacity-25",
-                      colorStyle,
+                        : // touch-none impede o navegador de entender o arrasto como rolagem
+                          // da página e engolir o gesto no meio.
+                          "cursor-grab touch-none active:cursor-grabbing hover:shadow-md",
+                      dragging && "cursor-grabbing shadow-lg",
+                      selected && !dragging && "ring-2 ring-primary/70",
+                      // A caixa de texto é recado, não equipamento: borda tracejada e fundo
+                      // neutro para ninguém confundir com uma peça do palco.
+                      isTextItem(item)
+                        ? "border-dashed border-border bg-background/80"
+                        : colorStyle,
                     )}
                   >
-                    {/* Marca da âncora: o canto que vai encostar na célula sob o cursor.
-                        Aparece no hover, antes do arrasto começar, para a regra ser
-                        aprendida sem precisar errar uma vez. */}
-                    {!item.locked && (
-                      <span
-                        aria-hidden
-                        className="pointer-events-none absolute -left-0.5 -top-0.5 z-20 size-2 rounded-full bg-primary opacity-0 ring-2 ring-background transition-opacity group-hover:opacity-100"
-                      />
-                    )}
-                    <div className="absolute -right-2 -top-2 z-30 flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                    <div
+                      data-stage-control
+                      className={cn(
+                        "absolute -right-2 -top-2 z-30 flex gap-0.5 transition-opacity focus-within:opacity-100",
+                        controlsVisible,
+                      )}
+                    >
+                      {/* Editar texto tem botão próprio porque o duplo clique não existe no
+                          toque: o preventDefault do pointerdown (necessário para o arrasto)
+                          suprime os eventos de mouse de compatibilidade, e com eles o
+                          dblclick. Sem este botão a caixa de texto seria ineditável no
+                          celular — justo a plataforma que o resto daqui veio consertar. */}
+                      {isTextItem(item) && (
+                        <button
+                          type="button"
+                          aria-label={`Editar texto de ${item.label}`}
+                          title="Editar o texto desta caixa"
+                          className="rounded-full border border-border bg-background p-1 text-foreground shadow-md disabled:opacity-40"
+                          disabled={item.locked}
+                          onClick={() => setEditingId(item.id)}
+                        >
+                          <Pencil className="size-3.5" />
+                        </button>
+                      )}
                       <button
                         type="button"
                         aria-label={item.locked ? `Destravar ${item.label}` : `Travar ${item.label}`}
@@ -1335,10 +1733,11 @@ export function StagePlot({
                       </button>
                     </div>
 
-                    {/* Alça de redimensionar, no canto inferior direito. Fica fora do fluxo
-                        do drag HTML5 (que move a peça) usando pointer events. */}
+                    {/* Alça de redimensionar, no canto inferior direito. Marcada como
+                        controle para o pointerdown dela não virar arrasto da peça. */}
                     {!item.locked && (
                       <div
+                        data-stage-control
                         role="slider"
                         tabIndex={0}
                         aria-label={`Redimensionar ${item.label}`}
@@ -1360,22 +1759,58 @@ export function StagePlot({
                           const d = step[e.key];
                           if (!d) return;
                           e.preventDefault();
+                          // Sem isto a seta também borbulharia para a peça e o gesto
+                          // redimensionaria e moveria de uma vez só.
+                          e.stopPropagation();
                           setSize(item.id, span.w + d[0], span.h + d[1]);
                         }}
-                        className="absolute -bottom-1 -right-1 z-30 size-3.5 cursor-nwse-resize rounded-sm border border-border bg-background opacity-0 shadow-md transition-opacity group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring/60"
+                        className={cn(
+                          "absolute -bottom-1 -right-1 z-30 size-3.5 touch-none cursor-nwse-resize rounded-sm border border-border bg-background shadow-md transition-opacity focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring/60",
+                          controlsVisible,
+                        )}
                       />
                     )}
 
-                    {/* A pegada inteira é arte: o rótulo sai dela e flutua por baixo, para o
-                        desenho não perder altura para uma faixa de texto. */}
-                    <StageIcon kind={item.kind} rotateDeg={item.rotateDeg} flipX={item.flipX} />
+                    {isTextItem(item) ? (
+                      editingId === item.id ? (
+                        <input
+                          data-stage-control
+                          // Foco na mão em vez de autoFocus, pelo mesmo motivo do startMove:
+                          // autoFocus rola o quadro para trazer a caixa à vista, e com
+                          // aproximação isso desloca o mapa inteiro na cara do usuário.
+                          ref={(el) => el?.focus({ preventScroll: true })}
+                          defaultValue={item.label}
+                          aria-label="Texto da caixa"
+                          onBlur={(e) => commitText(item.id, e.currentTarget.value)}
+                          onKeyDown={(e) => {
+                            e.stopPropagation();
+                            if (e.key === "Enter") commitText(item.id, e.currentTarget.value);
+                            if (e.key === "Escape") setEditingId(null);
+                          }}
+                          // select-text e touch-auto desfazem, só aqui dentro, o select-none
+                          // e o touch-none que a peça usa para o arrasto — senão não dá para
+                          // marcar nem posicionar o cursor no texto que se está editando.
+                          className="absolute inset-0 size-full touch-auto select-text rounded-lg border-0 bg-background/95 px-1 text-center text-[10px] font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      ) : (
+                        <span className="pointer-events-none flex size-full items-center justify-center overflow-hidden px-1 text-center text-[9px] font-semibold leading-tight text-foreground sm:text-[11px]">
+                          {item.label}
+                        </span>
+                      )
+                    ) : (
+                      <>
+                        {/* A pegada inteira é arte: o rótulo sai dela e flutua por baixo, para
+                            o desenho não perder altura para uma faixa de texto. */}
+                        <StageIcon kind={item.kind} rotateDeg={item.rotateDeg} flipX={item.flipX} />
 
-                    {/* Rótulo sobreposto no rodapé da própria pegada: não rouba altura da
-                        arte (que segue ocupando a caixa inteira) e não vaza para a célula
-                        vizinha. Quebra em duas linhas quando o nome é longo. */}
-                    <span className="pointer-events-none absolute bottom-0.5 left-1/2 z-20 max-w-[calc(100%-4px)] -translate-x-1/2 truncate rounded-xs border border-border/60 bg-background/95 px-0.5 py-px text-center text-[7px] font-bold leading-[1.1] text-foreground shadow-2xs sm:px-1 sm:py-0.5 sm:text-[9px] sm:leading-[1.15]">
-                      {item.label}
-                    </span>
+                        {/* Rótulo sobreposto no rodapé da própria pegada: não rouba altura da
+                            arte (que segue ocupando a caixa inteira) e não vaza para a célula
+                            vizinha. Quebra em duas linhas quando o nome é longo. */}
+                        <span className="pointer-events-none absolute bottom-0.5 left-1/2 z-20 max-w-[calc(100%-4px)] -translate-x-1/2 truncate rounded-xs border border-border/60 bg-background/95 px-0.5 py-px text-center text-[7px] font-bold leading-[1.1] text-foreground shadow-2xs sm:px-1 sm:py-0.5 sm:text-[9px] sm:leading-[1.15]">
+                          {item.label}
+                        </span>
+                      </>
+                    )}
                   </div>
                 );
               })}
@@ -1395,11 +1830,11 @@ export function StagePlot({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        💡 <strong>Como posicionar:</strong> ao arrastar, a peça encosta o{" "}
-        <strong>canto superior esquerdo</strong> na célula sob o cursor — o pontinho{" "}
-        <span className="inline-block size-2 translate-y-px rounded-full bg-primary ring-1 ring-border" />{" "}
-        marca esse ponto, e a área tracejada mostra as células que ela vai ocupar antes de você
-        soltar. Puxe o canto inferior direito para redimensionar.
+        💡 <strong>Como posicionar:</strong> arraste a peça com o dedo ou o mouse — ela acompanha o
+        ponto onde você pegou, e a área tracejada mostra as células que ela vai ocupar antes de você
+        soltar. <strong>Toque uma vez</strong> para selecionar e liberar os botões de travar, girar,
+        espelhar, duplicar e remover; com a peça selecionada, as setas do teclado ajustam célula a
+        célula. Puxe o canto inferior direito para redimensionar.
         {history ? " Ctrl/Cmd + Z desfaz, Ctrl/Cmd + Shift + Z refaz." : ""}
       </p>
     </div>
@@ -1505,6 +1940,34 @@ export function StagePlotPrintable({
         >
           {items.map((item) => {
             const span = itemSpan(item);
+            // A caixa de texto vira o próprio recado no PDF: moldura tracejada e o texto
+            // ocupando a caixa, sem ícone e sem a faixinha de nome.
+            if (isTextItem(item)) {
+              return (
+                <div
+                  key={item.id}
+                  style={{
+                    gridColumn: `${item.col + 1} / span ${span.w}`,
+                    gridRow: `${item.row + 1} / span ${span.h}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "2px 4px",
+                    border: "1px dashed #a1a1aa",
+                    borderRadius: 6,
+                    background: "#ffffff",
+                    fontSize: 10,
+                    fontWeight: 700,
+                    lineHeight: 1.2,
+                    textAlign: "center",
+                    color: "#18181b",
+                    overflow: "hidden",
+                  }}
+                >
+                  {item.label}
+                </div>
+              );
+            }
             return (
               <div
                 key={item.id}

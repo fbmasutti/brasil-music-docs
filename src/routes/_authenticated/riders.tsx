@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Sliders, Plus, Download, Trash2, Wand2, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,7 @@ import {
   PRINT_PLOT_HEIGHT_LANDSCAPE,
 } from "@/components/StagePlot";
 import { toPng } from "html-to-image";
+import { toast } from "sonner";
 import { RIDER_PRESETS, presetToStageItems } from "@/lib/rider-presets";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { PdfOrientation } from "@/lib/pdf";
@@ -165,7 +166,25 @@ const empty = {
   rooming_list: "",
 };
 
-type RiderTab = "channels" | "som" | "luz" | "hospitality" | "mapa";
+/** Som, luz, backline e hospitality viraram uma aba só: são todos texto corrido que se
+ * preenche de uma sentada, e separá-los em quatro abas obrigava a caçar em qual delas
+ * estava o campo. O mapa ficou sozinho e na frente porque é a peça que se monta, não se
+ * digita — e é o que a casa de show olha primeiro. */
+type RiderTab = "mapa" | "channels" | "requisitos";
+
+/** Cabeçalho leve para separar os blocos dentro da aba de requisitos. Não usa o Section do
+ * ui-kit de propósito: aquele desenha um painel com borda, e um painel dentro do corpo do
+ * formulário criaria uma segunda moldura em volta de campos que já estão numa. */
+function SubSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="space-y-4">
+      <h3 className="border-b border-border pb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
 
 function RidersPage() {
   const { data: profile } = useProfile();
@@ -185,7 +204,7 @@ function RidersPage() {
     rider: RiderRow;
     orientation: PdfOrientation;
   } | null>(null);
-  const [tab, setTab] = useState<RiderTab>("channels");
+  const [tab, setTab] = useState<RiderTab>("mapa");
   const printRef = useRef<HTMLDivElement>(null);
   // O histórico mora aqui, não dentro do canvas: a grade e a lista de rótulos editam as
   // mesmas peças e precisam empilhar no mesmo desfazer.
@@ -225,7 +244,7 @@ function RidersPage() {
     const taken = riders.filter((r) => r.name.startsWith(preset.label)).length;
     setEditingId(null);
     setFormOpen(true);
-    setTab("channels");
+    setTab("mapa");
     setForm({
       ...empty,
       name: taken ? `${preset.label} (${taken + 1})` : preset.label,
@@ -247,6 +266,9 @@ function RidersPage() {
     let cancelled = false;
     (async () => {
       let dataUrl: string | null = null;
+      // Rider sem nenhuma peça não tem mapa para perder — só nesse caso a tabela de
+      // reserva é o resultado esperado, e não uma falha.
+      const temMapa = parseStagePlot(rider.stage_plot).length > 0;
       try {
         if (node) {
           // Espera um frame: no primeiro commit o nó existe no DOM mas ainda
@@ -266,6 +288,14 @@ function RidersPage() {
       }
       if (cancelled) return;
       exportRider(rider, dataUrl, pendingExport.orientation);
+      // A reserva salva o PDF, mas trocar o desenho por uma tabela sem avisar faz o
+      // usuário mandar para a casa de show um rider que ele acha que tem mapa e não tem.
+      if (temMapa && !dataUrl) {
+        toast.warning("O PDF saiu sem o desenho do palco", {
+          description:
+            "Não foi possível gerar a imagem do mapa; ele foi para o PDF como tabela de posições. Tente exportar de novo.",
+        });
+      }
       setPendingExport(null);
     })();
     return () => {
@@ -274,7 +304,7 @@ function RidersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingExport]);
 
-  function startEdit(rider: RiderRow, openTab: RiderTab = "channels") {
+  function startEdit(rider: RiderRow, openTab: RiderTab = "mapa") {
     setEditingId(rider.id);
     setFormOpen(true);
     setTab(openTab);
@@ -302,7 +332,7 @@ function RidersPage() {
   function startBlank() {
     setEditingId(null);
     setFormOpen(true);
-    setTab("channels");
+    setTab("mapa");
     setForm({ ...empty, formation_id: activeFormationId ?? "" });
     stageHistory.reset([]);
     setChannels([]);
@@ -524,22 +554,33 @@ function RidersPage() {
 
           <Tabs value={tab} onValueChange={(v) => setTab(v as RiderTab)} className="mt-4">
             <TabsList className="h-auto flex-wrap gap-1">
+              {/* O mapa vem primeiro e com ícone: é o trabalho principal desta tela, e o
+                  resto do rider é preenchimento de campo. */}
+              <TabsTrigger value="mapa" className="font-semibold">
+                <Map className="mr-1.5 size-4" />
+                Mapa de palco
+                {stage.length > 0 && (
+                  <Badge variant="secondary" className="ml-1.5 px-1.5 py-0 text-[10px]">
+                    {stage.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
               <TabsTrigger value="channels">
                 Channel list
                 {channels.length > 0 && (
-                  <Badge variant="secondary" className="ml-1.5 px-1.5 py-0 text-[10px]">{channels.length}</Badge>
+                  <Badge variant="secondary" className="ml-1.5 px-1.5 py-0 text-[10px]">
+                    {channels.length}
+                  </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="som">Som</TabsTrigger>
-              <TabsTrigger value="luz">Luz & Backline</TabsTrigger>
-              <TabsTrigger value="hospitality">Hospitality</TabsTrigger>
-              <TabsTrigger value="mapa">
-                Mapa
-                {stage.length > 0 && (
-                  <Badge variant="secondary" className="ml-1.5 px-1.5 py-0 text-[10px]">{stage.length}</Badge>
-                )}
-              </TabsTrigger>
+              <TabsTrigger value="requisitos">Requisitos</TabsTrigger>
             </TabsList>
+
+            {/* ─── Mapa de palco ─── */}
+            <TabsContent value="mapa" className="space-y-3 pt-2">
+              <StagePlot items={stage} onChange={setStage} history={stageHistory} />
+              <StageItemLabels items={stage} onChange={setStage} />
+            </TabsContent>
 
             {/* ─── Channel list ─── */}
             <TabsContent value="channels" className="space-y-3 pt-2">
@@ -615,91 +656,90 @@ function RidersPage() {
               </Button>
             </TabsContent>
 
-            {/* ─── Som ─── */}
-            <TabsContent value="som" className="space-y-4 pt-2">
-              <FieldGrid>
-                <TextField
-                  label="Mesa / Console"
-                  value={form.console_specs}
-                  onChange={set("console_specs")}
-                  placeholder="Digital, mínimo 16 canais"
+            {/* ─── Requisitos: som, luz, backline e hospitality na mesma folha ─── */}
+            <TabsContent value="requisitos" className="space-y-6 pt-2">
+              <SubSection title="Som">
+                <FieldGrid>
+                  <TextField
+                    label="Mesa / Console"
+                    value={form.console_specs}
+                    onChange={set("console_specs")}
+                    placeholder="Digital, mínimo 16 canais"
+                  />
+                  <TextField
+                    label="P.A."
+                    value={form.pa_specs}
+                    onChange={set("pa_specs")}
+                    placeholder="Line array, compatível com o público"
+                  />
+                  <TextField
+                    label="Monitores"
+                    value={form.monitor_specs}
+                    onChange={set("monitor_specs")}
+                    placeholder="4 vias independentes ou in-ear"
+                  />
+                </FieldGrid>
+                <TextAreaField
+                  label="Observações gerais de som"
+                  value={form.sound_requirements}
+                  onChange={set("sound_requirements")}
+                  placeholder="Detalhes de setup, palco próprio, etc."
                 />
-                <TextField
-                  label="P.A."
-                  value={form.pa_specs}
-                  onChange={set("pa_specs")}
-                  placeholder="Line array, compatível com o público"
+              </SubSection>
+
+              <SubSection title="Luz & backline">
+                <TextAreaField
+                  label="Iluminação"
+                  value={form.lighting_requirements}
+                  onChange={set("lighting_requirements")}
+                  placeholder="Ex.: 4 PAR LED frontais, 2 spots laterais, strobo..."
                 />
-                <TextField
-                  label="Monitores"
-                  value={form.monitor_specs}
-                  onChange={set("monitor_specs")}
-                  placeholder="4 vias independentes ou in-ear"
+                <div className="space-y-2">
+                  <Label>Backline — lista de equipamentos</Label>
+                  {backlineRows.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">Nenhum item ainda.</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {backlineRows.map((row) => (
+                        <div key={row.id} className="flex items-center gap-2">
+                          <Input
+                            value={row.item}
+                            onChange={(e) => updateBacklineRow(row.id, e.target.value)}
+                            placeholder="Ex.: Bateria acústica 5 peças c/ bumbo 22pol"
+                            className="flex-1"
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Remover item"
+                            onClick={() => removeBacklineRow(row.id)}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <Button type="button" variant="outline" size="sm" onClick={addBacklineRow}>
+                    <Plus className="mr-1 size-4" /> Adicionar equipamento
+                  </Button>
+                </div>
+              </SubSection>
+
+              <SubSection title="Hospitality & transporte">
+                <TextAreaField
+                  label="Hospitality / camarim"
+                  value={form.hospitality}
+                  onChange={set("hospitality")}
+                  placeholder="Água mineral, chá, snacks, espaço reservado..."
                 />
-              </FieldGrid>
-              <TextAreaField
-                label="Observações gerais de som"
-                value={form.sound_requirements}
-                onChange={set("sound_requirements")}
-                placeholder="Detalhes de setup, palco próprio, etc."
-              />
-            </TabsContent>
-
-            {/* ─── Luz & Backline ─── */}
-            <TabsContent value="luz" className="space-y-4 pt-2">
-              <TextAreaField
-                label="Iluminação"
-                value={form.lighting_requirements}
-                onChange={set("lighting_requirements")}
-                placeholder="Ex.: 4 PAR LED frontais, 2 spots laterais, strobo..."
-              />
-              <div className="space-y-2">
-                <Label>Backline — lista de equipamentos</Label>
-                {backlineRows.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">Nenhum item ainda.</p>
-                ) : (
-                  <div className="space-y-1.5">
-                    {backlineRows.map((row) => (
-                      <div key={row.id} className="flex items-center gap-2">
-                        <Input
-                          value={row.item}
-                          onChange={(e) => updateBacklineRow(row.id, e.target.value)}
-                          placeholder="Ex.: Bateria acústica 5 peças c/ bumbo 22pol"
-                          className="flex-1"
-                        />
-                        <Button variant="ghost" size="icon" aria-label="Remover item" onClick={() => removeBacklineRow(row.id)}>
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <Button type="button" variant="outline" size="sm" onClick={addBacklineRow}>
-                  <Plus className="mr-1 size-4" /> Adicionar equipamento
-                </Button>
-              </div>
-            </TabsContent>
-
-            {/* ─── Hospitality ─── */}
-            <TabsContent value="hospitality" className="space-y-4 pt-2">
-              <TextAreaField
-                label="Hospitality / camarim"
-                value={form.hospitality}
-                onChange={set("hospitality")}
-                placeholder="Água mineral, chá, snacks, espaço reservado..."
-              />
-              <TextAreaField
-                label="Rooming list / transporte"
-                value={form.rooming_list}
-                onChange={set("rooming_list")}
-                placeholder="Número de quartos, van, meia-passagem..."
-              />
-            </TabsContent>
-
-            {/* ─── Mapa de palco ─── */}
-            <TabsContent value="mapa" className="space-y-3 pt-2">
-              <StagePlot items={stage} onChange={setStage} history={stageHistory} />
-              <StageItemLabels items={stage} onChange={setStage} />
+                <TextAreaField
+                  label="Rooming list / transporte"
+                  value={form.rooming_list}
+                  onChange={set("rooming_list")}
+                  placeholder="Número de quartos, van, meia-passagem..."
+                />
+              </SubSection>
             </TabsContent>
           </Tabs>
 
