@@ -87,11 +87,13 @@ export function StatCard({
   return (
     <div className="panel p-5">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             {label}
           </p>
-          <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">{value}</p>
+          <p className="mt-2 break-words text-2xl font-bold tracking-tight text-foreground">
+            {value}
+          </p>
           {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
         </div>
         {icon ? (
@@ -326,7 +328,7 @@ export function Section({
                 <p className="mt-1 text-xs text-muted-foreground">{description}</p>
               ) : null}
             </div>
-            {actions}
+            {actions ? <div className="ml-auto flex items-center gap-2">{actions}</div> : null}
           </div>
         ) : null}
         {children}
@@ -356,7 +358,7 @@ export function Section({
               ) : null}
             </div>
           </CollapsibleTrigger>
-          {actions}
+          {actions ? <div className="ml-auto flex items-center gap-2">{actions}</div> : null}
         </div>
         <CollapsibleContent className="mt-4">{children}</CollapsibleContent>
       </Collapsible>

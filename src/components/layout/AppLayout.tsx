@@ -322,7 +322,7 @@ function FormationSwitcher() {
               style={{ backgroundColor: formationDotColor(activeBrandKit) }}
             />
           ) : null}
-          <span className="max-w-32 truncate">
+          <span className="max-w-56 truncate">
             Tocando como: {activeFormation?.name ?? "Padrão (solo)"}
           </span>
         </Button>

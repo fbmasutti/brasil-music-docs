@@ -102,14 +102,21 @@ export type StageCategoryKey =
   | "bateria_percussao"
   | "teclas_eletronicos"
   | "amplificacao_monitores"
-  | "sopros_infra";
+  | "sopros"
+  | "infra";
 
+// Cada cor segue uma associação direta com a categoria, em vez de ordem arbitrária:
+// azul para voz/cordas (neutro, "limpo"), âmbar para bateria/percussão (madeira, calor),
+// verde para teclas/eletrônicos (telas, digital), rosa para amplificação/retornos (potência),
+// dourado para sopros (latão dos instrumentos de metal) e cinza para infra — a única
+// categoria que não é instrumento musical, por isso fica fora da paleta "quente/instrumento".
 export const STAGE_CATEGORIES: { key: StageCategoryKey; label: string; color: string }[] = [
   { key: "voz_cordas", label: "Voz & Cordas", color: "sky" },
   { key: "bateria_percussao", label: "Bateria & Percussão", color: "amber" },
   { key: "teclas_eletronicos", label: "Teclas & Eletrônicos", color: "emerald" },
   { key: "amplificacao_monitores", label: "Amplificadores & Retornos", color: "rose" },
-  { key: "sopros_infra", label: "Sopros & Infra", color: "indigo" },
+  { key: "sopros", label: "Sopros", color: "yellow" },
+  { key: "infra", label: "Infraestrutura", color: "slate" },
 ];
 
 export const STAGE_KINDS: {
@@ -122,7 +129,9 @@ export const STAGE_KINDS: {
   rotateDeg?: number;
   /** Tamanho relativo dentro da célula. Não é ajuste de enquadramento: codifica o porte
    * real da peça em escala comprimida, para uma DI não ocupar o mesmo espaço visual que
-   * um cajón. Piso em ~0.5 — abaixo disso o ícone some dentro da moldura. */
+   * um cajón. Piso em ~0.5 — abaixo disso o ícone some dentro da moldura. Teto em 1: a
+   * arte já preenche 100% da pegada via object-contain, então qualquer valor acima disso
+   * estoura pra fora da célula — quanto maior a pegada, mais visível o estouro. */
   scaleRatio?: number;
   /** Espelha no eixo X. Deixa o par esquerdo/direito de retornos compartilhar um único
    * arquivo, com simetria garantida. */
@@ -162,7 +171,7 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/guitarra.svg",
     footprint: { w: 3, h: 2 },
-    scaleRatio: 1.05,
+    scaleRatio: 1,
   },
   {
     kind: "violao",
@@ -170,7 +179,7 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/violao.svg",
     footprint: { w: 3, h: 3 },
-    scaleRatio: 1.05,
+    scaleRatio: 1,
   },
   {
     kind: "violao_aco",
@@ -178,7 +187,7 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/violao-aco.svg",
     footprint: { w: 3, h: 2 },
-    scaleRatio: 1.05,
+    scaleRatio: 1,
   },
   {
     kind: "cavaco",
@@ -202,7 +211,7 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/baixo.svg",
     footprint: { w: 3, h: 2 },
-    scaleRatio: 1.05,
+    scaleRatio: 1,
   },
   {
     kind: "contrabaixo",
@@ -210,7 +219,7 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/contrabaixo.svg",
     footprint: { w: 2, h: 5 },
-    scaleRatio: 1.05,
+    scaleRatio: 1,
     darkOutline: true,
   },
   {
@@ -227,7 +236,7 @@ export const STAGE_KINDS: {
     category: "voz_cordas",
     iconSrc: "/stage-icons/violoncelo.svg",
     footprint: { w: 3, h: 3 },
-    scaleRatio: 1.05,
+    scaleRatio: 1,
   },
   {
     kind: "pedalboard",
@@ -246,7 +255,7 @@ export const STAGE_KINDS: {
     category: "bateria_percussao",
     iconSrc: "/stage-icons/bateria.svg",
     footprint: { w: 5, h: 4 },
-    scaleRatio: 1.15,
+    scaleRatio: 1,
     darkOutline: true,
   },
   {
@@ -306,7 +315,7 @@ export const STAGE_KINDS: {
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/teclado.svg",
     footprint: { w: 5, h: 2 },
-    scaleRatio: 1.15,
+    scaleRatio: 1,
   },
   {
     kind: "piano",
@@ -314,7 +323,7 @@ export const STAGE_KINDS: {
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/piano.svg",
     footprint: { w: 5, h: 5 },
-    scaleRatio: 1.1,
+    scaleRatio: 1,
     darkOutline: true,
   },
   {
@@ -323,7 +332,7 @@ export const STAGE_KINDS: {
     category: "teclas_eletronicos",
     iconSrc: "/stage-icons/orgao.svg",
     footprint: { w: 6, h: 2 },
-    scaleRatio: 1.1,
+    scaleRatio: 1,
   },
   {
     kind: "sanfona",
@@ -449,15 +458,15 @@ export const STAGE_KINDS: {
     category: "amplificacao_monitores",
     iconSrc: "/stage-icons/mesa-som.svg",
     footprint: { w: 4, h: 3 },
-    scaleRatio: 1.05,
+    scaleRatio: 1,
     darkOutline: true,
   },
 
-  // Sopros & Infra
+  // Sopros
   {
     kind: "sax",
     label: "Sax",
-    category: "sopros_infra",
+    category: "sopros",
     iconSrc: "/stage-icons/sax.svg",
     footprint: { w: 2, h: 3 },
     scaleRatio: 0.95,
@@ -465,40 +474,42 @@ export const STAGE_KINDS: {
   {
     kind: "trombone",
     label: "Trombone",
-    category: "sopros_infra",
+    category: "sopros",
     iconSrc: "/stage-icons/trombone.svg",
     footprint: { w: 3, h: 3 },
-    scaleRatio: 1.05,
+    scaleRatio: 1,
   },
   {
     kind: "trompete",
     label: "Trompete",
-    category: "sopros_infra",
+    category: "sopros",
     iconSrc: "/stage-icons/trompete.svg",
     footprint: { w: 2, h: 2 },
     scaleRatio: 0.85,
   },
+
+  // Infraestrutura
   {
     kind: "ponto_energia",
     label: "Ponto de energia / Régua AC",
-    category: "sopros_infra",
+    category: "infra",
     iconSrc: "/stage-icons/ponto-energia.svg",
     footprint: { w: 2, h: 2 },
-    scaleRatio: 0.6,
+    scaleRatio: 0.5,
   },
   {
     kind: "praticavel",
     label: "Praticável",
-    category: "sopros_infra",
+    category: "infra",
     iconSrc: "/stage-icons/praticavel.svg",
     footprint: { w: 6, h: 3 },
-    scaleRatio: 1.15,
+    scaleRatio: 1,
     darkOutline: true,
   },
   {
     kind: "outro",
     label: "Outro",
-    category: "sopros_infra",
+    category: "infra",
     icon: <Music2 className="size-8 text-primary" />,
     footprint: { w: 2, h: 2 },
     scaleRatio: 0.7,
@@ -514,15 +525,17 @@ export function spanOf(kind: StageKind) {
 function categoryColorStyles(category: StageCategoryKey) {
   switch (category) {
     case "voz_cordas":
-      return "border-sky-500/40 text-sky-600 dark:text-sky-400 bg-sky-500/5";
+      return "border-sky-500/20 text-sky-600 dark:text-sky-400 bg-sky-500/5";
     case "bateria_percussao":
-      return "border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/5";
+      return "border-amber-500/20 text-amber-600 dark:text-amber-400 bg-amber-500/5";
     case "teclas_eletronicos":
-      return "border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5";
+      return "border-emerald-500/20 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5";
     case "amplificacao_monitores":
-      return "border-rose-500/40 text-rose-600 dark:text-rose-400 bg-rose-500/5";
-    case "sopros_infra":
-      return "border-indigo-500/40 text-indigo-600 dark:text-indigo-400 bg-indigo-500/5";
+      return "border-rose-500/20 text-rose-600 dark:text-rose-400 bg-rose-500/5";
+    case "sopros":
+      return "border-yellow-500/20 text-yellow-600 dark:text-yellow-400 bg-yellow-500/5";
+    case "infra":
+      return "border-slate-500/20 text-slate-600 dark:text-slate-400 bg-slate-500/5";
   }
 }
 
@@ -585,9 +598,6 @@ function StageIcon({
 // salvo continua válido.
 export const COLS = 22;
 export const ROWS = 12;
-/** Altura da célula no canvas, em px. A largura mínima do canvas acompanha COLS para a
- * célula continuar quadrada: 22 × 46px + 21 vãos de 4px ≈ 1100px. */
-export const CELL_HEIGHT = 48;
 
 
 export function parseStagePlot(raw: unknown): StageItem[] {
@@ -1130,7 +1140,10 @@ export function StagePlot({
           <span className="text-[10px] text-muted-foreground/70">LATERAIS / SIDE FILL DIREITO</span>
         </div>
 
-        <div className="overflow-x-auto pb-2">
+        <div className="pb-2">
+          {/* Largura 100% + aspect-ratio COLS/ROWS: a célula fica sempre quadrada, em
+              qualquer tamanho de tela, sem precisar de uma largura mínima fixa nem de
+              rolagem horizontal — o mapa inteiro encolhe e cresce junto com o modal. */}
           <div
             ref={gridRef}
             onDragOver={handleDragOver}
@@ -1139,14 +1152,15 @@ export function StagePlot({
               if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropHint(null);
             }}
             onDrop={handleDrop}
-            className={cn("relative min-w-[1100px]", dropHint && "cursor-crosshair")}
+            className={cn("relative w-full", dropHint && "cursor-crosshair")}
+            style={{ aspectRatio: `${COLS} / ${ROWS}` }}
           >
             {/* Linhas da Grade do Palco sem Fundo Roxo */}
             <div
-              className="grid gap-1"
+              className="grid size-full gap-1"
               style={{
                 gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-                gridTemplateRows: `repeat(${ROWS}, ${CELL_HEIGHT}px)`,
+                gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
               }}
             >
               {Array.from({ length: ROWS * COLS }).map((_, index) => {
@@ -1175,7 +1189,7 @@ export function StagePlot({
               className="pointer-events-none absolute inset-0 grid gap-1"
               style={{
                 gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-                gridTemplateRows: `repeat(${ROWS}, ${CELL_HEIGHT}px)`,
+                gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
               }}
             >
               {/* Prévia do drop: as células exatas que a peça vai ocupar, com o ponto de
@@ -1215,7 +1229,7 @@ export function StagePlot({
               {items.map((item) => {
                 const span = itemSpan(item);
                 const category =
-                  STAGE_KINDS.find((k) => k.kind === item.kind)?.category ?? "sopros_infra";
+                  STAGE_KINDS.find((k) => k.kind === item.kind)?.category ?? "infra";
                 const colorStyle = categoryColorStyles(category);
 
                 return (
@@ -1242,7 +1256,7 @@ export function StagePlot({
                       gridRow: `${item.row + 1} / span ${span.h}`,
                     }}
                     className={cn(
-                      "group pointer-events-auto relative rounded-lg border-2 backdrop-blur-2xs shadow-xs hover:shadow-md transition-all",
+                      "group pointer-events-auto relative rounded-lg border backdrop-blur-2xs shadow-xs hover:shadow-md transition-all",
                       item.locked
                         ? "cursor-not-allowed border-dashed opacity-90"
                         : "cursor-grab active:cursor-grabbing hover:scale-[1.02]",
@@ -1359,7 +1373,7 @@ export function StagePlot({
                     {/* Rótulo sobreposto no rodapé da própria pegada: não rouba altura da
                         arte (que segue ocupando a caixa inteira) e não vaza para a célula
                         vizinha. Quebra em duas linhas quando o nome é longo. */}
-                    <span className="pointer-events-none absolute bottom-0.5 left-1/2 z-20 max-w-[calc(100%-4px)] -translate-x-1/2 rounded-xs border border-border/60 bg-background/95 px-1 py-0.5 text-center text-[9px] font-bold leading-[1.15] text-foreground shadow-2xs">
+                    <span className="pointer-events-none absolute bottom-0.5 left-1/2 z-20 max-w-[calc(100%-4px)] -translate-x-1/2 truncate rounded-xs border border-border/60 bg-background/95 px-0.5 py-px text-center text-[7px] font-bold leading-[1.1] text-foreground shadow-2xs sm:px-1 sm:py-0.5 sm:text-[9px] sm:leading-[1.15]">
                       {item.label}
                     </span>
                   </div>
@@ -1590,7 +1604,7 @@ export function StageItemLabels({
         const span = itemSpan(item);
         const resized = item.w !== undefined || item.h !== undefined;
         return (
-          <div key={item.id} className="flex items-center gap-2">
+          <div key={item.id} className="flex flex-wrap items-center gap-2">
             <Select
               value={item.kind}
               disabled={Boolean(item.locked)}
@@ -1607,7 +1621,7 @@ export function StageItemLabels({
               }
             >
               <SelectTrigger
-                className="w-44 h-8 text-xs"
+                className="h-8 w-full text-xs sm:w-44"
                 title="Trocar o tipo desta peça — o desenho e o espaço que ela ocupa mudam junto"
               >
                 <SelectValue />
@@ -1621,7 +1635,7 @@ export function StageItemLabels({
               </SelectContent>
             </Select>
             <input
-              className="h-8 flex-1 rounded-md border border-input bg-background px-3 text-xs"
+              className="h-8 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-xs"
               title="Nome que aparece no mapa e no PDF. Nomes curtos cabem melhor dentro da peça"
               value={item.label}
               onChange={(e) =>

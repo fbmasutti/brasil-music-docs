@@ -493,7 +493,7 @@ function RidersPage() {
       </Section>
 
       <Dialog open={formOpen} onOpenChange={(o) => !o && closeForm()}>
-        <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-6xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? "Editar rider" : "Novo rider"}</DialogTitle>
             <DialogDescription>Só o nome é necessário para salvar e gerar o PDF.</DialogDescription>
@@ -523,7 +523,7 @@ function RidersPage() {
           </FieldGrid>
 
           <Tabs value={tab} onValueChange={(v) => setTab(v as RiderTab)} className="mt-4">
-            <TabsList className="flex-wrap">
+            <TabsList className="h-auto flex-wrap gap-1">
               <TabsTrigger value="channels">
                 Channel list
                 {channels.length > 0 && (
@@ -558,13 +558,15 @@ function RidersPage() {
                   </div>
                   {channels.map((row, i) => (
                     <div key={row.id} className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
-                      <span className="w-5 shrink-0 text-center text-xs text-muted-foreground">{i + 1}</span>
-                      <Input
-                        value={row.instrument}
-                        onChange={(e) => updateChannelRow(row.id, { instrument: e.target.value })}
-                        placeholder="Instrumento"
-                        className="flex-1"
-                      />
+                      <div className="flex w-full items-center gap-2 sm:contents">
+                        <span className="w-5 shrink-0 text-center text-xs text-muted-foreground">{i + 1}</span>
+                        <Input
+                          value={row.instrument}
+                          onChange={(e) => updateChannelRow(row.id, { instrument: e.target.value })}
+                          placeholder="Instrumento"
+                          className="min-w-0 flex-1"
+                        />
+                      </div>
                       <Select
                         value={MIC_OPTIONS.includes(row.mic) ? row.mic : ""}
                         onValueChange={(v) => updateChannelRow(row.id, { mic: v })}
@@ -732,7 +734,7 @@ function RidersPage() {
                       {formation ? ` · padrão de ${formation.name}` : ""}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
