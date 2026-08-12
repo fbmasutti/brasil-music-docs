@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { CalendarDays, Check, Unlink, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -199,9 +200,14 @@ function ProfilePage() {
 
   function save() {
     if (!profile) return;
-    const values: Partial<FormState & { stage_name: string }> = {
+    const values: Partial<
+      Omit<FormState, "cnd_expires_at"> & { stage_name: string; cnd_expires_at: string | null }
+    > = {
       ...form,
       stage_name: form.stage_name || "Meu projeto musical",
+      // Coluna é date | null no banco — string vazia não é uma data válida para o
+      // Postgres, e é o valor padrão do campo até o usuário preencher a certidão.
+      cnd_expires_at: form.cnd_expires_at || null,
     };
     update.mutate({ id: profile.id, values: values as never });
   }
@@ -232,6 +238,10 @@ function ProfilePage() {
   }
 
   const today = new Date().toISOString().slice(0, 10);
+  // Sincronização automática ainda não foi ativada em produção (falta client ID do
+  // Google) — o botão "Conectar" só aparece quando essa credencial existir, pra não
+  // oferecer uma ação que sempre falha.
+  const googleCalendarConfigured = Boolean(import.meta.env["VITE_GOOGLE_CLIENT_ID"]);
   const isPj = form.entity_type === "PJ" || form.entity_type === "MEI";
   const healthChecks = [
     { label: "Nome artístico", done: Boolean(form.stage_name) },
@@ -424,7 +434,7 @@ function ProfilePage() {
                   <p className="text-xs text-muted-foreground">
                     {profile?.google_calendar_refresh_token
                       ? `Conectado${profile.google_calendar_email ? ` — ${profile.google_calendar_email}` : ""}. Shows salvos entram automaticamente na sua agenda.`
-                      : "Ao salvar um show, ele é adicionado automaticamente ao seu Google Calendar."}
+                      : "Em breve: sincronização automática com o Google Calendar. Por enquanto, use o link \"Adicionar ao Google Calendar\" na página de cada show."}
                   </p>
                 </div>
               </div>
@@ -441,10 +451,14 @@ function ProfilePage() {
                 >
                   <Unlink className="mr-1 size-4" /> Desconectar
                 </Button>
-              ) : (
+              ) : googleCalendarConfigured ? (
                 <Button variant="outline" size="sm" onClick={() => void connectGoogleCalendar()}>
                   <Check className="mr-1 size-4" /> Conectar
                 </Button>
+              ) : (
+                <Badge variant="outline" className="text-muted-foreground">
+                  Em breve
+                </Badge>
               )}
             </div>
           </Section>
