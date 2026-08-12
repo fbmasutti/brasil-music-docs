@@ -91,6 +91,13 @@ function Dashboard() {
     formations[0];
   const activeGear = gearItems.filter((g) => g.formation_id === activeFormation?.id);
 
+  // Só conta o que está marcado E pertence à formação de agora. O seletor de formação
+  // mora no AppLayout, que não desmonta ao trocar: sem esta interseção, os ids marcados
+  // na formação anterior continuavam no conjunto e o cabeçalho anunciava coisas como
+  // "3/3 itens" com nenhum item da lista aparecendo marcado.
+  const checkedActive = activeGear.filter((g) => checkedGear.has(g.id));
+  const todosMarcados = activeGear.length > 0 && checkedActive.length === activeGear.length;
+
   // Pendências reais (algo vencido ou pendente de ação), nunca "você ainda não
   // usa Y" — quem não usa um recurso não deveria ser cobrado por ele.
   const alerts: { text: string; to: string }[] = [];
@@ -362,7 +369,7 @@ function Dashboard() {
       {activeGear.length > 0 && (
         <Section
           title="Mala de gig"
-          description={`${activeFormation?.name ?? "Formação ativa"} · ${checkedGear.size}/${activeGear.length} itens`}
+          description={`${activeFormation?.name ?? "Formação ativa"} · ${checkedActive.length}/${activeGear.length} itens`}
           className="mt-5"
           collapsible
           defaultOpen={false}
@@ -371,9 +378,11 @@ function Dashboard() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setCheckedGear(checkedGear.size === activeGear.length ? new Set() : new Set(activeGear.map((g) => g.id)))}
+                onClick={() =>
+                  setCheckedGear(todosMarcados ? new Set() : new Set(activeGear.map((g) => g.id)))
+                }
               >
-                {checkedGear.size === activeGear.length ? "Desmarcar tudo" : "Marcar tudo"}
+                {todosMarcados ? "Desmarcar tudo" : "Marcar tudo"}
               </Button>
               <Button asChild variant="ghost" size="sm">
                 <Link to="/formacoes">Editar</Link>
@@ -394,11 +403,14 @@ function Dashboard() {
                       <li key={g.id}>
                         <button
                           type="button"
-                          onClick={() => {
-                            const next = new Set(checkedGear);
-                            checked ? next.delete(g.id) : next.add(g.id);
-                            setCheckedGear(next);
-                          }}
+                          onClick={() =>
+                            setCheckedGear((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(g.id)) next.delete(g.id);
+                              else next.add(g.id);
+                              return next;
+                            })
+                          }
                           className={cn(
                             "flex w-full items-center gap-2 rounded-md border px-3 py-2 text-sm transition",
                             checked
