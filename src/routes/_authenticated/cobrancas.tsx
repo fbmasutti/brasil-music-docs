@@ -4,8 +4,17 @@ import { toast } from "sonner";
 import QRCode from "qrcode";
 import { toJpeg } from "html-to-image";
 import {
-  QrCode, Copy, Download, AlertTriangle, Maximize2, X,
-  MessageCircle, Mail, FileText, CheckSquare, RotateCcw,
+  QrCode,
+  Copy,
+  Download,
+  AlertTriangle,
+  Maximize2,
+  X,
+  MessageCircle,
+  Mail,
+  FileText,
+  CheckSquare,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -51,10 +60,29 @@ export const Route = createFileRoute("/_authenticated/cobrancas")({
 });
 
 function CobrancasPage() {
+  return (
+    <PageContainer>
+      <PageHeader
+        title="Cobrança via PIX"
+        subtitle="Gere um QR Code e o código copia e cola para receber cachês e sinais na hora."
+      />
+      <CobrancaPixContent />
+    </PageContainer>
+  );
+}
+
+/** Conteúdo de emissão de cobrança Pix — extraído para ser reaproveitado
+ *  como aba dentro de Financeiro & Cachês, já que cobrar e controlar cachê
+ *  são a mesma tarefa mental e viviam em telas separadas do menu. */
+export function CobrancaPixContent() {
   const { data: profile } = useProfile();
-  const { data: events = [] } = useList("events", { order: { column: "event_date", ascending: false } });
+  const { data: events = [] } = useList("events", {
+    order: { column: "event_date", ascending: false },
+  });
   const { data: clients = [] } = useList("clients", { order: { column: "name" } });
-  const { data: charges = [] } = useList("charges", { order: { column: "created_at", ascending: false } });
+  const { data: charges = [] } = useList("charges", {
+    order: { column: "created_at", ascending: false },
+  });
   const insert = useInsert("charges", "Cobrança salva");
   const remove = useRemove("charges", "Cobrança removida");
   const updateCharge = useUpdate("charges", "Cobrança atualizada");
@@ -97,12 +125,21 @@ function CobrancasPage() {
   }, [pixKey, receiverName, city, amount, description, eventId]);
 
   useEffect(() => {
-    if (!payload) { setQrDataUrl(null); return; }
+    if (!payload) {
+      setQrDataUrl(null);
+      return;
+    }
     let cancelled = false;
     QRCode.toDataURL(payload, { width: 480, margin: 1 })
-      .then((url) => { if (!cancelled) setQrDataUrl(url); })
-      .catch(() => { if (!cancelled) setQrDataUrl(null); });
-    return () => { cancelled = true; };
+      .then((url) => {
+        if (!cancelled) setQrDataUrl(url);
+      })
+      .catch(() => {
+        if (!cancelled) setQrDataUrl(null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [payload]);
 
   function copyPayload() {
@@ -114,7 +151,12 @@ function CobrancasPage() {
   async function downloadCard(ref: RefObject<HTMLDivElement | null>) {
     if (!ref.current) return;
     try {
-      const dataUrl = await toJpeg(ref.current, { pixelRatio: 2, cacheBust: true, backgroundColor: "#fff", quality: 0.95 });
+      const dataUrl = await toJpeg(ref.current, {
+        pixelRatio: 2,
+        cacheBust: true,
+        backgroundColor: "#fff",
+        quality: 0.95,
+      });
       const a = document.createElement("a");
       a.href = dataUrl;
       a.download = "cobranca-pix.jpg";
@@ -152,10 +194,13 @@ function CobrancasPage() {
 
   function sendEmail() {
     const client = clients.find((c) => c.id === clientId);
-    if (!client?.email) { toast.error("Contratante sem e-mail cadastrado."); return; }
+    if (!client?.email) {
+      toast.error("Contratante sem e-mail cadastrado.");
+      return;
+    }
     const subject = encodeURIComponent(`Cobrança PIX${description ? ` — ${description}` : ""}`);
     const body = encodeURIComponent(
-      `Olá${client.contact_name ? ` ${client.contact_name}` : ""},\n\nSegue o código Pix para pagamento${description ? ` de "${description}"` : ""}${amount ? `: ${money(Number(amount.replace(",", ".")))}` : ""}.\n\nCódigo Pix (copia e cola):\n${payload}${dueDate ? `\n\nVencimento: ${dateBR(dueDate)}` : ""}\n\nAté logo!`
+      `Olá${client.contact_name ? ` ${client.contact_name}` : ""},\n\nSegue o código Pix para pagamento${description ? ` de "${description}"` : ""}${amount ? `: ${money(Number(amount.replace(",", ".")))}` : ""}.\n\nCódigo Pix (copia e cola):\n${payload}${dueDate ? `\n\nVencimento: ${dateBR(dueDate)}` : ""}\n\nAté logo!`,
     );
     window.open(`mailto:${client.email}?subject=${subject}&body=${body}`, "_self");
   }
@@ -191,18 +236,17 @@ function CobrancasPage() {
   const client = clients.find((c) => c.id === clientId);
 
   return (
-    <PageContainer>
-      <PageHeader
-        title="Cobrança via PIX"
-        subtitle="Gere um QR Code e o código copia e cola para receber cachês e sinais na hora."
-      />
-
+    <>
       {missingProfile && (
         <div className="mb-5 flex items-start gap-3 rounded-lg border border-warning/30 bg-warning/10 p-4 text-sm text-warning">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" />
           <p>
             Complete a chave Pix, o nome e a cidade no{" "}
-            <Link to="/perfil" search={{ google_calendar: undefined }} className="underline underline-offset-2">
+            <Link
+              to="/perfil"
+              search={{ google_calendar: undefined }}
+              className="underline underline-offset-2"
+            >
               seu perfil
             </Link>{" "}
             para gerar a cobrança.
@@ -219,7 +263,9 @@ function CobrancasPage() {
                 <div className="space-y-2 sm:col-span-2">
                   <Label>Vincular a um evento (opcional)</Label>
                   <Select value={eventId} onValueChange={applyEvent}>
-                    <SelectTrigger><SelectValue placeholder="Nenhum — cobrança avulsa" /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Nenhum — cobrança avulsa" />
+                    </SelectTrigger>
                     <SelectContent>
                       {events.map((e) => (
                         <SelectItem key={e.id} value={e.id}>
@@ -234,26 +280,46 @@ function CobrancasPage() {
                 <div className="space-y-2 sm:col-span-2">
                   <Label>Contratante (para envio)</Label>
                   <Select value={clientId} onValueChange={setClientId}>
-                    <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Nenhum" />
+                    </SelectTrigger>
                     <SelectContent>
                       {clients.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
               ) : null}
-              <TextField label="Valor (R$)" value={amount} onChange={setAmount} type="number" placeholder="500.00" />
-              <TextField label="Descrição" value={description} onChange={setDescription} placeholder="Sinal do show, cachê..." />
+              <TextField
+                label="Valor (R$)"
+                value={amount}
+                onChange={setAmount}
+                type="number"
+                placeholder="500.00"
+              />
+              <TextField
+                label="Descrição"
+                value={description}
+                onChange={setDescription}
+                placeholder="Sinal do show, cachê..."
+              />
               <TextField label="Vencimento" value={dueDate} onChange={setDueDate} type="date" />
             </FieldGrid>
             <p className="mt-3 text-xs text-muted-foreground">
-              Deixe o valor em branco para gerar uma cobrança sem valor fixo (quem paga digita o quanto).
+              Deixe o valor em branco para gerar uma cobrança sem valor fixo (quem paga digita o
+              quanto).
             </p>
           </Section>
 
           {/* Histórico */}
-          <Section title={`Histórico (${charges.length})`} collapsible defaultOpen={charges.length > 0}>
+          <Section
+            title={`Histórico (${charges.length})`}
+            collapsible
+            defaultOpen={charges.length > 0}
+          >
             {charges.length === 0 ? (
               <p className="text-sm text-muted-foreground">Nenhuma cobrança salva ainda.</p>
             ) : (
@@ -281,18 +347,37 @@ function CobrancasPage() {
                           onDelete={() => remove.mutate(c.id)}
                           deleteConfirm={{
                             title: `Remover cobrança?`,
-                            description: "O registro sai do histórico. Essa ação não pode ser desfeita.",
+                            description:
+                              "O registro sai do histórico. Essa ação não pode ser desfeita.",
                             confirmLabel: "Remover",
                           }}
                           extra={[
                             ...(nextLabel
-                              ? [{ label: nextLabel, icon: <CheckSquare className="size-4" />, onClick: () => advanceStatus(c) }]
+                              ? [
+                                  {
+                                    label: nextLabel,
+                                    icon: <CheckSquare className="size-4" />,
+                                    onClick: () => advanceStatus(c),
+                                  },
+                                ]
                               : []),
                             ...(c.status !== "VENCIDA" && c.status !== "PAGA"
-                              ? [{ label: "Marcar como Vencida", icon: <AlertTriangle className="size-4" />, onClick: () => markVencida(c) }]
+                              ? [
+                                  {
+                                    label: "Marcar como Vencida",
+                                    icon: <AlertTriangle className="size-4" />,
+                                    onClick: () => markVencida(c),
+                                  },
+                                ]
                               : []),
                             ...(c.status !== "PENDENTE"
-                              ? [{ label: "Voltar para Pendente", icon: <RotateCcw className="size-4" />, onClick: () => resetCharge(c) }]
+                              ? [
+                                  {
+                                    label: "Voltar para Pendente",
+                                    icon: <RotateCcw className="size-4" />,
+                                    onClick: () => resetCharge(c),
+                                  },
+                                ]
                               : []),
                           ]}
                         />
@@ -317,11 +402,17 @@ function CobrancasPage() {
                   {qrDataUrl ? (
                     <img src={qrDataUrl} alt="QR Code Pix" className="size-56" />
                   ) : (
-                    <div className="flex size-56 items-center justify-center text-xs text-zinc-400">Gerando QR Code…</div>
+                    <div className="flex size-56 items-center justify-center text-xs text-zinc-400">
+                      Gerando QR Code…
+                    </div>
                   )}
                   <div>
                     <p className="text-sm font-semibold text-zinc-900">{receiverName}</p>
-                    {amount ? <p className="text-lg font-bold text-zinc-900">{money(Number(amount.replace(",", ".")) || 0)}</p> : null}
+                    {amount ? (
+                      <p className="text-lg font-bold text-zinc-900">
+                        {money(Number(amount.replace(",", ".")) || 0)}
+                      </p>
+                    ) : null}
                     {description ? <p className="text-xs text-zinc-500">{description}</p> : null}
                   </div>
                 </div>
@@ -342,7 +433,12 @@ function CobrancasPage() {
                   <Button variant="outline" onClick={sendEmail} disabled={!client?.email}>
                     <Mail className="mr-1 size-4" /> E-mail
                   </Button>
-                  <Button className="col-span-2" variant="outline" onClick={saveCharge} disabled={insert.isPending}>
+                  <Button
+                    className="col-span-2"
+                    variant="outline"
+                    onClick={saveCharge}
+                    disabled={insert.isPending}
+                  >
                     <FileText className="mr-1 size-4" /> Salvar no histórico
                   </Button>
                 </div>
@@ -372,10 +468,16 @@ function CobrancasPage() {
             <X className="size-6" />
           </button>
           <div ref={modalCardRef} className="flex flex-col items-center gap-5 text-center">
-            {qrDataUrl ? <img src={qrDataUrl} alt="QR Code Pix" className="size-[min(75vw,420px)]" /> : null}
+            {qrDataUrl ? (
+              <img src={qrDataUrl} alt="QR Code Pix" className="size-[min(75vw,420px)]" />
+            ) : null}
             <div>
               <p className="text-xl font-semibold text-zinc-900">{receiverName}</p>
-              {amount ? <p className="text-3xl font-bold text-zinc-900">{money(Number(amount.replace(",", ".")) || 0)}</p> : null}
+              {amount ? (
+                <p className="text-3xl font-bold text-zinc-900">
+                  {money(Number(amount.replace(",", ".")) || 0)}
+                </p>
+              ) : null}
               {description ? <p className="text-sm text-zinc-500">{description}</p> : null}
             </div>
           </div>
@@ -384,6 +486,6 @@ function CobrancasPage() {
           </Button>
         </DialogContent>
       </Dialog>
-    </PageContainer>
+    </>
   );
 }

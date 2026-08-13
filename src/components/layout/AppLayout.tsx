@@ -1,32 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  LayoutDashboard,
-  Users,
-  Building2,
-  FileText,
-  CalendarDays,
-  Music4,
-  Sliders,
-  Images,
-  Settings,
-  LogOut,
-  Menu,
-  Radio,
-  Layers,
-  Palette,
-  Megaphone,
-  Wand2,
-  Wallet,
-  QrCode,
-  ChevronDown,
-  Sun,
-  Moon,
-  type LucideIcon,
-} from "lucide-react";
+import { LogOut, Menu, Radio, Layers, Search, Sun, Moon, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   DropdownMenu,
@@ -40,78 +22,37 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/lib/theme";
 import { ActiveFormationProvider, useActiveFormation } from "@/lib/active-formation";
 import { presetPalette } from "@/lib/brand-presets";
+import { NAV_TOP, NAV_GROUPS, pageTitleFor, groupKeyForPathname, type NavItem } from "@/lib/nav";
+import { CommandPalette } from "@/components/CommandPalette";
 import type { Tables } from "@/integrations/supabase/types";
 
-type NavItem = { to: string; label: string; icon: LucideIcon };
-type NavGroup = { key: string; label: string; items: NavItem[]; defaultOpen: boolean };
-
-// Nível 1: só o que se checa todo dia. Tudo que é "ação pontual" foi pro
-// grupo Ferramentas — misturar os dois é o que deixava o nível 1 confuso.
-const NAV_TOP: NavItem[] = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/eventos", label: "Agenda de Shows", icon: CalendarDays },
-  { to: "/financeiro", label: "Financeiro & Cachês", icon: Wallet },
-];
-
-// Nível 2: agrupado por intenção, para o menu não virar uma lista de 13 itens.
-const NAV_GROUPS: NavGroup[] = [
-  {
-    key: "ferramentas",
-    label: "Ferramentas rápidas",
-    defaultOpen: true,
-    items: [
-      { to: "/magic-paste", label: "Colar do WhatsApp", icon: Wand2 },
-      { to: "/cobrancas", label: "Cobrança via PIX", icon: QrCode },
-      { to: "/gerador-cards", label: "Gerador de Posts", icon: Megaphone },
-    ],
-  },
-  {
-    key: "docs",
-    label: "Documentos",
-    defaultOpen: true,
-    items: [
-      { to: "/documentos", label: "Contratos e Documentos", icon: FileText },
-      { to: "/riders", label: "Rider & Mapa de Palco", icon: Sliders },
-      { to: "/repertorio", label: "Repertório", icon: Music4 },
-    ],
-  },
-  {
-    key: "marca",
-    label: "Identidade & Portfólio",
-    defaultOpen: false,
-    items: [
-      { to: "/marca", label: "Identidade Visual", icon: Palette },
-      { to: "/portfolio", label: "Portfólio & Clipping", icon: Images },
-    ],
-  },
-  {
-    key: "cadastros",
-    label: "Cadastros",
-    defaultOpen: false,
-    items: [
-      { to: "/formacoes", label: "Formações", icon: Layers },
-      { to: "/equipe", label: "Equipe", icon: Users },
-      { to: "/contratantes", label: "Contratantes", icon: Building2 },
-      { to: "/perfil", label: "Dados do Artista", icon: Settings },
-    ],
-  },
-];
-
-const NAV_STORAGE_PREFIX = "stagekit:nav-group:";
-
-const ENTITY_TYPE_LABEL: Record<string, string> = {
-  PF: "Pessoa Física",
-  MEI: "MEI",
-  PJ: "Pessoa Jurídica",
-};
+const NAV_OPEN_GROUP_KEY = "stagekit:nav-open-group";
 
 export function AppLayout() {
   const [open, setOpen] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data: profile } = useProfile();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { theme, toggleTheme } = useTheme();
+
+  // Um grupo aberto por vez. A navegação pode trocar qual grupo está aberto
+  // (para revelar o item ativo), mas só o clique do usuário no cabeçalho do
+  // grupo é gravado no localStorage — sem isso, todo grupo visitado ficava
+  // aberto para sempre.
+  const [openGroup, setOpenGroup] = useState<string | null>(() => {
+    if (typeof localStorage === "undefined") return groupKeyForPathname(pathname);
+    const stored = localStorage.getItem(NAV_OPEN_GROUP_KEY);
+    if (stored !== null) return stored || null;
+    return groupKeyForPathname(pathname) ?? NAV_GROUPS.find((g) => g.defaultOpen)?.key ?? null;
+  });
+
+  useEffect(() => {
+    const activeGroup = groupKeyForPathname(pathname);
+    if (activeGroup && activeGroup !== openGroup) setOpenGroup(activeGroup);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
@@ -147,14 +88,28 @@ export function AppLayout() {
   const nav = (
     <nav className="flex flex-1 flex-col gap-1 px-3">
       {NAV_TOP.map(renderNavItem)}
-      {NAV_GROUPS.map((group) => (
-        <NavGroupBlock
-          key={group.key}
-          group={group}
-          hasActive={group.items.some((item) => isItemActive(item.to))}
-          renderItem={renderNavItem}
-        />
-      ))}
+      <Accordion
+        type="single"
+        collapsible
+        value={openGroup ?? ""}
+        onValueChange={(value) => {
+          const next = value || null;
+          setOpenGroup(next);
+          localStorage.setItem(NAV_OPEN_GROUP_KEY, next ?? "");
+        }}
+        className="mt-2 flex flex-col gap-0.5"
+      >
+        {NAV_GROUPS.map((group) => (
+          <AccordionItem key={group.key} value={group.key} className="border-b-0">
+            <AccordionTrigger className="rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground/80 hover:no-underline [&[data-state=open]>svg]:rotate-180">
+              {group.label}
+            </AccordionTrigger>
+            <AccordionContent className="flex flex-col gap-1 pb-1 pt-1">
+              {group.items.map(renderNavItem)}
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
     </nav>
   );
 
@@ -203,21 +158,30 @@ export function AppLayout() {
             </Button>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-foreground">
-                {profile?.stage_name || "StageKit"}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">
-                {ENTITY_TYPE_LABEL[profile?.entity_type ?? "PF"] ?? "Pessoa Física"} ·{" "}
-                {profile?.city || "cidade não informada"}
+                {pageTitleFor(pathname)}
               </p>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCommandOpen(true)}
+              className="hidden items-center gap-1.5 text-muted-foreground sm:inline-flex"
+            >
+              <Search className="size-3.5" /> Buscar
+              <kbd className="ml-1 rounded border border-border px-1 text-[10px] text-muted-foreground/70">
+                ⌘K
+              </kbd>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setCommandOpen(true)}
+              aria-label="Buscar"
+              className="sm:hidden"
+            >
+              <Search className="size-4.5" />
+            </Button>
             <FormationSwitcher />
-            {pathname !== "/dashboard" ? (
-              <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
-                <Link to="/dashboard">
-                  <LayoutDashboard className="mr-1 size-4" /> Painel
-                </Link>
-              </Button>
-            ) : null}
             <Button
               variant="ghost"
               size="icon"
@@ -236,45 +200,9 @@ export function AppLayout() {
           </main>
         </div>
       </div>
+
+      <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
     </ActiveFormationProvider>
-  );
-}
-
-function NavGroupBlock({
-  group,
-  hasActive,
-  renderItem,
-}: {
-  group: NavGroup;
-  hasActive: boolean;
-  renderItem: (item: NavItem) => React.ReactNode;
-}) {
-  const storageKey = `${NAV_STORAGE_PREFIX}${group.key}`;
-  const [open, setOpen] = useState(() => {
-    const stored = typeof localStorage === "undefined" ? null : localStorage.getItem(storageKey);
-    if (stored === "1") return true;
-    if (stored === "0") return false;
-    return group.defaultOpen;
-  });
-
-  useEffect(() => {
-    if (hasActive) setOpen(true);
-  }, [hasActive]);
-
-  useEffect(() => {
-    localStorage.setItem(storageKey, open ? "1" : "0");
-  }, [open, storageKey]);
-
-  return (
-    <Collapsible open={open} onOpenChange={setOpen} className="mt-3">
-      <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50 transition-colors hover:text-sidebar-foreground/80">
-        <span>{group.label}</span>
-        <ChevronDown className={cn("size-3.5 transition-transform", open && "rotate-180")} />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="flex flex-col gap-1 pt-1">
-        {group.items.map(renderItem)}
-      </CollapsibleContent>
-    </Collapsible>
   );
 }
 
@@ -302,7 +230,9 @@ function formationDotColor(brandKit: Tables<"brand_kits"> | undefined): string {
 
 // "Tocando como": troca a formação ativa pra qualquer tela que herde brand
 // kit ou roster (Gerador de Posts, Riders), sem precisar reconfigurar nada a
-// cada vez — é o contexto que fica ligado, não a tela.
+// cada vez — é o contexto que fica ligado, não a tela. Visível também no
+// mobile (só o ícone/ponto, o rótulo aparece a partir de sm) — antes sumia
+// completamente e o usuário ficava sem saber em que formação estava.
 function FormationSwitcher() {
   const { formations, activeFormation, activeFormationId, setActiveFormationId } =
     useActiveFormation();
@@ -315,16 +245,19 @@ function FormationSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="hidden items-center gap-2 sm:inline-flex">
+        <Button variant="outline" size="sm" className="inline-flex shrink-0 items-center gap-2">
           {activeFormation ? (
             <span
               className="size-2.5 shrink-0 rounded-full"
               style={{ backgroundColor: formationDotColor(activeBrandKit) }}
             />
-          ) : null}
-          <span className="max-w-56 truncate">
+          ) : (
+            <Layers className="size-3.5 shrink-0 text-muted-foreground" />
+          )}
+          <span className="hidden max-w-56 truncate sm:inline">
             Tocando como: {activeFormation?.name ?? "Padrão (solo)"}
           </span>
+          <ChevronDown className="hidden size-3.5 shrink-0 text-muted-foreground sm:inline" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

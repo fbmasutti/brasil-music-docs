@@ -1,14 +1,26 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
 User-agent: *
 Allow: /
+Allow: /modelo-contrato-show
+Allow: /termos
+Allow: /privacidade
+Disallow: /dashboard
+Disallow: /eventos
+Disallow: /financeiro
+Disallow: /contrato
+Disallow: /documentos
+Disallow: /riders
+Disallow: /repertorio
+Disallow: /marca
+Disallow: /portfolio
+Disallow: /formacoes
+Disallow: /equipe
+Disallow: /contratantes
+Disallow: /perfil
+Disallow: /gerador-cards
+Disallow: /magic-paste
+Disallow: /cobrancas
+Disallow: /comecar
+Disallow: /auth
+Disallow: /nova-senha
+
+Sitemap: https://stage-kit.lovable.app/sitemap.xml

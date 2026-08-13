@@ -39,7 +39,7 @@ const PATTERNS: { test: RegExp; message: string }[] = [
   },
 ];
 
-function extractMessage(error: unknown): string {
+export function extractMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
   // Erros do Supabase/PostgREST (PostgrestError) são objetos simples com
   // .message, não instâncias de Error — "instanceof Error" falha para eles
@@ -57,4 +57,63 @@ export function friendlyErrorMessage(error: unknown): string {
   console.error(error);
   const match = PATTERNS.find((p) => p.test.test(raw));
   return match?.message ?? raw ?? "Algo deu errado. Tente novamente.";
+}
+
+/**
+ * Erros de autenticação (login/cadastro) precisam de mais que uma mensagem —
+ * a tela de login embute uma ação diferente para cada um (reenviar
+ * confirmação, ir para "esqueci a senha", trocar de aba). `kind` é o que a
+ * tela usa para decidir qual botão mostrar junto da mensagem; ver
+ * `src/routes/auth.tsx`.
+ */
+export type AuthErrorKind =
+  | "unconfirmed"
+  | "invalid_credentials"
+  | "already_registered"
+  | "weak_password"
+  | "rate_limited"
+  | "generic";
+
+const AUTH_PATTERNS: { test: RegExp; kind: AuthErrorKind; message: string }[] = [
+  {
+    test: /email not confirmed/i,
+    kind: "unconfirmed",
+    message: "Sua conta ainda não foi confirmada.",
+  },
+  {
+    test: /invalid login credentials/i,
+    kind: "invalid_credentials",
+    message: "E-mail ou senha não conferem.",
+  },
+  {
+    test: /user already registered|already registered/i,
+    kind: "already_registered",
+    message: "Já existe uma conta com esse e-mail.",
+  },
+  {
+    test: /password should be at least/i,
+    kind: "weak_password",
+    message: "A senha precisa ter pelo menos 6 caracteres.",
+  },
+  {
+    // Mensagem literal do Supabase quando o limite de envio de e-mail (SMTP
+    // padrão do projeto, poucos e-mails/hora) estoura — é o gatilho mais
+    // provável de um usuário nunca receber o e-mail de confirmação.
+    test: /email rate limit exceeded|over_email_send_rate_limit|you can only request this after/i,
+    kind: "rate_limited",
+    message: "Você pediu e-mails demais em pouco tempo. Aguarde um pouco e tente de novo.",
+  },
+  {
+    test: /token has expired|otp expired|invalid otp|token is invalid/i,
+    kind: "generic",
+    message: "Esse código expirou ou está incorreto. Peça um novo.",
+  },
+];
+
+export function classifyAuthError(error: unknown): { kind: AuthErrorKind; message: string } {
+  const raw = extractMessage(error);
+  console.error(error);
+  const match = AUTH_PATTERNS.find((p) => p.test.test(raw));
+  if (match) return { kind: match.kind, message: match.message };
+  return { kind: "generic", message: friendlyErrorMessage(error) };
 }
