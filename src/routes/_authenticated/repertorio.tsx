@@ -44,6 +44,7 @@ import { useDocumentAccent } from "@/lib/active-formation";
 import type { Tables } from "@/integrations/supabase/types";
 import { duration, parseDuration, ECAD_ASSOCIATIONS, dateBR, razaoSocial } from "@/lib/format";
 import { downloadPdf } from "@/lib/pdf";
+import { songAuthors } from "@/lib/ecad-xlsx";
 import { fetchTrackMeta } from "@/lib/oembed";
 
 export const Route = createFileRoute("/_authenticated/repertorio")({
@@ -209,6 +210,20 @@ function RepertoirePage() {
           </>
         }
       />
+
+      <p className="-mt-4 mb-6 text-xs text-muted-foreground">
+        O roteiro musical oficial (.xlsx, modelo Ecad Arr008) para envio de shows fica no dossiê de
+        cada evento, na seção ECAD.{" "}
+        <a
+          href="https://www4.ecad.org.br/wp-content/uploads/2026/08/Regulamento-de-Arrecadacao_ago26.pdf"
+          target="_blank"
+          rel="noreferrer"
+          className="underline underline-offset-2"
+        >
+          Regulamento de Arrecadação do Ecad
+        </a>
+        .
+      </p>
 
       <Section
         title={songsQuery.isLoading ? "Obras" : `Obras (${songs.length})`}
@@ -500,7 +515,9 @@ function RepertoirePage() {
         <SongFormDialog
           song={allSongs.find((s) => s.id === editingSongId)}
           open={true}
-          onOpenChange={(o) => { if (!o) setEditingSongId(null); }}
+          onOpenChange={(o) => {
+            if (!o) setEditingSongId(null);
+          }}
         />
       )}
     </PageContainer>
@@ -549,11 +566,7 @@ function EcadReportDialog({
       )
     : allSongs;
 
-  function authorsFor(s: Tables<"songs">) {
-    if (s.origin === "cover") return s.original_authors || "—";
-    const list = writers.filter((w) => w.song_id === s.id);
-    return list.map((w) => `${w.name} ${w.share_percent}%`).join("; ") || "—";
-  }
+  const authorsFor = (s: Tables<"songs">) => songAuthors(s, writers);
 
   function download() {
     const event = events.find((e) => e.id === eventId);
@@ -636,7 +649,10 @@ function EcadReportDialog({
           </div>
           <div className="space-y-2">
             <Label>Evento (opcional)</Label>
-            <Select value={eventId || "none"} onValueChange={(v) => setEventId(v === "none" ? "" : v)}>
+            <Select
+              value={eventId || "none"}
+              onValueChange={(v) => setEventId(v === "none" ? "" : v)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Sem evento específico" />
               </SelectTrigger>

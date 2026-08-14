@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
   CalendarPlus,
   CheckCircle2,
   Circle,
+  Download,
+  ExternalLink,
   FileText,
   MapPin,
   Megaphone,
@@ -18,6 +20,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,23 +43,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  PageHeader,
-  PageContainer,
-  Section,
-  StatCard,
-  StatusBadge,
-} from "@/components/ui-kit";
+import { PageHeader, PageContainer, Section, StatCard, StatusBadge } from "@/components/ui-kit";
 import { EventFormDialog } from "@/components/EventFormDialog";
-import { useList, useUpdate, useInsert, useRemove } from "@/lib/queries";
+import { useList, useUpdate, useInsert, useRemove, useProfile } from "@/lib/queries";
 import {
   dateBR,
   money,
+  razaoSocial,
   EVENT_STATUS,
   DOCUMENT_STATUS,
   CHARGE_STATUS,
 } from "@/lib/format";
 import { buildGoogleCalendarUrl, buildMapsUrl, downloadICS } from "@/lib/calendar-link";
+import { downloadEcadRoteiro, songAuthors } from "@/lib/ecad-xlsx";
+import type { Tables } from "@/integrations/supabase/types";
+
+const ECAD_REGULAMENTO_URL =
+  "https://www4.ecad.org.br/wp-content/uploads/2026/08/Regulamento-de-Arrecadacao_ago26.pdf";
 
 export const Route = createFileRoute("/_authenticated/eventos/$eventId")({
   head: () => ({
@@ -81,6 +92,10 @@ function EventDetail() {
   const { data: events = [] } = useList("events");
   const { data: clients = [] } = useList("clients");
   const { data: formations = [] } = useList("formations");
+  const { data: allSongs = [] } = useList("songs");
+  const { data: formationSongs = [] } = useList("formation_songs");
+  const { data: writers = [] } = useList("song_writers");
+  const { data: profile } = useProfile();
   const event = events.find((e) => e.id === eventId);
 
   const { data: tasks = [] } = useList("event_checklists", {
@@ -248,19 +263,25 @@ function EventDetail() {
         <StatCard
           label="Sinal"
           value={money(Number(event.fee_deposit))}
-          hint={event.deposit_due_date ? `vence ${dateBR(event.deposit_due_date)}` : "sem vencimento"}
+          hint={
+            event.deposit_due_date ? `vence ${dateBR(event.deposit_due_date)}` : "sem vencimento"
+          }
           tone="cyan"
         />
         <StatCard
           label="Saldo"
           value={money(Number(event.fee_total) - Number(event.fee_deposit))}
-          hint={event.balance_due_date ? `vence ${dateBR(event.balance_due_date)}` : "sem vencimento"}
+          hint={
+            event.balance_due_date ? `vence ${dateBR(event.balance_due_date)}` : "sem vencimento"
+          }
           tone="amber"
         />
         <StatCard
           label="Checklist"
           value={tasks.length ? `${done}/${tasks.length}` : "—"}
-          hint={tasks.length ? `${Math.round((done / tasks.length) * 100)}% concluído` : "sem tarefas"}
+          hint={
+            tasks.length ? `${Math.round((done / tasks.length) * 100)}% concluído` : "sem tarefas"
+          }
           tone="muted"
         />
       </div>
@@ -312,7 +333,13 @@ function EventDetail() {
                             updateTask.mutate({ id: task.id, values: { done: Boolean(checked) } })
                           }
                         />
-                        <span className={task.done ? "flex-1 text-sm text-muted-foreground line-through" : "flex-1 text-sm"}>
+                        <span
+                          className={
+                            task.done
+                              ? "flex-1 text-sm text-muted-foreground line-through"
+                              : "flex-1 text-sm"
+                          }
+                        >
                           {task.label}
                         </span>
                         <Button
@@ -338,7 +365,10 @@ function EventDetail() {
                       placeholder={`Nova tarefa em ${phase.label}...`}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") submitNewTask(phase.key);
-                        if (e.key === "Escape") { setAddingPhase(null); setNewTaskLabel(""); }
+                        if (e.key === "Escape") {
+                          setAddingPhase(null);
+                          setNewTaskLabel("");
+                        }
                       }}
                       className="flex-1"
                     />
@@ -360,20 +390,60 @@ function EventDetail() {
         <div className="space-y-5">
           {/* ECAD */}
           <Section title="ECAD">
-            <button
-              type="button"
-              className="flex items-center gap-2 text-sm"
-              onClick={() =>
-                updateEvent.mutate({ id: event.id, values: { ecad_sent: !event.ecad_sent } })
-              }
-            >
-              {event.ecad_sent ? (
-                <CheckCircle2 className="size-4 text-success" />
-              ) : (
-                <Circle className="size-4 text-warning" />
-              )}
-              {event.ecad_sent ? "Relatório de execução enviado" : "Marcar relatório como enviado"}
-            </button>
+            <div className="space-y-3">
+              <button
+                type="button"
+                className="flex items-center gap-2 text-sm"
+                onClick={() =>
+                  updateEvent.mutate({ id: event.id, values: { ecad_sent: !event.ecad_sent } })
+                }
+              >
+                {event.ecad_sent ? (
+                  <CheckCircle2 className="size-4 text-success" />
+                ) : (
+                  <Circle className="size-4 text-warning" />
+                )}
+                {event.ecad_sent ? "Roteiro enviado ao Ecad" : "Marcar roteiro como enviado"}
+              </button>
+
+              <EcadRoteiroDialog
+                trigger={
+                  <Button variant="outline" size="sm" className="text-xs">
+                    <Download className="mr-1 size-4" /> Baixar roteiro (.xlsx)
+                  </Button>
+                }
+                event={event}
+                client={client}
+                profile={profile}
+                allSongs={allSongs}
+                formations={formations}
+                formationSongs={formationSongs}
+                writers={writers}
+              />
+
+              <p className="text-xs text-muted-foreground">
+                Arquivo oficial (Arr008) para envio no{" "}
+                <a
+                  href="https://canaldousuario.ecad.org.br/login?goBackTo=/show"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-2"
+                >
+                  Canal do Usuário Ecad
+                </a>
+                . Confira o repertório antes de enviar — a programação deve ser fiel ao que foi
+                tocado.
+              </p>
+
+              <a
+                href={ECAD_REGULAMENTO_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1 text-xs text-muted-foreground underline underline-offset-2"
+              >
+                <ExternalLink className="size-3" /> Regulamento de Arrecadação do Ecad
+              </a>
+            </div>
           </Section>
 
           {/* Cobranças do evento */}
@@ -483,5 +553,111 @@ function EventDetail() {
         </div>
       </div>
     </PageContainer>
+  );
+}
+
+/**
+ * Roteiro musical oficial do Ecad (Arr008) preenchido para este evento — o
+ * repertório decide quais músicas entram na tabela, como no relatório PDF do
+ * ECAD em repertorio.tsx. Pré-seleciona a formação do evento, se houver.
+ */
+function EcadRoteiroDialog({
+  trigger,
+  event,
+  client,
+  profile,
+  allSongs,
+  formations,
+  formationSongs,
+  writers,
+}: {
+  trigger: ReactNode;
+  event: Tables<"events">;
+  client: Tables<"clients"> | undefined;
+  profile: Tables<"profiles"> | null | undefined;
+  allSongs: Tables<"songs">[];
+  formations: Tables<"formations">[];
+  formationSongs: Tables<"formation_songs">[];
+  writers: Tables<"song_writers">[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [formationId, setFormationId] = useState("");
+  const [downloading, setDownloading] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setFormationId(event.formation_id ?? formations.find((f) => f.is_default)?.id ?? "");
+  }, [open, event.formation_id, formations]);
+
+  const songs = formationId
+    ? allSongs.filter((s) =>
+        formationSongs.some((fs) => fs.song_id === s.id && fs.formation_id === formationId),
+      )
+    : allSongs;
+
+  async function download() {
+    setDownloading(true);
+    try {
+      await downloadEcadRoteiro({
+        header: {
+          eventTitle: event.title,
+          eventDate: event.event_date,
+          performer: profile?.stage_name || razaoSocial(profile) || "",
+          venue: event.venue,
+          city: event.city,
+          state: event.state,
+          producer: client?.contact_name || client?.name || null,
+          phone: client?.phone || null,
+        },
+        songs: songs.map((s) => ({ title: s.title, authors: songAuthors(s, writers) })),
+        filenameBase: "roteiro-ecad",
+      });
+      setOpen(false);
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Roteiro musical (Ecad)</DialogTitle>
+        </DialogHeader>
+        <p className="text-xs text-muted-foreground">
+          Escolha o repertório que foi tocado neste show. Com mais de 31 músicas, o download gera
+          mais de um arquivo, cada um com o mesmo cabeçalho — como pede o Ecad.
+        </p>
+        <div className="space-y-2">
+          <Label>Repertório</Label>
+          <Select
+            value={formationId || "all"}
+            onValueChange={(v) => setFormationId(v === "all" ? "" : v)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todo o repertório ({allSongs.length})</SelectItem>
+              {formations.map((f) => (
+                <SelectItem key={f.id} value={f.id}>
+                  {f.name}
+                  {f.is_default ? " · padrão" : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <DialogFooter>
+          <Button onClick={download} disabled={downloading || songs.length === 0}>
+            <Download className="mr-1 size-4" />
+            {downloading
+              ? "Gerando…"
+              : `Baixar (${songs.length} música${songs.length === 1 ? "" : "s"})`}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
