@@ -584,10 +584,13 @@ function EcadRoteiroDialog({
   const [formationId, setFormationId] = useState("");
   const [downloading, setDownloading] = useState(false);
 
+  // Começa em "Todo o repertório": pré-selecionar uma formação escondia
+  // silenciosamente as músicas que o usuário não tinha vinculado a ela,
+  // gerando roteiros com só 1-2 músicas mesmo com o repertório completo.
   useEffect(() => {
     if (!open) return;
-    setFormationId(event.formation_id ?? formations.find((f) => f.is_default)?.id ?? "");
-  }, [open, event.formation_id, formations]);
+    setFormationId("");
+  }, [open]);
 
   const songs = formationId
     ? allSongs.filter((s) =>

@@ -204,8 +204,8 @@ function Dashboard() {
           <ToolCard
             to="/repertorio"
             icon={<Music4 className="size-5" />}
-            title="Roteiro ECAD"
-            hint="Setlist e direitos autorais"
+            title="Setlist"
+            hint="Repertório e direitos autorais"
           />
         </div>
       </Section>
@@ -307,7 +307,9 @@ function Dashboard() {
           )}
         </Section>
 
-        <Section title={`Pendências${alerts.length + setupGaps.length ? ` (${alerts.length + setupGaps.length})` : ""}`}>
+        <Section
+          title={`Pendências${alerts.length + setupGaps.length ? ` (${alerts.length + setupGaps.length})` : ""}`}
+        >
           {alerts.length + setupGaps.length === 0 ? (
             <div className="flex items-start gap-2 text-sm text-muted-foreground">
               <CheckCircle2 className="mt-0.5 size-4 text-success" />
@@ -395,7 +397,9 @@ function Dashboard() {
             const catItems = activeGear.filter((g) => (g.category || "Geral") === cat);
             return (
               <div key={cat} className="mb-4 last:mb-0">
-                <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">{cat}</p>
+                <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
+                  {cat}
+                </p>
                 <ul className="grid gap-2 sm:grid-cols-2">
                   {catItems.map((g) => {
                     const checked = checkedGear.has(g.id);
