@@ -28,7 +28,7 @@ import { pushEventToGoogleCalendar } from "@/lib/google-calendar";
 import { getTemplate, type EventRow } from "@/lib/documents";
 import { downloadPdf, pdfPreviewUrl, type PdfDoc } from "@/lib/pdf";
 import { useDebounced } from "@/lib/use-debounced";
-import { dateBR, money } from "@/lib/format";
+import { dateBR, money, todayISO } from "@/lib/format";
 import { shareText } from "@/lib/share";
 import { cn } from "@/lib/utils";
 
@@ -107,10 +107,10 @@ function ContractWizard() {
       title: template.label,
       brand: profile?.stage_name ?? "StageKit",
       subtitle: profile?.legal_name ?? "Contrato de apresentação artística",
-      footer: `${profile?.stage_name ?? "StageKit"} · gerado em ${dateBR(new Date().toISOString().slice(0, 10))}`,
+      footer: `${profile?.stage_name ?? "StageKit"} · gerado em ${dateBR(todayISO())}`,
       accent,
       blocks: template.build({
-        values: { city, signature_date: new Date().toISOString().slice(0, 10) },
+        values: { city, signature_date: todayISO() },
         profile: profile ?? {},
         client,
         event: draftEvent,

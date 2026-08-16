@@ -1,114 +1,145 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Radio, Copy, Download, ArrowRight, Check } from "lucide-react";
-import { toast } from "sonner";
+import { Radio, Download, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { getTemplate } from "@/lib/documents";
+import { downloadPdf, pdfPreviewUrl, type PdfDoc } from "@/lib/pdf";
+import { useDebounced } from "@/lib/use-debounced";
+import { dateBR, todayISO } from "@/lib/format";
+import type { ClientRow, ProfileRow } from "@/lib/documents";
+
+const SITE_URL = "https://stage-kit.lovable.app";
 
 export const Route = createFileRoute("/modelo-contrato-show")({
   head: () => ({
     meta: [
-      { title: "Modelo de Contrato de Show Grátis para Baixar | StageKit" },
+      {
+        title: "Gerador de Documentos para Músicos: Contrato, RPA e Cessão de Imagem | StageKit",
+      },
       {
         name: "description",
         content:
-          "Gere um modelo de contrato de show gratuito e sem cadastro: cachê, sinal, cláusula de cancelamento e ECAD. Preencha os campos e baixe em segundos.",
+          "Gere contrato de show, RPA para músico sem MEI e termo de cessão de imagem em PDF, grátis e sem cadastro. Preencha os campos e baixe em segundos.",
       },
-      { property: "og:title", content: "Modelo de Contrato de Show Grátis" },
+      {
+        property: "og:title",
+        content: "Gerador de Documentos Grátis para Músicos",
+      },
       {
         property: "og:description",
-        content: "Contrato de show pronto para preencher, com cláusula de cancelamento e ECAD.",
+        content: "Contrato de show, RPA e cessão de imagem em PDF, sem cadastro.",
       },
+      { property: "og:url", content: `${SITE_URL}/modelo-contrato-show` },
     ],
+    links: [{ rel: "canonical", href: `${SITE_URL}/modelo-contrato-show` }],
   }),
-  component: ModeloContratoPage,
+  component: GeradorDocumentosPage,
 });
 
-const emptyForm = {
-  contratado: "",
-  contratante: "",
-  evento: "",
-  data: "",
-  local: "",
-  cache: "",
-  sinal: "",
-};
+// Os três modelos de maior volume de busca no público-alvo. Os outros cinco
+// de documents.ts ficam atrás do cadastro — aqui a função é capturar tráfego
+// orgânico e mostrar a qualidade do PDF, não replicar o app inteiro.
+const PUBLIC_DOCS = [
+  {
+    id: "CONTRATO_SHOW",
+    label: "Contrato de show",
+    blurb: "Cachê, cancelamento, hora extra e ECAD.",
+  },
+  {
+    id: "RPA",
+    label: "Recibo / RPA",
+    blurb: "Para receber sem MEI, com as retenções discriminadas.",
+  },
+  {
+    id: "CESSAO_IMAGEM",
+    label: "Cessão de imagem e voz",
+    blurb: "Autorização para audiovisual, redes e editais.",
+  },
+] as const;
 
-function buildContract(f: typeof emptyForm) {
-  const nomeContratado = f.contratado || "[nome artístico / banda]";
-  const nomeContratante = f.contratante || "[nome do contratante]";
-  const evento = f.evento || "[nome do evento ou casa de show]";
-  const data = f.data || "[data]";
-  const local = f.local || "[local completo]";
-  const cache = f.cache || "[valor do cachê]";
-  const sinal = f.sinal || "[valor do sinal, se houver]";
+/** Campos de identificação que, no app, vêm do perfil e do cadastro de
+ *  contratantes. Aqui o visitante é anônimo, então digita à mão. */
+const IDENTITY_FIELDS = [
+  { key: "stage_name", label: "Artista / banda" },
+  { key: "cpf_cnpj", label: "CPF ou CNPJ do artista" },
+  { key: "client_name", label: "Contratante" },
+  { key: "client_doc", label: "CPF/CNPJ do contratante" },
+] as const;
 
-  return `CONTRATO DE PRESTAÇÃO DE SERVIÇOS ARTÍSTICOS
+function GeradorDocumentosPage() {
+  const [docId, setDocId] = useState<string>(PUBLIC_DOCS[0].id);
+  const [identity, setIdentity] = useState<Record<string, string>>({});
+  const [values, setValues] = useState<Record<string, string>>({});
 
-CONTRATANTE: ${nomeContratante}
-CONTRATADO (artista/banda): ${nomeContratado}
+  const template = getTemplate(docId)!;
 
-1. OBJETO
-O CONTRATADO se compromete a realizar apresentação musical no evento "${evento}", a ser
-realizado em ${data}, no seguinte local: ${local}.
-
-2. CACHÊ E PAGAMENTO
-O CONTRATANTE pagará ao CONTRATADO o valor de ${cache} a título de cachê, sendo ${sinal}
-pago como sinal/entrada e o saldo remanescente pago no dia do evento, antes ou logo após a
-apresentação, conforme acordado entre as partes.
-
-3. CANCELAMENTO
-O cancelamento pelo CONTRATANTE com menos de 72 (setenta e duas) horas de antecedência da
-data do evento sujeita o CONTRATANTE ao pagamento integral do cachê pactuado, a título de
-cláusula penal compensatória. Cancelamentos com antecedência igual ou superior a 72 horas
-dispensam o pagamento do cachê remanescente, ressalvada a retenção do sinal já pago.
-
-4. CASO FORTUITO OU FORÇA MAIOR
-Eventos imprevisíveis e alheios à vontade das partes (condições climáticas severas em locais
-abertos, determinação de autoridade pública, etc.) desobrigam ambas as partes, sem multa,
-cabendo remarcação por acordo ou devolução proporcional de valores antecipados.
-
-5. DIREITOS AUTORAIS (ECAD)
-Cabe ao CONTRATANTE o recolhimento dos direitos autorais devidos ao ECAD referentes à
-execução pública musical do evento, salvo disposição em contrário entre as partes.
-
-6. ASSINATURAS
-
-_________________________________          _________________________________
-${nomeContratante}                          ${nomeContratado}
-CONTRATANTE                                 CONTRATADO
-
-Local e data: ______________________, ____/____/________`;
-}
-
-function ModeloContratoPage() {
-  const [form, setForm] = useState(emptyForm);
-  const [copied, setCopied] = useState(false);
-  const contractText = useMemo(() => buildContract(form), [form]);
-  const set = (k: keyof typeof form) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
-
-  function copyText() {
-    void navigator.clipboard.writeText(contractText).then(() => {
-      setCopied(true);
-      toast.success("Contrato copiado.");
-      setTimeout(() => setCopied(false), 2000);
-    });
+  // Trocar de documento zera os campos específicos, mas preserva a
+  // identificação: quem acabou de digitar o próprio nome não deve digitá-lo
+  // de novo só porque quer também o recibo.
+  function changeDoc(next: string) {
+    setDocId(next);
+    setValues({});
   }
 
-  function downloadText() {
-    const blob = new Blob([contractText], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "contrato-de-show.txt";
-    a.click();
-    URL.revokeObjectURL(url);
-  }
+  const profile: Partial<ProfileRow> = useMemo(
+    () => ({
+      stage_name: identity["stage_name"] ?? "",
+      cpf_cnpj: identity["cpf_cnpj"] ?? "",
+    }),
+    [identity],
+  );
+
+  const client = useMemo(
+    () =>
+      identity["client_name"] || identity["client_doc"]
+        ? ({
+            name: identity["client_name"] ?? "",
+            doc: identity["client_doc"] ?? "",
+          } as ClientRow)
+        : null,
+    [identity],
+  );
+
+  const spec: PdfDoc = useMemo(
+    () => ({
+      title: template.label,
+      brand: identity["stage_name"] || "StageKit",
+      subtitle: "Documento gerado gratuitamente no StageKit",
+      footer: `Gerado em ${dateBR(todayISO())} · stagekit`,
+      blocks: template.build({ values, profile, client, event: null }),
+    }),
+    [template, values, profile, client, identity],
+  );
+
+  // Mesmo padrão de /documentos: jsPDF a cada tecla trava a digitação.
+  const debouncedSpec = useDebounced(spec, 350);
+
+  // jsPDF depende de APIs de navegador e quebra no SSR. Em /documentos isso
+  // nunca apareceu porque as rotas autenticadas têm `ssr: false`; esta é
+  // pública e precisa do SSR para o SEO, então o texto renderiza no servidor
+  // e só a pré-visualização espera a montagem no cliente.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const previewUrl = useMemo(
+    () => (mounted ? pdfPreviewUrl(debouncedSpec) : null),
+    [mounted, debouncedSpec],
+  );
+
+  const filename = `${template.id.toLowerCase()}-stagekit`;
 
   return (
     <div className="min-h-screen">
-      <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-6">
+      <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-6">
         <Link to="/" className="flex items-center gap-2.5">
           <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground glow-brand">
             <Radio className="size-4.5" />
@@ -122,76 +153,115 @@ function ModeloContratoPage() {
         </Button>
       </header>
 
-      <section className="mx-auto max-w-5xl px-5 pb-6 pt-4">
+      <section className="mx-auto max-w-6xl px-5 pb-6 pt-4">
         <h1 className="max-w-2xl text-3xl font-extrabold leading-tight tracking-tight md:text-4xl">
-          Modelo de contrato de show grátis
+          Gerador de documentos grátis para músicos
         </h1>
         <p className="mt-4 max-w-2xl text-base text-muted-foreground">
-          Preencha os campos abaixo e baixe um contrato de apresentação artística com cláusula de
-          cancelamento e previsão de ECAD — sem cadastro, sem pagar nada.
+          Contrato de show, RPA e cessão de imagem em PDF — preencha e baixe, sem cadastro e sem
+          pagar nada.
         </p>
       </section>
 
-      <section className="mx-auto grid max-w-5xl gap-6 px-5 pb-16 lg:grid-cols-2">
-        <div className="panel space-y-4 p-5">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            Dados do show
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Artista / banda</Label>
-              <Input value={form.contratado} onChange={(e) => set("contratado")(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Contratante</Label>
-              <Input
-                value={form.contratante}
-                onChange={(e) => set("contratante")(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label>Evento / casa de show</Label>
-              <Input value={form.evento} onChange={(e) => set("evento")(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Data</Label>
-              <Input
-                value={form.data}
-                onChange={(e) => set("data")(e.target.value)}
-                placeholder="dd/mm/aaaa"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Local</Label>
-              <Input value={form.local} onChange={(e) => set("local")(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Cachê (R$)</Label>
-              <Input value={form.cache} onChange={(e) => set("cache")(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Sinal (R$)</Label>
-              <Input value={form.sinal} onChange={(e) => set("sinal")(e.target.value)} />
+      <section className="mx-auto max-w-6xl px-5 pb-5">
+        <div className="grid gap-3 sm:grid-cols-3">
+          {PUBLIC_DOCS.map((d) => (
+            <button
+              key={d.id}
+              type="button"
+              onClick={() => changeDoc(d.id)}
+              aria-pressed={docId === d.id}
+              className={`panel p-4 text-left transition ${
+                docId === d.id
+                  ? "border-primary/50 bg-primary/5"
+                  : "hover:border-primary/40 hover:bg-primary/[0.03]"
+              }`}
+            >
+              <span className="block text-sm font-semibold">{d.label}</span>
+              <span className="mt-1 block text-xs text-muted-foreground">{d.blurb}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto grid max-w-6xl gap-6 px-5 pb-16 lg:grid-cols-2">
+        <div className="space-y-5">
+          <div className="panel space-y-4 p-5">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Quem contrata quem
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {IDENTITY_FIELDS.map((f) => (
+                <div key={f.key} className="space-y-2">
+                  <Label>{f.label}</Label>
+                  <Input
+                    value={identity[f.key] ?? ""}
+                    onChange={(e) => setIdentity((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                  />
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 pt-2">
-            <Button onClick={copyText} variant="outline" size="sm">
-              {copied ? <Check className="mr-1.5 size-4" /> : <Copy className="mr-1.5 size-4" />}
-              {copied ? "Copiado" : "Copiar texto"}
-            </Button>
-            <Button onClick={downloadText} size="sm">
-              <Download className="mr-1.5 size-4" /> Baixar .txt
+          <div className="panel space-y-4 p-5">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              {template.label}
+            </h2>
+            <p className="text-xs text-muted-foreground">{template.description}</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {template.fields.map((f) => (
+                <div
+                  key={f.name}
+                  className={`space-y-2 ${f.wide || f.type === "textarea" ? "sm:col-span-2" : ""}`}
+                >
+                  <Label>{f.label}</Label>
+                  {f.type === "textarea" ? (
+                    <Textarea
+                      rows={3}
+                      value={values[f.name] ?? ""}
+                      placeholder={f.placeholder ?? ""}
+                      onChange={(e) => setValues((prev) => ({ ...prev, [f.name]: e.target.value }))}
+                    />
+                  ) : f.type === "select" ? (
+                    <Select
+                      value={values[f.name] ?? ""}
+                      onValueChange={(v) => setValues((prev) => ({ ...prev, [f.name]: v }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(f.options ?? []).map((o) => (
+                          <SelectItem key={o} value={o}>
+                            {o}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      type={f.type === "date" ? "date" : "text"}
+                      value={values[f.name] ?? ""}
+                      placeholder={f.placeholder ?? ""}
+                      onChange={(e) => setValues((prev) => ({ ...prev, [f.name]: e.target.value }))}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <Button onClick={() => downloadPdf(spec, filename)} className="w-full sm:w-auto">
+              <Download className="mr-1.5 size-4" /> Baixar PDF
             </Button>
           </div>
 
           <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
             <p className="text-sm font-medium">
-              Quer isso em PDF, com sua identidade visual e sem preencher tudo de novo a cada show?
+              Quer com a sua identidade visual e sem preencher tudo de novo a cada show?
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              No StageKit seus dados ficam salvos e entram sozinhos em todo contrato, rider e
-              recibo.
+              No StageKit seus dados ficam salvos e entram sozinhos em todo contrato, rider e recibo
+              — e o PDF sai com o seu logo e as suas cores.
             </p>
             <Button asChild size="sm" className="mt-3">
               <Link to="/auth" search={{ modo: "criar" }}>
@@ -201,49 +271,21 @@ function ModeloContratoPage() {
           </div>
         </div>
 
-        <div className="panel p-5">
+        <div className="panel p-5 lg:sticky lg:top-6 lg:self-start">
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             Pré-visualização
           </h2>
-          <pre className="max-h-[600px] overflow-auto whitespace-pre-wrap rounded-lg bg-muted/40 p-4 font-mono text-xs leading-relaxed text-foreground">
-            {contractText}
-          </pre>
+          {previewUrl ? (
+            <iframe
+              src={previewUrl}
+              title={`Pré-visualização do documento ${template.label}`}
+              className="h-[600px] w-full rounded-lg border border-border bg-muted/30"
+            />
+          ) : (
+            <div className="h-[600px] w-full animate-pulse rounded-lg border border-border bg-muted/30" />
+          )}
         </div>
       </section>
-
-      <section className="mx-auto max-w-5xl px-5 pb-24">
-        <h2 className="mb-4 text-lg font-semibold">O que um contrato de show precisa ter</h2>
-        <div className="grid gap-4 text-sm text-muted-foreground sm:grid-cols-2">
-          <p>
-            <strong className="text-foreground">Cláusula de cancelamento.</strong> Define o que
-            acontece com o cachê se o show for cancelado, e com quanto tempo de antecedência.
-          </p>
-          <p>
-            <strong className="text-foreground">Previsão de ECAD.</strong> Deixa claro quem recolhe
-            os direitos autorais da execução pública — geralmente o contratante.
-          </p>
-          <p>
-            <strong className="text-foreground">Sinal e forma de pagamento.</strong> Separa o valor
-            pago na assinatura do saldo pago no dia do evento.
-          </p>
-          <p>
-            <strong className="text-foreground">Caso fortuito ou força maior.</strong> Protege as
-            duas partes em situações fora de controle, como clima ou determinação de autoridade
-            pública.
-          </p>
-        </div>
-        <p className="mt-6 text-xs text-muted-foreground">
-          Este modelo é um ponto de partida gratuito e não substitui revisão jurídica para casos
-          específicos.
-        </p>
-      </section>
-
-      <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground">
-        <Link to="/" className="hover:text-foreground">
-          StageKit
-        </Link>{" "}
-        · Documentação profissional para a música independente brasileira
-      </footer>
     </div>
   );
 }

@@ -23,7 +23,7 @@ import {
   TimeField,
 } from "@/components/ui-kit";
 import { useList, useProfile } from "@/lib/queries";
-import { dateBR } from "@/lib/format";
+import { dateBR, todayISO } from "@/lib/format";
 import { useActiveFormation } from "@/lib/active-formation";
 import { BRAND_PRESETS, paletteOf, patternStyle, FONT_STACKS } from "@/lib/brand-presets";
 import { cn } from "@/lib/utils";
@@ -71,7 +71,11 @@ type FormatKey = keyof typeof FORMATS;
 type LayoutKey = "BLEED" | "BLOCKS" | "POSTER" | "CENTERED" | "DIAGONAL";
 
 const LAYOUTS: { key: LayoutKey; label: string; hint: string }[] = [
-  { key: "BLEED", label: "Foto em destaque", hint: "Logo e chamada no canto, texto compacto embaixo" },
+  {
+    key: "BLEED",
+    label: "Foto em destaque",
+    hint: "Logo e chamada no canto, texto compacto embaixo",
+  },
   { key: "BLOCKS", label: "Blocos", hint: "Foto em cima, texto num bloco sólido embaixo" },
   { key: "POSTER", label: "Cartaz tipográfico", hint: "O título domina a peça inteira" },
   { key: "CENTERED", label: "Minimalista", hint: "Tudo centralizado, com bastante respiro" },
@@ -112,7 +116,7 @@ function CardGeneratorPage() {
   const { data: brandKits = [] } = useList("brand_kits");
   const { event: eventIdParam } = Route.useSearch();
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayISO();
   const upcoming = events.filter(
     (e) => e.status !== "CANCELADO" && (!e.event_date || e.event_date >= today),
   );
@@ -303,10 +307,7 @@ function CardGeneratorPage() {
               ) : null}
               {copy.headline ? (
                 <p
-                  className={cn(
-                    "font-extrabold leading-tight",
-                    isCompact ? "text-xl" : "text-2xl",
-                  )}
+                  className={cn("font-extrabold leading-tight", isCompact ? "text-xl" : "text-2xl")}
                 >
                   {copy.headline}
                 </p>
@@ -373,7 +374,11 @@ function CardGeneratorPage() {
         return (
           <>
             {bg}
-            <div className="absolute inset-0" style={{ background: `${palette.bg}cc` }} aria-hidden />
+            <div
+              className="absolute inset-0"
+              style={{ background: `${palette.bg}cc` }}
+              aria-hidden
+            />
             <div className="relative flex h-full flex-col items-center justify-center gap-3 p-10 text-center">
               {logo}
               {copy.kicker ? (

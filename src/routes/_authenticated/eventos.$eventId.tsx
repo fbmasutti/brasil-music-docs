@@ -32,23 +32,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  PageHeader,
-  PageContainer,
-  Section,
-  StatCard,
-  StatusBadge,
-} from "@/components/ui-kit";
+import { PageHeader, PageContainer, Section, StatCard, StatusBadge } from "@/components/ui-kit";
 import { EventFormDialog } from "@/components/EventFormDialog";
 import { useList, useUpdate, useInsert, useRemove } from "@/lib/queries";
-import {
-  dateBR,
-  money,
-  EVENT_STATUS,
-  DOCUMENT_STATUS,
-  CHARGE_STATUS,
-} from "@/lib/format";
+import { dateBR, money, EVENT_STATUS, DOCUMENT_STATUS, CHARGE_STATUS } from "@/lib/format";
 import { buildGoogleCalendarUrl, buildMapsUrl, downloadICS } from "@/lib/calendar-link";
+import { isEventToday, TodayBadge, HowToGetThere } from "@/components/EventToday";
 
 export const Route = createFileRoute("/_authenticated/eventos/$eventId")({
   head: () => ({
@@ -150,6 +139,7 @@ function EventDetail() {
   const status = EVENT_STATUS[event.status] ?? { label: event.status, tone: "" };
   const googleCalendarUrl = buildGoogleCalendarUrl(event);
   const mapsUrl = buildMapsUrl(event);
+  const isToday = isEventToday(event);
 
   const totalExpenses = expenses.reduce((s, e) => s + Number(e.amount), 0);
   const totalCharges = charges.reduce((s, c) => s + Number(c.amount ?? 0), 0);
@@ -165,11 +155,26 @@ function EventDetail() {
         </Link>
       </Button>
 
+      {isToday ? (
+        <div className="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3">
+          <TodayBadge />
+          <p className="min-w-0 flex-1 text-sm font-medium">
+            {event.start_time ? `O show é hoje, às ${event.start_time}` : "O show é hoje"}
+            {event.venue ? ` · ${event.venue}` : ""}
+          </p>
+          <HowToGetThere event={event} variant="outline" />
+        </div>
+      ) : null}
+
       <PageHeader
         title={event.title}
         subtitle={`${dateBR(event.event_date)} · ${[event.venue, event.city].filter(Boolean).join(", ") || "local a definir"}${client ? ` · ${client.name}` : ""}${formation ? ` · ${formation.name}` : ""}`}
         actions={
           <>
+            {/* No dia do show, chegar ao local é a única ação que importa —
+                por isso sai do menu ⋮ e vira botão primário. */}
+            {isToday ? <HowToGetThere event={event} /> : null}
+
             <Select
               value={event.status}
               onValueChange={(value) =>
@@ -248,19 +253,25 @@ function EventDetail() {
         <StatCard
           label="Sinal"
           value={money(Number(event.fee_deposit))}
-          hint={event.deposit_due_date ? `vence ${dateBR(event.deposit_due_date)}` : "sem vencimento"}
+          hint={
+            event.deposit_due_date ? `vence ${dateBR(event.deposit_due_date)}` : "sem vencimento"
+          }
           tone="cyan"
         />
         <StatCard
           label="Saldo"
           value={money(Number(event.fee_total) - Number(event.fee_deposit))}
-          hint={event.balance_due_date ? `vence ${dateBR(event.balance_due_date)}` : "sem vencimento"}
+          hint={
+            event.balance_due_date ? `vence ${dateBR(event.balance_due_date)}` : "sem vencimento"
+          }
           tone="amber"
         />
         <StatCard
           label="Checklist"
           value={tasks.length ? `${done}/${tasks.length}` : "—"}
-          hint={tasks.length ? `${Math.round((done / tasks.length) * 100)}% concluído` : "sem tarefas"}
+          hint={
+            tasks.length ? `${Math.round((done / tasks.length) * 100)}% concluído` : "sem tarefas"
+          }
           tone="muted"
         />
       </div>
@@ -312,7 +323,13 @@ function EventDetail() {
                             updateTask.mutate({ id: task.id, values: { done: Boolean(checked) } })
                           }
                         />
-                        <span className={task.done ? "flex-1 text-sm text-muted-foreground line-through" : "flex-1 text-sm"}>
+                        <span
+                          className={
+                            task.done
+                              ? "flex-1 text-sm text-muted-foreground line-through"
+                              : "flex-1 text-sm"
+                          }
+                        >
                           {task.label}
                         </span>
                         <Button
@@ -338,7 +355,10 @@ function EventDetail() {
                       placeholder={`Nova tarefa em ${phase.label}...`}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") submitNewTask(phase.key);
-                        if (e.key === "Escape") { setAddingPhase(null); setNewTaskLabel(""); }
+                        if (e.key === "Escape") {
+                          setAddingPhase(null);
+                          setNewTaskLabel("");
+                        }
                       }}
                       className="flex-1"
                     />

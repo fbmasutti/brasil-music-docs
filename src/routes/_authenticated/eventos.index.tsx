@@ -19,8 +19,10 @@ import {
 } from "@/components/ui-kit";
 import { EventFormDialog } from "@/components/EventFormDialog";
 import { useList, useInsert, useRemove } from "@/lib/queries";
-import { dateBR, money, EVENT_STATUS } from "@/lib/format";
+import { dateBR, money, todayISO, EVENT_STATUS } from "@/lib/format";
 import { buildGoogleCalendarUrl, downloadICS } from "@/lib/calendar-link";
+import { isEventToday, TodayBadge, HowToGetThere } from "@/components/EventToday";
+import { cn } from "@/lib/utils";
 import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/eventos/")({
@@ -49,7 +51,7 @@ function EventsPage() {
   const duplicate = useInsert("events", "Evento duplicado");
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayISO();
   const future = events
     .filter((e) => (e.event_date ?? "") >= today)
     .sort((a, b) => (a.event_date ?? "").localeCompare(b.event_date ?? ""));
@@ -138,7 +140,9 @@ function EventsPage() {
         <EventFormDialog
           event={events.find((e) => e.id === editingId)}
           open={true}
-          onOpenChange={(o) => { if (!o) setEditingId(null); }}
+          onOpenChange={(o) => {
+            if (!o) setEditingId(null);
+          }}
         />
       )}
     </PageContainer>
@@ -163,16 +167,26 @@ function EventList({
       {events.map((e) => {
         const client = clients.find((c) => c.id === e.client_id);
         const googleCalendarUrl = buildGoogleCalendarUrl(e);
+        const today = isEventToday(e);
         return (
-          <li key={e.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+          <li
+            key={e.id}
+            className={cn(
+              "flex flex-wrap items-center justify-between gap-3 py-3",
+              today && "-mx-3 rounded-lg border border-primary/30 bg-primary/5 px-3",
+            )}
+          >
             <div className="min-w-0">
-              <Link
-                to="/eventos/$eventId"
-                params={{ eventId: e.id }}
-                className="block truncate font-medium hover:text-primary"
-              >
-                {e.title}
-              </Link>
+              <span className="flex items-center gap-2">
+                <Link
+                  to="/eventos/$eventId"
+                  params={{ eventId: e.id }}
+                  className="truncate font-medium hover:text-primary"
+                >
+                  {e.title}
+                </Link>
+                {today ? <TodayBadge /> : null}
+              </span>
               <p className="text-xs text-muted-foreground">
                 {e.event_date ? dateBR(e.event_date) : "Data a definir"} ·{" "}
                 {[e.venue, e.city && `${e.city}${e.state ? `/${e.state}` : ""}`]
@@ -182,6 +196,7 @@ function EventList({
               </p>
             </div>
             <div className="flex items-center gap-3">
+              {today ? <HowToGetThere event={e} variant="outline" /> : null}
               <span className="text-sm font-semibold">{money(Number(e.fee_total))}</span>
               <StatusBadge status={e.status} map={EVENT_STATUS} />
               <Button asChild variant="ghost" size="icon" aria-label={`Gerar post de ${e.title}`}>

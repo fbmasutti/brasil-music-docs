@@ -32,7 +32,7 @@ import { useList, useInsert, useRemove, useUpdate, useProfile } from "@/lib/quer
 import { useDocumentAccent } from "@/lib/active-formation";
 import { DOC_TEMPLATES, getTemplate } from "@/lib/documents";
 import { downloadPdf, pdfPreviewUrl, pdfBlob, type PdfDoc } from "@/lib/pdf";
-import { dateBR, DOCUMENT_STATUS } from "@/lib/format";
+import { dateBR, todayISO, DOCUMENT_STATUS } from "@/lib/format";
 import { useDebounced } from "@/lib/use-debounced";
 import { shareFile } from "@/lib/share";
 import type { Tables } from "@/integrations/supabase/types";
@@ -84,8 +84,9 @@ function DocumentsPage() {
     () => ({
       title: template.label,
       brand: profile?.stage_name ?? "StageKit",
-      subtitle: profile?.pf_full_name ?? profile?.legal_name ?? "Documentação profissional para músicos",
-      footer: `${profile?.stage_name ?? "StageKit"} · gerado em ${dateBR(new Date().toISOString().slice(0, 10))}`,
+      subtitle:
+        profile?.pf_full_name ?? profile?.legal_name ?? "Documentação profissional para músicos",
+      footer: `${profile?.stage_name ?? "StageKit"} · gerado em ${dateBR(todayISO())}`,
       accent,
       blocks: template.build({ values, profile: profile ?? {}, client, event }),
     }),
@@ -165,7 +166,12 @@ function DocumentsPage() {
             <Button variant="outline" size="sm" onClick={save} disabled={insert.isPending}>
               <Save className="mr-1 size-4" /> Salvar
             </Button>
-            <Button variant="outline" size="sm" onClick={() => void sendForSignature()} disabled={insert.isPending}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void sendForSignature()}
+              disabled={insert.isPending}
+            >
               <Send className="mr-1 size-4" /> Encaminhar para assinatura
             </Button>
             <Button size="sm" onClick={() => downloadPdf(spec, filename)}>
@@ -178,7 +184,12 @@ function DocumentsPage() {
       <div className="grid gap-5 lg:grid-cols-5">
         <div className="space-y-5 lg:col-span-3">
           {/* 3.2: passos numerados colapsíveis */}
-          <Section title="Passo 1 — Escolha o modelo" description={template.description} collapsible defaultOpen>
+          <Section
+            title="Passo 1 — Escolha o modelo"
+            description={template.description}
+            collapsible
+            defaultOpen
+          >
             <div className="space-y-2">
               <Label>Documento</Label>
               <Select
@@ -332,18 +343,22 @@ function DocumentsPage() {
                           }}
                           extra={[
                             ...(nextLabel
-                              ? [{
-                                  label: nextLabel,
-                                  icon: <CheckSquare className="size-4" />,
-                                  onClick: () => advanceStatus(d),
-                                }]
+                              ? [
+                                  {
+                                    label: nextLabel,
+                                    icon: <CheckSquare className="size-4" />,
+                                    onClick: () => advanceStatus(d),
+                                  },
+                                ]
                               : []),
                             ...(d.status !== "RASCUNHO"
-                              ? [{
-                                  label: "Voltar para Rascunho",
-                                  icon: <RotateCcw className="size-4" />,
-                                  onClick: () => resetStatus(d),
-                                }]
+                              ? [
+                                  {
+                                    label: "Voltar para Rascunho",
+                                    icon: <RotateCcw className="size-4" />,
+                                    onClick: () => resetStatus(d),
+                                  },
+                                ]
                               : []),
                           ]}
                         />

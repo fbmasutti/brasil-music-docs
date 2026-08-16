@@ -7,6 +7,19 @@ export function money(value: number | null | undefined) {
   return BRL.format(Number(value ?? 0));
 }
 
+/**
+ * Data de hoje em `YYYY-MM-DD` no fuso do dispositivo.
+ *
+ * O padrão anterior — `new Date().toISOString().slice(0, 10)` — devolve UTC.
+ * No Brasil (UTC−3) isso vira a data de amanhã a partir das 21h locais, ou
+ * seja: na noite do show, exatamente quando o artista está saindo para
+ * tocar, o app passava a tratar o evento como se já tivesse passado.
+ * `en-CA` é o locale que formata como `YYYY-MM-DD`, já em hora local.
+ */
+export function todayISO() {
+  return new Date().toLocaleDateString("en-CA");
+}
+
 export function dateBR(value?: string | null) {
   if (!value) return "—";
   const [y, m, d] = value.slice(0, 10).split("-");
@@ -44,8 +57,14 @@ export function razaoSocial(profile: RazaoSocialInput | null | undefined): strin
   if (!profile) return "";
   const isPj = profile.entity_type === "PJ" || profile.entity_type === "MEI";
   const name = isPj
-    ? (profile.pj_razao_social?.trim() || profile.legal_name?.trim() || profile.stage_name?.trim() || "")
-    : (profile.pf_full_name?.trim() || profile.legal_name?.trim() || profile.stage_name?.trim() || "");
+    ? profile.pj_razao_social?.trim() ||
+      profile.legal_name?.trim() ||
+      profile.stage_name?.trim() ||
+      ""
+    : profile.pf_full_name?.trim() ||
+      profile.legal_name?.trim() ||
+      profile.stage_name?.trim() ||
+      "";
   if (profile.entity_type === "MEI") {
     const cnpj = profile.pj_cnpj?.trim() || profile.cpf_cnpj?.trim();
     return cnpj ? `${name} ${cnpj}` : name;
@@ -178,16 +197,22 @@ export type CacheStatusKey = keyof typeof CACHE_STATUS;
 export const DOCUMENT_STATUS: Record<string, { label: string; tone: string }> = {
   RASCUNHO: { label: "Rascunho", tone: NEUTRAL_TONE },
   ENVIADO: { label: "Enviado", tone: "bg-cyan/15 text-cyan border-cyan/30" },
-  AGUARDANDO_ASSINATURA: { label: "Aguardando assinatura", tone: "bg-warning/15 text-warning border-warning/30" },
+  AGUARDANDO_ASSINATURA: {
+    label: "Aguardando assinatura",
+    tone: "bg-warning/15 text-warning border-warning/30",
+  },
   ASSINADO: { label: "Assinado", tone: "bg-success/15 text-success border-success/30" },
-  CANCELADO: { label: "Cancelado", tone: "bg-destructive/15 text-destructive border-destructive/30" },
+  CANCELADO: {
+    label: "Cancelado",
+    tone: "bg-destructive/15 text-destructive border-destructive/30",
+  },
 };
 
 export const CHARGE_STATUS: Record<string, { label: string; tone: string }> = {
-  PENDENTE:  { label: "Pendente",  tone: "bg-warning/15 text-warning border-warning/30" },
-  ENVIADA:   { label: "Enviada",   tone: "bg-cyan-500/15 text-cyan-600 border-cyan-500/30" },
-  PAGA:      { label: "Paga",      tone: "bg-success/15 text-success border-success/30" },
-  VENCIDA:   { label: "Vencida",   tone: "bg-destructive/15 text-destructive border-destructive/30" },
+  PENDENTE: { label: "Pendente", tone: "bg-warning/15 text-warning border-warning/30" },
+  ENVIADA: { label: "Enviada", tone: "bg-cyan-500/15 text-cyan-600 border-cyan-500/30" },
+  PAGA: { label: "Paga", tone: "bg-success/15 text-success border-success/30" },
+  VENCIDA: { label: "Vencida", tone: "bg-destructive/15 text-destructive border-destructive/30" },
   CANCELADA: { label: "Cancelada", tone: "bg-zinc-500/15 text-zinc-500 border-zinc-500/30" },
 };
 

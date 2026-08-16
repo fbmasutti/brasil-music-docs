@@ -53,6 +53,28 @@ export function buildMapsUrl(ev: CalendarEventInput): string | null {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
 }
 
+/**
+ * Waze e Apple Maps, para o usuário escolher o app de navegação.
+ *
+ * Um link https de `google.com/maps` NÃO abre seletor de app: no Android só
+ * o app do Google Maps declara filtro para esse domínio e no iOS só ele
+ * reivindica o Universal Link — o Waze nunca entra na disputa. O esquema
+ * `geo:` convocaria o seletor no Android, mas não existe no iOS. Por isso a
+ * escolha é oferecida na interface, com um link universal por app: funciona
+ * nos dois sistemas e cai no site do app quando ele não está instalado.
+ */
+export function buildWazeUrl(ev: CalendarEventInput): string | null {
+  const location = eventLocation(ev);
+  if (!location) return null;
+  return `https://waze.com/ul?q=${encodeURIComponent(location)}&navigate=yes`;
+}
+
+export function buildAppleMapsUrl(ev: CalendarEventInput): string | null {
+  const location = eventLocation(ev);
+  if (!location) return null;
+  return `https://maps.apple.com/?q=${encodeURIComponent(location)}`;
+}
+
 function escapeICS(text: string) {
   return text.replace(/[\\,;]/g, (m) => `\\${m}`).replace(/\n/g, "\\n");
 }

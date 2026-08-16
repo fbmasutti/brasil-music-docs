@@ -1,6 +1,6 @@
 import type { Tables } from "@/integrations/supabase/types";
 import type { PdfBlock } from "./pdf";
-import { longDateBR, money, razaoSocial } from "./format";
+import { longDateBR, money, razaoSocial, todayISO } from "./format";
 
 export type ProfileRow = Tables<"profiles">;
 export type ClientRow = Tables<"clients">;
@@ -121,10 +121,7 @@ function foroClause(profile: Partial<ProfileRow>, title: string): PdfBlock {
 
 const place = (profile: Partial<ProfileRow>, values: Record<string, string>) => {
   const city = values["city"] || profile.city;
-  return phrase(
-    city ? `${city},` : "",
-    longDateBR(values["signature_date"] || new Date().toISOString().slice(0, 10)) + ".",
-  );
+  return phrase(city ? `${city},` : "", longDateBR(values["signature_date"] || todayISO()) + ".");
 };
 
 export const DOC_TEMPLATES: DocTemplate[] = [

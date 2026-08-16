@@ -32,6 +32,7 @@ import {
   isValidCnpj,
   CNAE_OPTIONS,
   ECAD_ASSOCIATIONS,
+  todayISO,
 } from "@/lib/format";
 import { connectGoogleCalendar } from "@/lib/google-calendar";
 
@@ -195,8 +196,10 @@ function ProfilePage() {
     navigate({ search: { google_calendar: undefined }, replace: true });
   }, [google_calendar, navigate]);
 
-  const set = <K extends keyof FormState>(k: K) => (v: string) =>
-    setForm((f) => ({ ...f, [k]: v }));
+  const set =
+    <K extends keyof FormState>(k: K) =>
+    (v: string) =>
+      setForm((f) => ({ ...f, [k]: v }));
 
   function save() {
     if (!profile) return;
@@ -237,7 +240,7 @@ function ProfilePage() {
     }));
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayISO();
   // Sincronização automática ainda não foi ativada em produção (falta client ID do
   // Google) — o botão "Conectar" só aparece quando essa credencial existir, pra não
   // oferecer uma ação que sempre falha.
@@ -255,10 +258,16 @@ function ProfilePage() {
   ];
 
   // Validação inline de CPF/CNPJ
-  const pjCnpjError =
-    form.pj_cnpj ? (isValidCnpj(form.pj_cnpj) ? undefined : "CNPJ inválido") : undefined;
-  const pfCpfError =
-    form.pf_cpf ? (isValidCpf(form.pf_cpf) ? undefined : "CPF inválido") : undefined;
+  const pjCnpjError = form.pj_cnpj
+    ? isValidCnpj(form.pj_cnpj)
+      ? undefined
+      : "CNPJ inválido"
+    : undefined;
+  const pfCpfError = form.pf_cpf
+    ? isValidCpf(form.pf_cpf)
+      ? undefined
+      : "CPF inválido"
+    : undefined;
 
   return (
     <PageContainer>
@@ -281,7 +290,9 @@ function ProfilePage() {
           <div className="space-y-2">
             <Label>Natureza jurídica</Label>
             <Select value={form.entity_type} onValueChange={set("entity_type")}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="PF">Pessoa Física</SelectItem>
                 <SelectItem value="MEI">MEI — Microempreendedor Individual</SelectItem>
@@ -292,7 +303,9 @@ function ProfilePage() {
           <div className="space-y-2">
             <Label>Emissor padrão em contratos</Label>
             <Select value={form.default_issuer} onValueChange={set("default_issuer")}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="PF">Pessoa Física</SelectItem>
                 <SelectItem value="PJ">Pessoa Jurídica / MEI</SelectItem>
@@ -302,10 +315,14 @@ function ProfilePage() {
           <div className="space-y-2">
             <Label>CNAE principal</Label>
             <Select value={form.cnae} onValueChange={set("cnae")}>
-              <SelectTrigger><SelectValue placeholder="Selecionar CNAE" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecionar CNAE" />
+              </SelectTrigger>
               <SelectContent>
                 {CNAE_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -334,22 +351,46 @@ function ProfilePage() {
             }
           >
             <FieldGrid>
-              <TextField label="Razão social" value={form.pj_razao_social} onChange={set("pj_razao_social")} />
-              <TextField label="Nome fantasia" value={form.pj_nome_fantasia} onChange={set("pj_nome_fantasia")} />
+              <TextField
+                label="Razão social"
+                value={form.pj_razao_social}
+                onChange={set("pj_razao_social")}
+              />
+              <TextField
+                label="Nome fantasia"
+                value={form.pj_nome_fantasia}
+                onChange={set("pj_nome_fantasia")}
+              />
               <TextField
                 label="CNPJ"
                 value={form.pj_cnpj}
                 onChange={(v) => set("pj_cnpj")(maskCpfCnpj(v))}
                 error={pjCnpjError}
               />
-              <TextField label="Inscrição municipal" value={form.pj_inscricao_municipal} onChange={set("pj_inscricao_municipal")} />
-              <TextField label="Inscrição estadual" value={form.pj_inscricao_estadual} onChange={set("pj_inscricao_estadual")} />
+              <TextField
+                label="Inscrição municipal"
+                value={form.pj_inscricao_municipal}
+                onChange={set("pj_inscricao_municipal")}
+              />
+              <TextField
+                label="Inscrição estadual"
+                value={form.pj_inscricao_estadual}
+                onChange={set("pj_inscricao_estadual")}
+              />
               <TextField label="E-mail" value={form.pj_email} onChange={set("pj_email")} />
-              <TextField label="Telefone" value={form.pj_phone} onChange={(v) => set("pj_phone")(maskPhone(v))} />
+              <TextField
+                label="Telefone"
+                value={form.pj_phone}
+                onChange={(v) => set("pj_phone")(maskPhone(v))}
+              />
               <TextField label="Endereço" value={form.pj_address} onChange={set("pj_address")} />
               <TextField label="Cidade" value={form.pj_city} onChange={set("pj_city")} />
               <TextField label="UF" value={form.pj_state} onChange={set("pj_state")} />
-              <TextField label="CEP" value={form.pj_cep} onChange={(v) => set("pj_cep")(maskCep(v))} />
+              <TextField
+                label="CEP"
+                value={form.pj_cep}
+                onChange={(v) => set("pj_cep")(maskCep(v))}
+              />
             </FieldGrid>
           </Section>
         </TabsContent>
@@ -366,7 +407,11 @@ function ProfilePage() {
             }
           >
             <FieldGrid>
-              <TextField label="Nome completo" value={form.pf_full_name} onChange={set("pf_full_name")} />
+              <TextField
+                label="Nome completo"
+                value={form.pf_full_name}
+                onChange={set("pf_full_name")}
+              />
               <TextField
                 label="CPF"
                 value={form.pf_cpf}
@@ -375,11 +420,19 @@ function ProfilePage() {
               />
               <TextField label="RG" value={form.pf_rg} onChange={set("pf_rg")} />
               <TextField label="E-mail" value={form.pf_email} onChange={set("pf_email")} />
-              <TextField label="Telefone" value={form.pf_phone} onChange={(v) => set("pf_phone")(maskPhone(v))} />
+              <TextField
+                label="Telefone"
+                value={form.pf_phone}
+                onChange={(v) => set("pf_phone")(maskPhone(v))}
+              />
               <TextField label="Endereço" value={form.pf_address} onChange={set("pf_address")} />
               <TextField label="Cidade" value={form.pf_city} onChange={set("pf_city")} />
               <TextField label="UF" value={form.pf_state} onChange={set("pf_state")} />
-              <TextField label="CEP" value={form.pf_cep} onChange={(v) => set("pf_cep")(maskCep(v))} />
+              <TextField
+                label="CEP"
+                value={form.pf_cep}
+                onChange={(v) => set("pf_cep")(maskCep(v))}
+              />
             </FieldGrid>
           </Section>
         </TabsContent>
@@ -388,7 +441,12 @@ function ProfilePage() {
         <TabsContent value="contas">
           <Section title="Dados bancários e PIX">
             <FieldGrid>
-              <TextField label="Chave PIX" value={form.pix_key} onChange={set("pix_key")} hint="CPF, CNPJ, e-mail, telefone ou chave aleatória" />
+              <TextField
+                label="Chave PIX"
+                value={form.pix_key}
+                onChange={set("pix_key")}
+                hint="CPF, CNPJ, e-mail, telefone ou chave aleatória"
+              />
               <TextField label="Banco" value={form.bank_name} onChange={set("bank_name")} />
               <TextField label="Agência" value={form.bank_agency} onChange={set("bank_agency")} />
               <TextField label="Conta" value={form.bank_account} onChange={set("bank_account")} />
@@ -403,22 +461,34 @@ function ProfilePage() {
               <div className="space-y-2">
                 <Label>Associação ECAD</Label>
                 <Select value={form.ecad_association} onValueChange={set("ecad_association")}>
-                  <SelectTrigger><SelectValue placeholder="Selecionar associação" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar associação" />
+                  </SelectTrigger>
                   <SelectContent>
                     {ECAD_ASSOCIATIONS.map((a) => (
-                      <SelectItem key={a} value={a}>{a}</SelectItem>
+                      <SelectItem key={a} value={a}>
+                        {a}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              <TextField label="Nº de cliente ECAD" value={form.ecad_client_number} onChange={set("ecad_client_number")} />
+              <TextField
+                label="Nº de cliente ECAD"
+                value={form.ecad_client_number}
+                onChange={set("ecad_client_number")}
+              />
               <TextField label="CAE / IPI" value={form.cae_ipi} onChange={set("cae_ipi")} />
               <TextField
                 label="Validade da certidão negativa"
                 value={form.cnd_expires_at}
                 onChange={set("cnd_expires_at")}
                 type="date"
-                error={form.cnd_expires_at && form.cnd_expires_at < today ? "Certidão vencida" : undefined}
+                error={
+                  form.cnd_expires_at && form.cnd_expires_at < today
+                    ? "Certidão vencida"
+                    : undefined
+                }
               />
             </FieldGrid>
           </Section>
@@ -434,7 +504,7 @@ function ProfilePage() {
                   <p className="text-xs text-muted-foreground">
                     {profile?.google_calendar_refresh_token
                       ? `Conectado${profile.google_calendar_email ? ` — ${profile.google_calendar_email}` : ""}. Shows salvos entram automaticamente na sua agenda.`
-                      : "Em breve: sincronização automática com o Google Calendar. Por enquanto, use o link \"Adicionar ao Google Calendar\" na página de cada show."}
+                      : 'Em breve: sincronização automática com o Google Calendar. Por enquanto, use o link "Adicionar ao Google Calendar" na página de cada show.'}
                   </p>
                 </div>
               </div>

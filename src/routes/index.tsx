@@ -8,8 +8,10 @@ import {
   Wallet,
   Backpack,
   ArrowRight,
-  CalendarDays,
   FileText,
+  Wand2,
+  MapPin,
+  Megaphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +20,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { cn } from "@/lib/utils";
 
 const SITE_URL = "https://stage-kit.lovable.app";
 
@@ -46,7 +49,47 @@ export const Route = createFileRoute("/")({
 // Linha visível curta (a rolagem que o próprio usuário do produto ignora
 // hoje) + texto completo com as palavras-chave dentro do <details>, que o
 // Google indexa mesmo fechado — ver plano de revisão de UX/SEO, Passo 2.
+//
+// Os quatro primeiros são os diferenciais e abrem a grade com destaque
+// visual: dois deles (WhatsApp e gerador de posts) não apareciam em card
+// nenhum antes. "Agenda de Shows" e "Rider e Mapa de Palco" foram
+// absorvidos pelos destaques equivalentes para não dizer a mesma coisa
+// duas vezes — por isso a grade fecha em 9, não em 11.
 const MODULES = [
+  {
+    icon: Wand2,
+    title: "Importação Inteligente via WhatsApp",
+    summary: "Chegou proposta no WhatsApp? É só copiar e colar.",
+    details:
+      "O StageKit identifica data, horário, local e cachê da conversa e cria o evento na sua agenda automaticamente, sem digitação repetitiva.",
+    featured: true,
+  },
+  {
+    icon: MapPin,
+    title: "Logística e Agenda Integradas",
+    summary: "Do compromisso na agenda ao GPS no dia do show.",
+    // "Manda para o Google Agenda" é o quick-add via login do navegador,
+    // que funciona. Não dizer "sincroniza": o OAuth está desligado.
+    details:
+      "Mande cada show para o Google Agenda (ou baixe o .ics para Apple e Outlook) em um clique. No dia da gig, o botão Como chegar abre o endereço no seu app de navegação favorito. Zero atrasos.",
+    featured: true,
+  },
+  {
+    icon: Sliders,
+    title: "Rider Técnico e Presets",
+    summary: "Riders e mapas de palco com nível profissional em minutos.",
+    details:
+      "Monte seu mapa de palco online com presets prontos de equipamentos, microfones recomendados e channel list limpa, para o técnico de som entender de primeira. Backline e hospitality saem no mesmo PDF.",
+    featured: true,
+  },
+  {
+    icon: Megaphone,
+    title: "Gerador de Posts sem Canva",
+    summary: "Artes de divulgação prontas instantaneamente.",
+    details:
+      "Aplique sua Identidade Visual (BrandKit) automaticamente e gere posts do show em Stories 9:16, Feed 1:1 ou 4:5, prontos para o Instagram, sem abrir editor de imagem.",
+    featured: true,
+  },
   {
     icon: FileSignature,
     title: "Contratos e Documentos",
@@ -55,25 +98,11 @@ const MODULES = [
       "Gere Contratos de Show profissionais em segundos, com cláusulas de cancelamento e ECAD. Inclui gerador de RPA para músicos sem MEI, Declaração de Cessão de Imagem e Carta de Anuência. Seus dados entram sozinhos em todo documento.",
   },
   {
-    icon: Sliders,
-    title: "Rider e Mapa de Palco",
-    summary: "Mapa de palco online e rider em PDF.",
-    details:
-      "Crie seu Mapa de Palco online com ícones técnicos e proporcionais. Gere PDFs limpos e organizados com channel list, backline e hospitality prontos para o produtor.",
-  },
-  {
     icon: Music4,
     title: "Repertório, ECAD e Formações",
     summary: "Seu setlist vira o relatório do ECAD.",
     details:
       "Organize seu repertório, vincule obras às formações da sua banda e gere relatórios de execução pública para o ECAD automaticamente.",
-  },
-  {
-    icon: Images,
-    title: "Portfólio, Clipping e BrandKit",
-    summary: "Portfólio pronto para anexar em edital.",
-    details:
-      "Organize mídias e matérias para currículos de editais de fomento. Aplique sua Identidade Visual (BrandKit) automaticamente em todos os PDFs e documentos do artista.",
   },
   {
     icon: Wallet,
@@ -90,49 +119,56 @@ const MODULES = [
       "Monte a lista de equipamento de cada formação uma vez. Todo show que usa aquela formação já nasce com o checklist do que levar, agrupado por categoria — inclusive os shows criados pelo WhatsApp.",
   },
   {
-    icon: CalendarDays,
-    title: "Agenda de Shows",
-    summary: "Cada show com cachê, sinal e checklist.",
+    icon: Images,
+    title: "Portfólio e Clipping",
+    summary: "Portfólio pronto para anexar em edital.",
     details:
-      "Agenda de shows com cachê, sinal, vencimentos e checklist de pré-produção, palco e pós-show, com status por evento.",
+      "Organize mídias, matérias e releases por ano para montar o anexo de currículo dos editais de fomento.",
   },
 ];
 
+// O card já mostra o número no círculo, então o título não repete "Passo N".
 const STEPS = [
   {
-    title: "Cadastre seus dados uma vez",
-    text: "Nome artístico, CPF/CNPJ e identidade visual ficam salvos e entram sozinhos em todo contrato, rider e post.",
+    title: "Cadastre seu perfil, marca e formações",
+    text: "Configure seu perfil, logotipos, fontes e equipamentos uma única vez. Seus dados entram automaticamente em todos os documentos e artes.",
   },
   {
-    title: "Cole a negociação do WhatsApp",
-    text: "Data, local e cachê são lidos automaticamente. Você confere na tela, confirma, e os documentos saem preenchidos.",
+    title: "Crie shows em segundos (ou cole do WhatsApp)",
+    text: "Insira o show manualmente ou cole o texto da conversa do WhatsApp. O sistema extrai data, local e cachê, alimenta sua agenda e manda o compromisso para o Google Agenda em um clique.",
   },
   {
-    title: "Gere o que precisar",
-    text: "Do mesmo show saem contrato, rider técnico, post de divulgação, checklist de equipamento e controle de cachê.",
+    title: "Gere o pacote completo em PDF e imagem",
+    text: "Emita instantaneamente contratos, rider técnico com presets de microfones, mapa de palco e posts de divulgação prontos — sem precisar do Canva.",
   },
 ];
 
+// Ordenado da dúvida mais comum para a mais específica. A pergunta sobre
+// MEI saiu: quase ninguém faz essa associação espontaneamente.
 const FAQ = [
   {
-    q: "O StageKit substitui o MEI?",
-    a: "Não. O StageKit gera os documentos da sua operação artística — contratos, RPA, riders, recibos — mas não abre nem administra empresa. Para decisões sobre MEI, CNPJ ou regime tributário, procure um contador.",
-  },
-  {
-    q: "Como funciona o relatório de ECAD na plataforma?",
-    a: "Você cadastra o repertório tocado em cada show — covers e obras próprias, vinculados à formação — e o StageKit gera o relatório de execução pública pronto para envio ao ECAD.",
-  },
-  {
     q: "Os contratos gerados têm validade jurídica?",
-    a: "Sim, os modelos seguem a estrutura de um contrato de prestação de serviços artísticos válido, com cláusulas de cancelamento e ECAD. Para casos específicos ou de maior complexidade, recomendamos revisão de um advogado.",
+    a: "Sim. Os modelos seguem a estrutura de um contrato de prestação de serviços artísticos válido, com cláusulas de cachê, cancelamento, hora extra e ECAD. Para casos específicos ou de maior complexidade, recomendamos a revisão de um advogado.",
   },
   {
-    q: "Serve para quem toca sozinho?",
-    a: "Sim. Todo o toolkit funciona no modo solo, sem precisar cadastrar banda, integrantes ou formação — o rateio e a mala de gig por formação são recursos opcionais para quem toca acompanhado.",
+    q: "Preciso entender de contrato ou de burocracia para usar?",
+    a: "Não. Você responde perguntas simples — quem contrata, quando, onde e por quanto — e o texto jurídico já sai pronto. É justamente o trabalho que o StageKit tira das suas costas: nada de procurar modelo na internet nem reescrever cláusula a cada show.",
   },
   {
-    q: "É grátis?",
-    a: "Sim, criar conta e usar o StageKit é grátis para começar, sem cartão de crédito.",
+    q: "Os documentos ficam profissionais para enviar ao contratante?",
+    a: "Sim. Tudo sai em PDF com layout limpo e com a sua Identidade Visual aplicada automaticamente — logo, cores e tipografia do seu BrandKit. O rider e o mapa de palco saem no formato que o técnico de som espera receber.",
+  },
+  {
+    q: "Meus dados e os dos meus contratantes ficam seguros?",
+    a: "Sim. Cada conta enxerga apenas os próprios registros: o banco aplica isolamento por linha, de modo que nenhum usuário acessa dados de outro. Fotos e logos ficam em armazenamento privado, servidos por link assinado — não ficam abertos na internet.",
+  },
+  {
+    q: "Com quais serviços o StageKit se integra?",
+    a: "Você cola a conversa do WhatsApp para criar o show e envia contratos e cobranças pelo próprio WhatsApp; manda cada show para o Google Agenda ou baixa o .ics para Apple e Outlook; abre o endereço do local no seu app de GPS; e gera QR Code e código Pix copia e cola. Não há integração bancária: o Pix gerado serve para você cobrar ou pagar pelo seu próprio banco.",
+  },
+  {
+    q: "O que muda na minha rotina depois de cadastrar tudo?",
+    a: "Com perfil e formação prontos, cada show novo já nasce com contrato, rider, mapa de palco, post de divulgação e checklist de equipamento a um clique. Você deixa de reconstruir a mesma papelada a cada gig e passa a só conferir o que o sistema preencheu.",
   },
 ];
 
@@ -195,13 +231,17 @@ function Landing() {
         <p className="mb-4 inline-flex rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
           O toolkit anti-burocracia da música brasileira
         </p>
-        <h1 className="max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">
-          Gestão de Shows, Contratos e Riders Técnicos para Músicos Independentes.
+        {/* O H1 é a voz do produto; as palavras-chave ficam no <title> da
+            rota, que pesa mais para ranqueamento do que o H1. */}
+        <h1 className="max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">
+          Sua rotina musical resolvida <span className="text-primary">em um só lugar</span>.
         </h1>
         <p className="mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
-          Sua rotina musical resolvida antes da passagem de som: contratos, mapas de palco online,
-          ECAD e financeiro em um só painel.
+          Um workflow pensado por quem vive a música. Automatize seus contratos, riders técnicos,
+          mapas de palco e materiais visuais para focar no que realmente importa: a sua música.
         </p>
+        {/* Três pesos visuais distintos: sem isso, três CTAs lado a lado
+            viram três decisões equivalentes e ninguém escolhe. */}
         <div className="mt-8 flex flex-wrap items-center gap-3">
           <Button asChild size="lg">
             <Link to="/auth" search={{ modo: "criar" }}>
@@ -209,7 +249,12 @@ function Landing() {
             </Link>
           </Button>
           <Button asChild size="lg" variant="outline">
-            <a href="#como-funciona">Ver como funciona</a>
+            <a href="#como-funciona">Como funciona?</a>
+          </Button>
+          <Button asChild size="lg" variant="ghost">
+            <Link to="/modelo-contrato-show">
+              <FileText className="mr-1.5 size-4" /> Gerador de documentos grátis
+            </Link>
           </Button>
         </div>
         <p className="mt-4 text-xs text-muted-foreground">
@@ -253,10 +298,20 @@ function Landing() {
           {MODULES.map((m) => (
             <details
               key={m.title}
-              className="panel group p-5 [&_summary::-webkit-details-marker]:hidden"
+              className={cn(
+                "panel group p-5 [&_summary::-webkit-details-marker]:hidden",
+                m.featured && "border-primary/30 bg-primary/[0.03]",
+              )}
             >
               <summary className="cursor-pointer list-none">
-                <span className="flex size-10 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+                <span
+                  className={cn(
+                    "flex size-10 items-center justify-center rounded-xl border",
+                    m.featured
+                      ? "border-primary/40 bg-primary/15 text-primary"
+                      : "border-primary/20 bg-primary/10 text-primary",
+                  )}
+                >
                   <m.icon className="size-5" />
                 </span>
                 <h3 className="mt-4 font-semibold">{m.title}</h3>
@@ -268,25 +323,6 @@ function Landing() {
               <p className="mt-2 text-sm text-muted-foreground">{m.details}</p>
             </details>
           ))}
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-5 pb-16">
-        <div className="panel flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Ferramentas grátis, sem cadastro
-            </h2>
-            <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-              Precisa de um contrato agora? Use o gerador de modelo de contrato de show gratuito —
-              preencha, copie ou baixe, sem criar conta.
-            </p>
-          </div>
-          <Button asChild variant="outline" className="shrink-0">
-            <Link to="/modelo-contrato-show">
-              <FileText className="mr-1.5 size-4" /> Modelo de contrato de show
-            </Link>
-          </Button>
         </div>
       </section>
 

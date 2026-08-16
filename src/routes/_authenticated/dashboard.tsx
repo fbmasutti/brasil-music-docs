@@ -22,7 +22,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader, PageContainer, StatCard, Section, EmptyState } from "@/components/ui-kit";
 import { useList, useProfile } from "@/lib/queries";
-import { dateBR, money, EVENT_STATUS } from "@/lib/format";
+import { dateBR, money, todayISO, EVENT_STATUS } from "@/lib/format";
+import { isEventToday, TodayBadge, HowToGetThere } from "@/components/EventToday";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -72,7 +73,7 @@ function Dashboard() {
   ];
   const gettingStartedDone = gettingStarted.filter((s) => s.done).length;
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayISO();
   // Eventos sem data ainda contam como "próximos" (ex.: show em negociação,
   // data não fechada) — só ficam no fim da lista, não somem da agenda.
   const upcoming = events
@@ -279,22 +280,33 @@ function Dashboard() {
             <ul className="divide-y divide-border">
               {upcoming.slice(0, 6).map((e) => {
                 const status = EVENT_STATUS[e.status] ?? { label: e.status, tone: "muted" };
+                const today = isEventToday(e);
                 return (
-                  <li key={e.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                  <li
+                    key={e.id}
+                    className={cn(
+                      "flex flex-wrap items-center justify-between gap-3 py-3",
+                      today && "-mx-3 rounded-lg border border-primary/30 bg-primary/5 px-3",
+                    )}
+                  >
                     <div className="min-w-0">
-                      <Link
-                        to="/eventos/$eventId"
-                        params={{ eventId: e.id }}
-                        className="truncate font-medium hover:text-primary"
-                      >
-                        {e.title}
-                      </Link>
+                      <span className="flex items-center gap-2">
+                        <Link
+                          to="/eventos/$eventId"
+                          params={{ eventId: e.id }}
+                          className="truncate font-medium hover:text-primary"
+                        >
+                          {e.title}
+                        </Link>
+                        {today ? <TodayBadge /> : null}
+                      </span>
                       <p className="text-xs text-muted-foreground">
                         {e.event_date ? dateBR(e.event_date) : "Data a definir"} ·{" "}
                         {[e.venue, e.city].filter(Boolean).join(", ") || "local a definir"}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
+                      {today ? <HowToGetThere event={e} variant="outline" /> : null}
                       <span className="text-sm font-semibold">{money(Number(e.fee_total))}</span>
                       <Badge variant="outline" className={status.tone}>
                         {status.label}
@@ -307,7 +319,9 @@ function Dashboard() {
           )}
         </Section>
 
-        <Section title={`Pendências${alerts.length + setupGaps.length ? ` (${alerts.length + setupGaps.length})` : ""}`}>
+        <Section
+          title={`Pendências${alerts.length + setupGaps.length ? ` (${alerts.length + setupGaps.length})` : ""}`}
+        >
           {alerts.length + setupGaps.length === 0 ? (
             <div className="flex items-start gap-2 text-sm text-muted-foreground">
               <CheckCircle2 className="mt-0.5 size-4 text-success" />
@@ -395,7 +409,9 @@ function Dashboard() {
             const catItems = activeGear.filter((g) => (g.category || "Geral") === cat);
             return (
               <div key={cat} className="mb-4 last:mb-0">
-                <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">{cat}</p>
+                <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
+                  {cat}
+                </p>
                 <ul className="grid gap-2 sm:grid-cols-2">
                   {catItems.map((g) => {
                     const checked = checkedGear.has(g.id);
