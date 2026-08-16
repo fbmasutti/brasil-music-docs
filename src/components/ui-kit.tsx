@@ -1,5 +1,15 @@
 import { forwardRef, useState, type ReactNode } from "react";
-import { AlertTriangle, ChevronDown, RefreshCw, Save, Undo2, MoreVertical, Pencil, Copy, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  ChevronDown,
+  RefreshCw,
+  Save,
+  Undo2,
+  MoreVertical,
+  Pencil,
+  Copy,
+  Trash2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -34,9 +44,22 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
-export function StatusBadge({ status, map }: { status: string; map: Record<string, { label: string; tone: string }> }) {
-  const meta = map[status] ?? { label: status, tone: "bg-muted/50 text-muted-foreground border-border" };
-  return <Badge variant="outline" className={meta.tone}>{meta.label}</Badge>;
+export function StatusBadge({
+  status,
+  map,
+}: {
+  status: string;
+  map: Record<string, { label: string; tone: string }>;
+}) {
+  const meta = map[status] ?? {
+    label: status,
+    tone: "bg-muted/50 text-muted-foreground border-border",
+  };
+  return (
+    <Badge variant="outline" className={meta.tone}>
+      {meta.label}
+    </Badge>
+  );
 }
 
 export function PageHeader({
@@ -399,7 +422,11 @@ export function TextField({
     <div className="space-y-2">
       <Label>
         {label}
-        {required && <span className="ml-0.5 text-destructive" aria-hidden>*</span>}
+        {required && (
+          <span className="ml-0.5 text-destructive" aria-hidden>
+            *
+          </span>
+        )}
       </Label>
       <Input
         type={type}
@@ -580,7 +607,10 @@ export function ItemActions({
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction
                 className={buttonVariants({ variant: "destructive" })}
-                onClick={() => { onDelete(); setConfirmOpen(false); }}
+                onClick={() => {
+                  onDelete();
+                  setConfirmOpen(false);
+                }}
               >
                 {deleteConfirm.confirmLabel ?? "Excluir"}
               </AlertDialogAction>
@@ -603,7 +633,9 @@ export function ModuleHealth({ checks }: { checks: { label: string; done: boolea
       <div className="flex items-center justify-between text-sm">
         <span className="font-medium">{pct}% concluído</span>
         {missing.length > 0 && (
-          <span className="text-muted-foreground">falta: {missing.map((c) => c.label).join(", ")}</span>
+          <span className="text-muted-foreground">
+            falta: {missing.map((c) => c.label).join(", ")}
+          </span>
         )}
       </div>
       <Progress value={pct} />

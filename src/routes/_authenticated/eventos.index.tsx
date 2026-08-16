@@ -20,8 +20,8 @@ import {
 import { EventFormDialog } from "@/components/EventFormDialog";
 import { useList, useInsert, useRemove } from "@/lib/queries";
 import { dateBR, money, todayISO, EVENT_STATUS } from "@/lib/format";
-import { buildGoogleCalendarUrl, downloadICS } from "@/lib/calendar-link";
-import { isEventToday, TodayBadge, HowToGetThere } from "@/components/EventToday";
+import { buildGoogleCalendarUrl, downloadICS, isEventToday } from "@/lib/calendar-link";
+import { TodayBadge, HowToGetThere } from "@/components/EventToday";
 import { cn } from "@/lib/utils";
 import type { Tables } from "@/integrations/supabase/types";
 

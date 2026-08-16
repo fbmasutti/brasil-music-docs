@@ -84,7 +84,14 @@ type RiderRow = {
   rooming_list: string | null;
 };
 
-type ChannelRow = { id: string; instrument: string; mic: string; phantom: boolean; pedestal: boolean; monitor: string };
+type ChannelRow = {
+  id: string;
+  instrument: string;
+  mic: string;
+  phantom: boolean;
+  pedestal: boolean;
+  monitor: string;
+};
 type BacklineRow = { id: string; item: string };
 
 // Curada de propósito — cobre o que a maioria dos riders realmente usa, sem
@@ -121,7 +128,14 @@ function parseChannelEntry(entry: unknown): ChannelRow {
   }
   const line = String(entry ?? "");
   const [instrument, ...rest] = line.split(" — ");
-  return { id: crypto.randomUUID(), instrument: instrument ?? "", mic: rest.join(" — "), phantom: false, pedestal: false, monitor: "" };
+  return {
+    id: crypto.randomUUID(),
+    instrument: instrument ?? "",
+    mic: rest.join(" — "),
+    phantom: false,
+    pedestal: false,
+    monitor: "",
+  };
 }
 
 function parseChannelLine(line: string): ChannelRow {
@@ -150,7 +164,10 @@ function parseBacklineRows(value: string | null | undefined): BacklineRow[] {
 }
 
 function backlineRowsToText(rows: BacklineRow[]): string {
-  return rows.filter((r) => r.item.trim()).map((r) => r.item.trim()).join("\n");
+  return rows
+    .filter((r) => r.item.trim())
+    .map((r) => r.item.trim())
+    .join("\n");
 }
 
 const empty = {
@@ -216,7 +233,17 @@ function RidersPage() {
   const set = (k: keyof typeof empty) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   function addChannelRow() {
-    setChannels((rows) => [...rows, { id: crypto.randomUUID(), instrument: "", mic: "", phantom: false, pedestal: false, monitor: "" }]);
+    setChannels((rows) => [
+      ...rows,
+      {
+        id: crypto.randomUUID(),
+        instrument: "",
+        mic: "",
+        phantom: false,
+        pedestal: false,
+        monitor: "",
+      },
+    ]);
   }
   function updateChannelRow(id: string, patch: Partial<ChannelRow>) {
     setChannels((rows) => rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
@@ -404,7 +431,14 @@ function RidersPage() {
                     : ["Canal", "Instrumento", "Microfone"],
                   rows: parsedChannels.map((c, i) =>
                     hasExtended
-                      ? [String(i + 1), c.instrument, c.mic, c.phantom ? "Sim" : "—", c.pedestal ? "Sim" : "—", c.monitor || "—"]
+                      ? [
+                          String(i + 1),
+                          c.instrument,
+                          c.mic,
+                          c.phantom ? "Sim" : "—",
+                          c.pedestal ? "Sim" : "—",
+                          c.monitor || "—",
+                        ]
                       : [String(i + 1), c.instrument, c.mic],
                   ),
                 },
@@ -585,22 +619,36 @@ function RidersPage() {
             {/* ─── Channel list ─── */}
             <TabsContent value="channels" className="space-y-3 pt-2">
               {channels.length === 0 ? (
-                <p className="text-xs text-muted-foreground">Nenhum canal ainda. Clique para adicionar.</p>
+                <p className="text-xs text-muted-foreground">
+                  Nenhum canal ainda. Clique para adicionar.
+                </p>
               ) : (
                 <div className="space-y-2">
                   <div className="hidden items-center gap-2 sm:flex">
                     <span className="w-5 shrink-0" />
-                    <span className="flex-1 text-[10px] uppercase tracking-wide text-muted-foreground/60">Instrumento</span>
-                    <span className="w-40 shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground/60">Microfone</span>
-                    <span className="w-8 shrink-0 text-center text-[10px] uppercase tracking-wide text-muted-foreground/60">+48V</span>
-                    <span className="w-8 shrink-0 text-center text-[10px] uppercase tracking-wide text-muted-foreground/60">Ped.</span>
-                    <span className="w-20 shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground/60">Retorno</span>
+                    <span className="flex-1 text-[10px] uppercase tracking-wide text-muted-foreground/60">
+                      Instrumento
+                    </span>
+                    <span className="w-40 shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground/60">
+                      Microfone
+                    </span>
+                    <span className="w-8 shrink-0 text-center text-[10px] uppercase tracking-wide text-muted-foreground/60">
+                      +48V
+                    </span>
+                    <span className="w-8 shrink-0 text-center text-[10px] uppercase tracking-wide text-muted-foreground/60">
+                      Ped.
+                    </span>
+                    <span className="w-20 shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground/60">
+                      Retorno
+                    </span>
                     <span className="w-8 shrink-0" />
                   </div>
                   {channels.map((row, i) => (
                     <div key={row.id} className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
                       <div className="flex w-full items-center gap-2 sm:contents">
-                        <span className="w-5 shrink-0 text-center text-xs text-muted-foreground">{i + 1}</span>
+                        <span className="w-5 shrink-0 text-center text-xs text-muted-foreground">
+                          {i + 1}
+                        </span>
                         <Input
                           value={row.instrument}
                           onChange={(e) => updateChannelRow(row.id, { instrument: e.target.value })}
@@ -617,7 +665,9 @@ function RidersPage() {
                         </SelectTrigger>
                         <SelectContent>
                           {MIC_OPTIONS.map((m) => (
-                            <SelectItem key={m} value={m}>{m}</SelectItem>
+                            <SelectItem key={m} value={m}>
+                              {m}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -644,7 +694,12 @@ function RidersPage() {
                         className="w-20 shrink-0"
                         title="Via de retorno"
                       />
-                      <Button variant="ghost" size="icon" aria-label="Remover canal" onClick={() => removeChannelRow(row.id)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Remover canal"
+                        onClick={() => removeChannelRow(row.id)}
+                      >
                         <Trash2 className="size-4" />
                       </Button>
                     </div>
@@ -789,11 +844,7 @@ function RidersPage() {
                     >
                       <Download className="mr-1 size-4" /> PDF (Mapa Amplo)
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => startEdit(r, "mapa")}
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => startEdit(r, "mapa")}>
                       <Map className="mr-1 size-4" /> Mapa
                     </Button>
                     <ItemActions

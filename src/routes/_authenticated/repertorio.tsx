@@ -500,7 +500,9 @@ function RepertoirePage() {
         <SongFormDialog
           song={allSongs.find((s) => s.id === editingSongId)}
           open={true}
-          onOpenChange={(o) => { if (!o) setEditingSongId(null); }}
+          onOpenChange={(o) => {
+            if (!o) setEditingSongId(null);
+          }}
         />
       )}
     </PageContainer>
@@ -636,7 +638,10 @@ function EcadReportDialog({
           </div>
           <div className="space-y-2">
             <Label>Evento (opcional)</Label>
-            <Select value={eventId || "none"} onValueChange={(v) => setEventId(v === "none" ? "" : v)}>
+            <Select
+              value={eventId || "none"}
+              onValueChange={(v) => setEventId(v === "none" ? "" : v)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Sem evento específico" />
               </SelectTrigger>

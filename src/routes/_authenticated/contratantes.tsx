@@ -147,7 +147,9 @@ function ContractorsPage() {
         <ClientFormDialog
           client={clients.find((c) => c.id === editingId)}
           open={true}
-          onOpenChange={(o) => { if (!o) setEditingId(null); }}
+          onOpenChange={(o) => {
+            if (!o) setEditingId(null);
+          }}
         />
       )}
     </PageContainer>
@@ -211,7 +213,11 @@ function ClientFormDialog({
             onChange={(v) => set("doc")(maskCpfCnpj(v))}
           />
           <TextField label="Responsável" value={form.contact_name} onChange={set("contact_name")} />
-          <TextField label="Telefone" value={form.phone} onChange={(v) => set("phone")(maskPhone(v))} />
+          <TextField
+            label="Telefone"
+            value={form.phone}
+            onChange={(v) => set("phone")(maskPhone(v))}
+          />
           <TextField label="E-mail" value={form.email} onChange={set("email")} />
           <TextField label="Endereço" value={form.address} onChange={set("address")} />
           <TextField label="Cidade" value={form.city} onChange={set("city")} />

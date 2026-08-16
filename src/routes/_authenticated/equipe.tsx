@@ -154,7 +154,9 @@ function TeamPage() {
         <MemberFormDialog
           member={members.find((m) => m.id === editingId)}
           open={true}
-          onOpenChange={(o) => { if (!o) setEditingId(null); }}
+          onOpenChange={(o) => {
+            if (!o) setEditingId(null);
+          }}
         />
       )}
     </PageContainer>

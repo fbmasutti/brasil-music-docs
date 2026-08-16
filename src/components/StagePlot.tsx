@@ -762,9 +762,7 @@ export function StagePlot({
   items: StageItem[];
   onChange: (items: StageItem[]) => void;
   /** Sem histórico o canvas segue funcionando; só some a barra de desfazer/refazer. */
-  history?:
-    | Pick<StageHistory, "undo" | "redo" | "canUndo" | "canRedo" | "replace">
-    | undefined;
+  history?: Pick<StageHistory, "undo" | "redo" | "canUndo" | "canRedo" | "replace"> | undefined;
 }) {
   const gridRef = useRef<HTMLDivElement>(null);
   const [warning, setWarning] = useState<string | null>(null);
@@ -814,7 +812,8 @@ export function StagePlot({
       if (!(e.metaKey || e.ctrlKey)) return;
       const el = e.target as HTMLElement | null;
       const tag = el?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el?.isContentEditable) return;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el?.isContentEditable)
+        return;
       const key = e.key.toLowerCase();
       if (key === "z" && !e.shiftKey) {
         e.preventDefault();
@@ -1642,8 +1641,7 @@ export function StagePlot({
 
               {items.map((item) => {
                 const span = itemSpan(item);
-                const category =
-                  STAGE_KINDS.find((k) => k.kind === item.kind)?.category ?? "infra";
+                const category = STAGE_KINDS.find((k) => k.kind === item.kind)?.category ?? "infra";
                 const colorStyle = categoryColorStyles(category);
                 const selected = selectedId === item.id;
                 const dragging = drag?.id === item.id;
@@ -1744,7 +1742,9 @@ export function StagePlot({
                       )}
                       <button
                         type="button"
-                        aria-label={item.locked ? `Destravar ${item.label}` : `Travar ${item.label}`}
+                        aria-label={
+                          item.locked ? `Destravar ${item.label}` : `Travar ${item.label}`
+                        }
                         title={
                           item.locked
                             ? "Destravar — volta a aceitar mover, girar e redimensionar"
@@ -1758,7 +1758,11 @@ export function StagePlot({
                         )}
                         onClick={() => toggleLock(item.id)}
                       >
-                        {item.locked ? <Lock className="size-3.5" /> : <Unlock className="size-3.5" />}
+                        {item.locked ? (
+                          <Lock className="size-3.5" />
+                        ) : (
+                          <Unlock className="size-3.5" />
+                        )}
                       </button>
                       <button
                         type="button"
@@ -2049,11 +2053,7 @@ export function StagePlotPrintable({
               >
                 {/* Sem moldura e sem faixa de rótulo: a pegada inteira é desenho, e o
                     nome flutua logo abaixo, como nos mapas de palco de referência. */}
-                <StageIcon
-                  kind={item.kind}
-                  rotateDeg={item.rotateDeg}
-                  flipX={item.flipX}
-                />
+                <StageIcon kind={item.kind} rotateDeg={item.rotateDeg} flipX={item.flipX} />
                 <span
                   style={{
                     // Sobreposto no rodapé da própria pegada: a arte segue ocupando a caixa

@@ -1,9 +1,13 @@
 /** Abre um link wa.me para enviar texto por WhatsApp.
  *  phone: número brasileiro sem máscara (o DDI 55 é adicionado aqui). */
-export function shareText({ phone, message }: { phone?: string | null | undefined; message: string }) {
-  const base = phone
-    ? `https://wa.me/55${phone.replace(/\D/g, "")}`
-    : "https://wa.me/";
+export function shareText({
+  phone,
+  message,
+}: {
+  phone?: string | null | undefined;
+  message: string;
+}) {
+  const base = phone ? `https://wa.me/55${phone.replace(/\D/g, "")}` : "https://wa.me/";
   window.open(`${base}?text=${encodeURIComponent(message)}`, "_blank");
 }
 

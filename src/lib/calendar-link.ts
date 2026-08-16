@@ -1,3 +1,5 @@
+import { todayISO } from "./format";
+
 const DEFAULT_DURATION_HOURS = 3;
 
 export type CalendarEventInput = {
@@ -10,6 +12,17 @@ export type CalendarEventInput = {
   full_address?: string | null;
   notes?: string | null;
 };
+
+/**
+ * É o dia do show? Usa `todayISO()` (data local), nunca `toISOString()`:
+ * em UTC−3 o horário UTC já virou amanhã às 21h, justamente quando o
+ * artista está saindo para tocar e mais precisa do destaque e do GPS.
+ */
+export function isEventToday(ev: CalendarEventInput & { status?: string | null }): boolean {
+  if (!ev.event_date) return false;
+  if (ev.status === "CANCELADO") return false;
+  return ev.event_date.slice(0, 10) === todayISO();
+}
 
 function pad(n: number) {
   return String(n).padStart(2, "0");

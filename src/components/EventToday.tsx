@@ -7,22 +7,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { buildMapsUrl, buildWazeUrl, buildAppleMapsUrl } from "@/lib/calendar-link";
-import { todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { CalendarEventInput } from "@/lib/calendar-link";
-
-type EventLike = CalendarEventInput & { status?: string | null };
-
-/**
- * É o dia do show? Usa `todayISO()` (data local), nunca `toISOString()`:
- * em UTC−3 o horário UTC já virou amanhã às 21h, justamente quando o
- * artista está saindo para tocar e mais precisa deste destaque.
- */
-export function isEventToday(ev: EventLike): boolean {
-  if (!ev.event_date) return false;
-  if (ev.status === "CANCELADO") return false;
-  return ev.event_date.slice(0, 10) === todayISO();
-}
 
 /** Selo comemorativo — cor de acento, não de alerta: é show, não problema. */
 export function TodayBadge({ className }: { className?: string | undefined }) {

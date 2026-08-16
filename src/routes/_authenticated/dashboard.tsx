@@ -23,7 +23,8 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader, PageContainer, StatCard, Section, EmptyState } from "@/components/ui-kit";
 import { useList, useProfile } from "@/lib/queries";
 import { dateBR, money, todayISO, EVENT_STATUS } from "@/lib/format";
-import { isEventToday, TodayBadge, HowToGetThere } from "@/components/EventToday";
+import { TodayBadge, HowToGetThere } from "@/components/EventToday";
+import { isEventToday } from "@/lib/calendar-link";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({

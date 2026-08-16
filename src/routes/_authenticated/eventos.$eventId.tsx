@@ -36,8 +36,13 @@ import { PageHeader, PageContainer, Section, StatCard, StatusBadge } from "@/com
 import { EventFormDialog } from "@/components/EventFormDialog";
 import { useList, useUpdate, useInsert, useRemove } from "@/lib/queries";
 import { dateBR, money, EVENT_STATUS, DOCUMENT_STATUS, CHARGE_STATUS } from "@/lib/format";
-import { buildGoogleCalendarUrl, buildMapsUrl, downloadICS } from "@/lib/calendar-link";
-import { isEventToday, TodayBadge, HowToGetThere } from "@/components/EventToday";
+import {
+  buildGoogleCalendarUrl,
+  buildMapsUrl,
+  downloadICS,
+  isEventToday,
+} from "@/lib/calendar-link";
+import { TodayBadge, HowToGetThere } from "@/components/EventToday";
 
 export const Route = createFileRoute("/_authenticated/eventos/$eventId")({
   head: () => ({
