@@ -6,7 +6,20 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", ".output", ".vinxi"] },
+  {
+    ignores: [
+      "dist",
+      ".output",
+      ".vinxi",
+      // Rotas emitidas pelo plugin do @lovable.dev/mcp-js. O próprio arquivo
+      // avisa "AUTO-GENERATED — do not edit" e é reescrito a cada build, então
+      // formatá-lo só produz um erro de lint que volta sozinho. Mesmo motivo
+      // pelo qual routeTree.gen.ts está no .prettierignore.
+      "src/routes/mcp.ts",
+      "src/routes/*mcp*/**",
+      "src/routes/*well-known*/**",
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],

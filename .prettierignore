@@ -6,3 +6,8 @@ pnpm-lock.yaml
 package-lock.json
 bun.lock
 routeTree.gen.ts
+
+# Rotas emitidas pelo plugin do @lovable.dev/mcp-js, reescritas a cada build
+src/routes/mcp.ts
+src/routes/*mcp*/
+src/routes/*well-known*/
