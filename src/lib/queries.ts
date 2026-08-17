@@ -30,7 +30,9 @@ type TableName =
   | "event_expenses"
   | "gear_assets"
   | "maintenance_fund_entries"
-  | "charges";
+  | "charges"
+  | "students"
+  | "lesson_records";
 
 export function useSession() {
   return useQuery({

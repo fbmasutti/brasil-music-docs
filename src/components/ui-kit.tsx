@@ -95,8 +95,9 @@ export function StatCard({
   value: string;
   hint?: string | undefined;
   icon?: ReactNode | undefined;
-  /** `brand` segue a cor primária do tema; os demais são acentos fixos. */
-  tone?: "brand" | "cyan" | "amber" | "lime" | "muted" | undefined;
+  /** `brand` segue a cor primária do tema; os demais são acentos fixos.
+   *  `lesson` é o roxo reservado a aulas — ver --lesson em styles.css. */
+  tone?: "brand" | "cyan" | "amber" | "lime" | "lesson" | "muted" | undefined;
 }) {
   const tones: Record<string, string> = {
     brand: "text-primary bg-primary/10 border-primary/20",
@@ -105,6 +106,7 @@ export function StatCard({
     cyan: "text-cyan bg-cyan/10 border-cyan/20",
     amber: "text-warning bg-warning/10 border-warning/20",
     lime: "text-lime bg-lime/10 border-lime/20",
+    lesson: "text-lesson bg-lesson/10 border-lesson/20",
     muted: "text-muted-foreground bg-muted/40 border-border",
   };
   return (

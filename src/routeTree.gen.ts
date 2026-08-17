@@ -19,6 +19,7 @@ import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as TermosRouteImport } from './routes/termos'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AuthenticatedAlunosRouteImport } from './routes/_authenticated/alunos'
 import { Route as AuthenticatedCobrancasRouteImport } from './routes/_authenticated/cobrancas'
 import { Route as AuthenticatedComecarRouteImport } from './routes/_authenticated/comecar'
 import { Route as AuthenticatedContratantesRouteImport } from './routes/_authenticated/contratantes'
@@ -91,6 +92,11 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
     path: '/.well-known/oauth-protected-resource',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedAlunosRoute = AuthenticatedAlunosRouteImport.update({
+  id: '/alunos',
+  path: '/alunos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCobrancasRoute = AuthenticatedCobrancasRouteImport.update({
   id: '/cobrancas',
   path: '/cobrancas',
@@ -207,6 +213,7 @@ export interface FileRoutesByFullPath {
   '/termos': typeof TermosRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/alunos': typeof AuthenticatedAlunosRoute
   '/cobrancas': typeof AuthenticatedCobrancasRoute
   '/comecar': typeof AuthenticatedComecarRoute
   '/contratantes': typeof AuthenticatedContratantesRoute
@@ -238,6 +245,7 @@ export interface FileRoutesByTo {
   '/termos': typeof TermosRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/alunos': typeof AuthenticatedAlunosRoute
   '/cobrancas': typeof AuthenticatedCobrancasRoute
   '/comecar': typeof AuthenticatedComecarRoute
   '/contratantes': typeof AuthenticatedContratantesRoute
@@ -271,6 +279,7 @@ export interface FileRoutesById {
   '/termos': typeof TermosRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/_authenticated/alunos': typeof AuthenticatedAlunosRoute
   '/_authenticated/cobrancas': typeof AuthenticatedCobrancasRoute
   '/_authenticated/comecar': typeof AuthenticatedComecarRoute
   '/_authenticated/contratantes': typeof AuthenticatedContratantesRoute
@@ -304,6 +313,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/alunos'
     | '/cobrancas'
     | '/comecar'
     | '/contratantes'
@@ -335,6 +345,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/alunos'
     | '/cobrancas'
     | '/comecar'
     | '/contratantes'
@@ -367,6 +378,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/_authenticated/alunos'
     | '/_authenticated/cobrancas'
     | '/_authenticated/comecar'
     | '/_authenticated/contratantes'
@@ -475,6 +487,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/.well-known/oauth-protected-resource'
       preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/alunos': {
+      id: '/_authenticated/alunos'
+      path: '/alunos'
+      fullPath: '/alunos'
+      preLoaderRoute: typeof AuthenticatedAlunosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/cobrancas': {
       id: '/_authenticated/cobrancas'
@@ -620,6 +639,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAlunosRoute: typeof AuthenticatedAlunosRoute
   AuthenticatedCobrancasRoute: typeof AuthenticatedCobrancasRoute
   AuthenticatedComecarRoute: typeof AuthenticatedComecarRoute
   AuthenticatedContratantesRoute: typeof AuthenticatedContratantesRoute
@@ -641,6 +661,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAlunosRoute: AuthenticatedAlunosRoute,
   AuthenticatedCobrancasRoute: AuthenticatedCobrancasRoute,
   AuthenticatedComecarRoute: AuthenticatedComecarRoute,
   AuthenticatedContratantesRoute: AuthenticatedContratantesRoute,

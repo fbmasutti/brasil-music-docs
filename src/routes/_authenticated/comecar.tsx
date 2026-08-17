@@ -13,6 +13,8 @@ import {
   FileText,
   Sliders,
   Megaphone,
+  GraduationCap,
+  Music4,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -22,6 +24,7 @@ import { uploadBrandAsset, UploadError } from "@/lib/storage";
 import { PICKABLE_BRAND_PRESETS, presetPalette } from "@/lib/brand-presets";
 import { PresetPicker } from "@/components/PresetPicker";
 import { maskCpfCnpj } from "@/lib/format";
+import { useActivities, ACTIVITY_OPTIONS, type Activity } from "@/lib/activities";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/comecar")({
@@ -134,6 +137,7 @@ function WizardPage() {
 function StepPerfil() {
   const { data: profile } = useProfile();
   const update = useUpdate("profiles", "");
+  const { activities } = useActivities();
   const [form, setForm] = useState({
     stage_name: "",
     cpf_cnpj: "",
@@ -159,8 +163,57 @@ function StepPerfil() {
     update.mutate({ id: profile.id, values: form });
   }
 
+  /** Marca de atividade: salva na hora, não no blur, porque é um clique e
+   *  não digitação — e é ela que decide o formato do menu e do painel. */
+  function toggleActivity(value: Activity) {
+    if (!profile) return;
+    const next = activities.includes(value)
+      ? activities.filter((a) => a !== value)
+      : [...activities, value];
+    // Ficar sem nenhuma esconderia o app inteiro; sempre resta ao menos uma.
+    if (next.length === 0) return;
+    update.mutate({ id: profile.id, values: { activities: next } });
+  }
+
   return (
     <div onBlur={persist}>
+      <div className="mb-6">
+        <p className="text-sm font-medium">O que você faz?</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Isso decide o que aparece no menu — dá para marcar os dois e mudar depois.
+        </p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {ACTIVITY_OPTIONS.map((opt) => {
+            const on = activities.includes(opt.value);
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                aria-pressed={on}
+                onClick={() => toggleActivity(opt.value)}
+                className={cn(
+                  "rounded-lg border p-4 text-left transition",
+                  on
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/40 hover:bg-primary/[0.03]",
+                )}
+              >
+                <span className="flex items-center gap-2 text-sm font-semibold">
+                  {opt.value === "aulas" ? (
+                    <GraduationCap className="size-4 text-lesson" />
+                  ) : (
+                    <Music4 className="size-4 text-primary" />
+                  )}
+                  {opt.label}
+                  {on ? <Check className="ml-auto size-4 text-primary" /> : null}
+                </span>
+                <span className="mt-1 block text-xs text-muted-foreground">{opt.hint}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <p className="mb-4 text-sm text-muted-foreground">
         Só o nome artístico é obrigatório. O CPF/CNPJ é o que deixa os contratos válidos — se ainda
         não tiver em mãos, preencha depois em Dados do Artista; os documentos omitem o que falta sem

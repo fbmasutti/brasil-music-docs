@@ -17,6 +17,7 @@ import {
   Sparkles,
   Receipt,
   Briefcase,
+  GraduationCap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +27,8 @@ import { dateBR, money, todayISO, EVENT_STATUS } from "@/lib/format";
 import { TodayBadge, HowToGetThere } from "@/components/EventToday";
 import { isEventToday } from "@/lib/calendar-link";
 import { cn } from "@/lib/utils";
+import { useActivities } from "@/lib/activities";
+import { monthKey } from "@/lib/lessons";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -65,6 +68,20 @@ function Dashboard() {
     order: { column: "position" },
   });
   const [checkedGear, setCheckedGear] = useState<Set<string>>(new Set());
+
+  const { doesShows, doesTeaching } = useActivities();
+  const { data: students = [] } = useList("students", { order: { column: "name" } });
+  const { data: charges = [] } = useList("charges");
+  const activeStudents = students.filter((s) => s.status === "ATIVO");
+  const monthlyRevenue = activeStudents.reduce((sum, s) => sum + Number(s.monthly_fee), 0);
+  // Mensalidade do mês corrente que ainda não foi paga nem cancelada.
+  const openMonthlies = charges.filter(
+    (c) =>
+      c.student_id &&
+      c.reference_month === monthKey() &&
+      c.status !== "PAGA" &&
+      c.status !== "CANCELADA",
+  );
 
   // Apenas o que é permanente do artista — nada de "cadastre um show" ou
   // "cadastre equipe": o toolkit já funciona sem isso.
@@ -122,13 +139,22 @@ function Dashboard() {
   // formação para herdar cachê/roster/mala de gig). Vale mais completar UMA
   // formação de verdade do que ter várias pela metade, então só aponta a
   // formação atual quando ela está sem gente — nunca sugere criar mais uma.
+  // Só cobra o cadastro que serve à atividade da pessoa: contratante e
+  // formação não fazem parte da rotina de quem só dá aula.
   const setupGaps: { text: string; to: string }[] = [];
-  if (!clients.length)
+  if (doesTeaching && !students.length)
+    setupGaps.push({
+      text: "Nenhum aluno cadastrado — é de lá que saem as mensalidades e o contrato de aulas.",
+      to: "/alunos",
+    });
+  if (doesShows && !clients.length)
     setupGaps.push({
       text: "Nenhum contratante cadastrado — agiliza a geração de contratos e recibos.",
       to: "/contratantes",
     });
-  if (!formations.length) {
+  if (!doesShows) {
+    // sem shows, formação não é pendência
+  } else if (!formations.length) {
     setupGaps.push({
       text: "Nenhuma formação cadastrada — uma formação completa herda cachê, roster e mala de gig nos shows.",
       to: "/formacoes",
@@ -173,42 +199,64 @@ function Dashboard() {
         className="mb-5"
       >
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <ToolCard
-            to="/contrato"
-            icon={<FileText className="size-5" />}
-            title="Gerar contrato de show"
-            hint="3 passos · PDF + WhatsApp"
-          />
-          <ToolCard
-            to="/riders"
-            icon={<Sliders className="size-5" />}
-            title="Rider & mapa de palco"
-            hint="Formato pronto em 1 clique"
-          />
-          <ToolCard
-            to="/gerador-cards"
-            icon={<Megaphone className="size-5" />}
-            title="Gerador de posts"
-            hint="Card de divulgação"
-          />
-          <ToolCard
-            to="/magic-paste"
-            icon={<Wand2 className="size-5" />}
-            title="Colar do WhatsApp"
-            hint="Extrai os dados do show"
-          />
+          {doesTeaching && (
+            <>
+              <ToolCard
+                to="/alunos"
+                icon={<GraduationCap className="size-5" />}
+                title="Meus alunos"
+                hint="Horário fixo e mensalidade"
+              />
+              <ToolCard
+                to="/financeiro"
+                icon={<Wallet className="size-5" />}
+                title="Mensalidades do mês"
+                hint="Gerar e acompanhar"
+              />
+            </>
+          )}
+          {doesShows && (
+            <>
+              <ToolCard
+                to="/contrato"
+                icon={<FileText className="size-5" />}
+                title="Gerar contrato de show"
+                hint="3 passos · PDF + WhatsApp"
+              />
+              <ToolCard
+                to="/riders"
+                icon={<Sliders className="size-5" />}
+                title="Rider & mapa de palco"
+                hint="Formato pronto em 1 clique"
+              />
+              <ToolCard
+                to="/gerador-cards"
+                icon={<Megaphone className="size-5" />}
+                title="Gerador de posts"
+                hint="Card de divulgação"
+              />
+              <ToolCard
+                to="/magic-paste"
+                icon={<Wand2 className="size-5" />}
+                title="Colar do WhatsApp"
+                hint="Extrai os dados do show"
+              />
+            </>
+          )}
           <ToolCard
             to="/documentos"
             icon={<Receipt className="size-5" />}
             title="Contratos e Documentos"
             hint="Kit de documentos"
           />
-          <ToolCard
-            to="/repertorio"
-            icon={<Music4 className="size-5" />}
-            title="Setlist"
-            hint="Repertório e direitos autorais"
-          />
+          {doesShows && (
+            <ToolCard
+              to="/repertorio"
+              icon={<Music4 className="size-5" />}
+              title="Setlist"
+              hint="Repertório e direitos autorais"
+            />
+          )}
         </div>
       </Section>
 
@@ -351,20 +399,44 @@ function Dashboard() {
         </Section>
       </div>
 
+      {/* Os números seguem a atividade: quem só dá aula não tem "shows
+          confirmados" para acompanhar, e sim alunos e mensalidades. */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Shows confirmados"
-          value={String(confirmed.length)}
-          hint={`${upcoming.length} na agenda futura`}
-          icon={<CalendarDays className="size-5" />}
-        />
-        <StatCard
-          label="A receber"
-          value={money(receivable)}
-          hint="Saldos de cachê em aberto"
-          tone="cyan"
-          icon={<Wallet className="size-5" />}
-        />
+        {doesShows && (
+          <>
+            <StatCard
+              label="Shows confirmados"
+              value={String(confirmed.length)}
+              hint={`${upcoming.length} na agenda futura`}
+              icon={<CalendarDays className="size-5" />}
+            />
+            <StatCard
+              label="A receber"
+              value={money(receivable)}
+              hint="Saldos de cachê em aberto"
+              tone="cyan"
+              icon={<Wallet className="size-5" />}
+            />
+          </>
+        )}
+        {doesTeaching && (
+          <>
+            <StatCard
+              label="Alunos ativos"
+              value={String(activeStudents.length)}
+              hint={`${money(monthlyRevenue)} por mês`}
+              tone="lesson"
+              icon={<GraduationCap className="size-5" />}
+            />
+            <StatCard
+              label="Mensalidades em aberto"
+              value={String(openMonthlies.length)}
+              hint={openMonthlies.length ? "Aguardando pagamento" : "Nada em aberto"}
+              tone={openMonthlies.length ? "amber" : "muted"}
+              icon={<Wallet className="size-5" />}
+            />
+          </>
+        )}
         <StatCard
           label="Documentos gerados"
           value={String(docs.length)}
@@ -372,16 +444,18 @@ function Dashboard() {
           tone="muted"
           icon={<FileText className="size-5" />}
         />
-        <StatCard
-          label="Tarefas em aberto"
-          value={String(openTasks.length)}
-          hint="Itens de checklist dos eventos"
-          tone="amber"
-          icon={<AlertTriangle className="size-5" />}
-        />
+        {doesShows && (
+          <StatCard
+            label="Tarefas em aberto"
+            value={String(openTasks.length)}
+            hint="Itens de checklist dos eventos"
+            tone="amber"
+            icon={<AlertTriangle className="size-5" />}
+          />
+        )}
       </div>
 
-      {activeGear.length > 0 && (
+      {doesShows && activeGear.length > 0 && (
         <Section
           title="Mala de gig"
           description={`${activeFormation?.name ?? "Formação ativa"} · ${checkedActive.length}/${activeGear.length} itens`}

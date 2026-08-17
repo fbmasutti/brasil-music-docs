@@ -189,6 +189,88 @@ END $$;
 -- na API imediatamente, sem esperar o reload automático.
 NOTIFY pgrst, 'reload schema';
 
+-- ---------------------------------------------------------------- ALUNOS
+-- Ferramentas para professores. Duas recorrências, tratadas de formas
+-- diferentes de propósito: a aula semanal é REGRA (o horário fixo mora no
+-- aluno e a agenda calcula as ocorrências; só o desvio vira linha em
+-- lesson_records) e a mensalidade é REGISTRO (cada uma precisa de status
+-- próprio, então é materializada em charges).
+CREATE TABLE IF NOT EXISTS public.students (
+  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL,
+  name TEXT NOT NULL,
+  doc TEXT,
+  email TEXT,
+  phone TEXT,
+  -- Aluno menor de idade é comum: quem assina e paga não é o aluno.
+  guardian_name TEXT,
+  guardian_phone TEXT,
+  instrument TEXT,
+  level TEXT,
+  modality TEXT NOT NULL DEFAULT 'Presencial',
+  -- weekday segue Date.getDay(): 0 = domingo.
+  weekday SMALLINT,
+  start_time TEXT,
+  duration_min INTEGER NOT NULL DEFAULT 50,
+  monthly_fee NUMERIC(12,2) NOT NULL DEFAULT 0,
+  due_day SMALLINT NOT NULL DEFAULT 10,
+  -- Só ATIVO gera mensalidade; quem tranca não some do histórico.
+  status TEXT NOT NULL DEFAULT 'ATIVO',
+  started_at DATE,
+  notes TEXT DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.students TO authenticated;
+GRANT ALL ON public.students TO service_role;
+ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own students" ON public.students;
+CREATE POLICY "own students" ON public.students FOR ALL TO authenticated
+  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+DROP TRIGGER IF EXISTS set_students_updated_at ON public.students;
+CREATE TRIGGER set_students_updated_at BEFORE UPDATE ON public.students
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+-- Só o que desvia do combinado. Sem linha = aula prevista e normal.
+CREATE TABLE IF NOT EXISTS public.lesson_records (
+  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL,
+  student_id UUID NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
+  lesson_date DATE NOT NULL,
+  status TEXT NOT NULL DEFAULT 'REALIZADA',
+  notes TEXT DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS lesson_records_student_date_key
+  ON public.lesson_records (student_id, lesson_date);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.lesson_records TO authenticated;
+GRANT ALL ON public.lesson_records TO service_role;
+ALTER TABLE public.lesson_records ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "own lesson records" ON public.lesson_records;
+CREATE POLICY "own lesson records" ON public.lesson_records FOR ALL TO authenticated
+  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+DROP TRIGGER IF EXISTS set_lesson_records_updated_at ON public.lesson_records;
+CREATE TRIGGER set_lesson_records_updated_at BEFORE UPDATE ON public.lesson_records
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+-- Mensalidade reusa charges em vez de tabela nova: ela já tem valor,
+-- vencimento, payload Pix e o ciclo PENDENTE/ENVIADA/PAGA/VENCIDA.
+ALTER TABLE public.charges
+  ADD COLUMN IF NOT EXISTS student_id UUID REFERENCES public.students(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS reference_month DATE;
+
+-- O que torna "gerar mensalidades do mês" idempotente: clicar duas vezes
+-- não cria cobrança repetida. Parcial porque cobrança de show não tem aluno.
+CREATE UNIQUE INDEX IF NOT EXISTS charges_student_month_key
+  ON public.charges (user_id, student_id, reference_month)
+  WHERE student_id IS NOT NULL;
+
+-- Decide a forma do app: quem só dá aula não vê rider, formação nem mala
+-- de gig. O padrão 'shows' preserva quem já usa o produto hoje.
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS activities TEXT[] NOT NULL DEFAULT ARRAY['shows'];
+
 -- =====================================================================
 -- VERIFICAÇÃO — o resultado desta consulta aparece na aba Results.
 -- Todas as linhas devem mostrar "OK". Se alguma mostrar "FALTANDO",
@@ -197,13 +279,25 @@ NOTIFY pgrst, 'reload schema';
 SELECT 'tabela: ' || t AS item,
        CASE WHEN to_regclass('public.' || t) IS NOT NULL THEN 'OK' ELSE 'FALTANDO' END AS status
 FROM unnest(ARRAY['formations','formation_members','brand_kits','gear_checklist_items',
-                  'event_expenses','gear_assets','maintenance_fund_entries']) AS t
+                  'event_expenses','gear_assets','maintenance_fund_entries',
+                  'students','lesson_records']) AS t
 UNION ALL
 SELECT 'coluna: events.' || c,
        CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
                          WHERE table_schema='public' AND table_name='events' AND column_name=c)
             THEN 'OK' ELSE 'FALTANDO' END
 FROM unnest(ARRAY['formation_id','full_address']) AS c
+UNION ALL
+SELECT 'coluna: charges.' || c,
+       CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                         WHERE table_schema='public' AND table_name='charges' AND column_name=c)
+            THEN 'OK' ELSE 'FALTANDO' END
+FROM unnest(ARRAY['student_id','reference_month']) AS c
+UNION ALL
+SELECT 'coluna: profiles.activities',
+       CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                         WHERE table_schema='public' AND table_name='profiles' AND column_name='activities')
+            THEN 'OK' ELSE 'FALTANDO' END
 UNION ALL
 SELECT 'bucket: ' || b,
        CASE WHEN EXISTS (SELECT 1 FROM storage.buckets WHERE id=b) THEN 'OK' ELSE 'FALTANDO' END

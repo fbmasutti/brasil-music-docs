@@ -14,10 +14,23 @@ import {
   Wand2,
   Wallet,
   FileSignature,
+  GraduationCap,
   type LucideIcon,
 } from "lucide-react";
+import type { Activity } from "./activities";
 
-export type NavItem = { to: string; label: string; icon: LucideIcon };
+/** `activities` ausente = o destino serve a todo mundo (Painel, Perfil…).
+ *  Presente = só aparece para quem faz aquilo. É o que permite ao professor
+ *  nunca ver rider, formação nem mala de gig. */
+export type NavItem = {
+  to: string;
+  label: string;
+  icon: LucideIcon;
+  activities?: Activity[];
+  /** Rótulo alternativo para quem só dá aula — "Financeiro & Cachês" não
+   *  descreve a tela de quem vive de mensalidade. */
+  teachingLabel?: string;
+};
 export type NavGroup = { key: string; label: string; items: NavItem[]; defaultOpen: boolean };
 
 // Única fonte de verdade para nome + rota de cada destino — usada pela
@@ -28,9 +41,15 @@ export type NavGroup = { key: string; label: string; items: NavItem[]; defaultOp
 // produto (Fechar um show), que antes não existia em lugar nenhum do menu.
 export const NAV_TOP: NavItem[] = [
   { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
-  { to: "/eventos", label: "Agenda de Shows", icon: CalendarDays },
-  { to: "/contrato", label: "Fechar um show", icon: FileSignature },
-  { to: "/financeiro", label: "Financeiro & Cachês", icon: Wallet },
+  { to: "/eventos", label: "Agenda de Shows", icon: CalendarDays, activities: ["shows"] },
+  { to: "/alunos", label: "Alunos", icon: GraduationCap, activities: ["aulas"] },
+  { to: "/contrato", label: "Fechar um show", icon: FileSignature, activities: ["shows"] },
+  {
+    to: "/financeiro",
+    label: "Financeiro & Cachês",
+    teachingLabel: "Financeiro & Mensalidades",
+    icon: Wallet,
+  },
 ];
 
 // Nível 2: agrupado por intenção — um grupo aberto por vez.
@@ -40,10 +59,10 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Criar",
     defaultOpen: true,
     items: [
-      { to: "/magic-paste", label: "Colar do WhatsApp", icon: Wand2 },
+      { to: "/magic-paste", label: "Colar do WhatsApp", icon: Wand2, activities: ["shows"] },
       { to: "/documentos", label: "Contratos e Documentos", icon: FileText },
-      { to: "/riders", label: "Rider & Mapa de Palco", icon: Sliders },
-      { to: "/gerador-cards", label: "Gerador de Posts", icon: Megaphone },
+      { to: "/riders", label: "Rider & Mapa de Palco", icon: Sliders, activities: ["shows"] },
+      { to: "/gerador-cards", label: "Gerador de Posts", icon: Megaphone, activities: ["shows"] },
     ],
   },
   {
@@ -51,7 +70,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Meu material",
     defaultOpen: false,
     items: [
-      { to: "/repertorio", label: "Repertório", icon: Music4 },
+      { to: "/repertorio", label: "Repertório", icon: Music4, activities: ["shows"] },
       { to: "/marca", label: "Identidade Visual", icon: Palette },
       { to: "/portfolio", label: "Portfólio & Clipping", icon: Images },
     ],
@@ -61,9 +80,9 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Cadastros",
     defaultOpen: false,
     items: [
-      { to: "/formacoes", label: "Formações", icon: Layers },
-      { to: "/equipe", label: "Equipe", icon: Users },
-      { to: "/contratantes", label: "Contratantes", icon: Building2 },
+      { to: "/formacoes", label: "Formações", icon: Layers, activities: ["shows"] },
+      { to: "/equipe", label: "Equipe", icon: Users, activities: ["shows"] },
+      { to: "/contratantes", label: "Contratantes", icon: Building2, activities: ["shows"] },
       { to: "/perfil", label: "Dados do Artista", icon: Settings },
     ],
   },
@@ -85,4 +104,21 @@ export function groupKeyForPathname(pathname: string): string | null {
     g.items.some((item) => pathname === item.to || pathname.startsWith(`${item.to}/`)),
   );
   return group?.key ?? null;
+}
+
+/** Filtra a navegação pela atividade do usuário. Grupo que fica sem item
+ *  algum desaparece — senão o professor veria um "Cadastros" vazio. */
+export function navForActivities(activities: Activity[]) {
+  const allows = (item: NavItem) =>
+    !item.activities || item.activities.some((a) => activities.includes(a));
+  const teachesOnly = activities.includes("aulas") && !activities.includes("shows");
+  const label = (item: NavItem): NavItem =>
+    teachesOnly && item.teachingLabel ? { ...item, label: item.teachingLabel } : item;
+
+  return {
+    top: NAV_TOP.filter(allows).map(label),
+    groups: NAV_GROUPS.map((g) => ({ ...g, items: g.items.filter(allows).map(label) })).filter(
+      (g) => g.items.length > 0,
+    ),
+  };
 }

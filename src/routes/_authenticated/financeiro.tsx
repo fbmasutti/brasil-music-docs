@@ -23,6 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { MonthlyFees } from "@/components/MonthlyFees";
+import { useActivities } from "@/lib/activities";
 import { CobrancaPixContent } from "./cobrancas";
 import {
   PageHeader,
@@ -70,6 +72,7 @@ const EXPENSE_CATEGORIES: Record<string, string> = {
 };
 
 function FinanceiroPage() {
+  const { doesShows, doesTeaching, teachesOnly } = useActivities();
   const { data: events = [] } = useList("events", {
     order: { column: "event_date", ascending: false },
   });
@@ -151,15 +154,28 @@ function FinanceiroPage() {
   return (
     <PageContainer className="space-y-5">
       <PageHeader
-        title="Financeiro & Cachês"
-        subtitle="Cachês pendentes, DRE rápido por show e reserva financeira de instrumentos."
+        title={teachesOnly ? "Financeiro & Mensalidades" : "Financeiro & Cachês"}
+        subtitle={
+          teachesOnly
+            ? "Mensalidades do mês, quem já pagou e quem está em atraso."
+            : "Cachês pendentes, DRE rápido por show e reserva financeira de instrumentos."
+        }
       />
 
-      <Tabs defaultValue="cache">
+      {/* A aba inicial segue a atividade: professor abre no que usa todo mês,
+          músico continua caindo no DRE por show. */}
+      <Tabs defaultValue={teachesOnly ? "mensalidades" : "cache"}>
         <TabsList>
-          <TabsTrigger value="cache">Cachês & DRE</TabsTrigger>
+          {doesShows && <TabsTrigger value="cache">Cachês & DRE</TabsTrigger>}
+          {doesTeaching && <TabsTrigger value="mensalidades">Mensalidades</TabsTrigger>}
           <TabsTrigger value="pix">Cobrança via PIX</TabsTrigger>
         </TabsList>
+
+        {doesTeaching && (
+          <TabsContent value="mensalidades" className="pt-4">
+            <MonthlyFees />
+          </TabsContent>
+        )}
 
         <TabsContent value="cache" className="space-y-5 pt-4">
           <div className="grid gap-4 sm:grid-cols-3">

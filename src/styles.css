@@ -47,6 +47,7 @@
   --color-cyan: var(--cyan);
   --color-lime: var(--lime);
   --color-orange: var(--orange);
+  --color-lesson: var(--lesson);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -93,6 +94,12 @@
      Uso pontual (valores positivos, destaques), não cor de marca. */
   --lime: oklch(0.86 0.2 118); /* #C4E000 */
   --orange: oklch(0.68 0.21 43); /* #FC640F */
+  /* Aula. Roxo hue 300 — o ponto mais distante do teal da marca (219) que
+     não colide com nenhum status: destructive 22, warning 78, lime 118,
+     success 155, cyan 205. Nunca usar sozinho: aula anda sempre com o
+     ícone de birrete, senão quem não distingue roxo de teal fica sem
+     saber o que está olhando. */
+  --lesson: oklch(0.68 0.18 300);
   --border: oklch(0.27 0.008 285);
   --input: oklch(0.28 0.008 285);
   --ring: oklch(0.62 0.10 219);
@@ -144,6 +151,8 @@
   --cyan: oklch(0.5 0.12 205);
   --lime: oklch(0.5 0.16 118);
   --orange: oklch(0.55 0.19 43);
+  /* Mesmo hue do tema escuro, escurecido para contrastar com fundo claro. */
+  --lesson: oklch(0.52 0.18 300);
   --border: oklch(0.9 0.005 285);
   --input: oklch(0.89 0.006 285);
   --ring: oklch(0.52 0.09 219);

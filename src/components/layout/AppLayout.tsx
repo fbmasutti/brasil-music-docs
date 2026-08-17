@@ -22,7 +22,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/lib/theme";
 import { ActiveFormationProvider, useActiveFormation } from "@/lib/active-formation";
 import { presetPalette } from "@/lib/brand-presets";
-import { NAV_TOP, NAV_GROUPS, pageTitleFor, groupKeyForPathname, type NavItem } from "@/lib/nav";
+import { navForActivities, pageTitleFor, groupKeyForPathname, type NavItem } from "@/lib/nav";
+import { useActivities } from "@/lib/activities";
 import { CommandPalette } from "@/components/CommandPalette";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -36,6 +37,10 @@ export function AppLayout() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { theme, toggleTheme } = useTheme();
+  // O menu tem forma diferente conforme o que a pessoa faz: quem só dá aula
+  // não vê rider, formação, equipe nem mala de gig.
+  const { activities } = useActivities();
+  const { top: navTop, groups: navGroups } = navForActivities(activities);
 
   // Um grupo aberto por vez. A navegação pode trocar qual grupo está aberto
   // (para revelar o item ativo), mas só o clique do usuário no cabeçalho do
@@ -45,7 +50,7 @@ export function AppLayout() {
     if (typeof localStorage === "undefined") return groupKeyForPathname(pathname);
     const stored = localStorage.getItem(NAV_OPEN_GROUP_KEY);
     if (stored !== null) return stored || null;
-    return groupKeyForPathname(pathname) ?? NAV_GROUPS.find((g) => g.defaultOpen)?.key ?? null;
+    return groupKeyForPathname(pathname) ?? navGroups.find((g) => g.defaultOpen)?.key ?? null;
   });
 
   useEffect(() => {
@@ -87,7 +92,7 @@ export function AppLayout() {
 
   const nav = (
     <nav className="flex flex-1 flex-col gap-1 px-3">
-      {NAV_TOP.map(renderNavItem)}
+      {navTop.map(renderNavItem)}
       <Accordion
         type="single"
         collapsible
@@ -99,7 +104,7 @@ export function AppLayout() {
         }}
         className="mt-2 flex flex-col gap-0.5"
       >
-        {NAV_GROUPS.map((group) => (
+        {navGroups.map((group) => (
           <AccordionItem key={group.key} value={group.key} className="border-b-0">
             <AccordionTrigger className="rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground/80 hover:no-underline [&[data-state=open]>svg]:rotate-180">
               {group.label}

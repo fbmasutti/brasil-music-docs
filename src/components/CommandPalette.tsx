@@ -10,7 +10,8 @@ import {
   CommandItem,
   CommandShortcut,
 } from "@/components/ui/command";
-import { ALL_NAV_ITEMS } from "@/lib/nav";
+import { navForActivities } from "@/lib/nav";
+import { useActivities } from "@/lib/activities";
 import { useList } from "@/lib/queries";
 import { dateBR } from "@/lib/format";
 
@@ -25,6 +26,11 @@ export function CommandPalette({
   onOpenChange: (open: boolean) => void;
 }) {
   const navigate = useNavigate();
+  // O ⌘K não pode oferecer tela que a sidebar esconde: seria a única porta
+  // para um recurso que não é daquele perfil.
+  const { activities } = useActivities();
+  const { top, groups } = navForActivities(activities);
+  const navItems = [...top, ...groups.flatMap((g) => g.items)];
   const { data: events = [] } = useList("events", {
     order: { column: "event_date", ascending: false },
   });
@@ -55,7 +61,7 @@ export function CommandPalette({
       <CommandList>
         <CommandEmpty>Nada encontrado.</CommandEmpty>
         <CommandGroup heading="Ir para">
-          {ALL_NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <CommandItem key={item.to} value={item.label} onSelect={() => go(item.to)}>
               <item.icon />
               {item.label}

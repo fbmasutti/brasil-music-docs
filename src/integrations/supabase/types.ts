@@ -55,7 +55,9 @@ export type Database = {
           id: string;
           paid_at: string | null;
           pix_payload: string | null;
+          reference_month: string | null;
           status: string;
+          student_id: string | null;
           txid: string | null;
           updated_at: string;
           user_id: string;
@@ -70,7 +72,9 @@ export type Database = {
           id?: string;
           paid_at?: string | null;
           pix_payload?: string | null;
+          reference_month?: string | null;
           status?: string;
+          student_id?: string | null;
           txid?: string | null;
           updated_at?: string;
           user_id: string;
@@ -85,7 +89,9 @@ export type Database = {
           id?: string;
           paid_at?: string | null;
           pix_payload?: string | null;
+          reference_month?: string | null;
           status?: string;
+          student_id?: string | null;
           txid?: string | null;
           updated_at?: string;
           user_id?: string;
@@ -533,6 +539,119 @@ export type Database = {
           },
         ];
       };
+      students: {
+        Row: {
+          created_at: string;
+          doc: string | null;
+          due_day: number;
+          duration_min: number;
+          email: string | null;
+          guardian_name: string | null;
+          guardian_phone: string | null;
+          id: string;
+          instrument: string | null;
+          level: string | null;
+          modality: string;
+          monthly_fee: number;
+          name: string;
+          notes: string | null;
+          phone: string | null;
+          start_time: string | null;
+          started_at: string | null;
+          status: string;
+          updated_at: string;
+          user_id: string;
+          weekday: number | null;
+        };
+        Insert: {
+          created_at?: string;
+          doc?: string | null;
+          due_day?: number;
+          duration_min?: number;
+          email?: string | null;
+          guardian_name?: string | null;
+          guardian_phone?: string | null;
+          id?: string;
+          instrument?: string | null;
+          level?: string | null;
+          modality?: string;
+          monthly_fee?: number;
+          name: string;
+          notes?: string | null;
+          phone?: string | null;
+          start_time?: string | null;
+          started_at?: string | null;
+          status?: string;
+          updated_at?: string;
+          user_id: string;
+          weekday?: number | null;
+        };
+        Update: {
+          created_at?: string;
+          doc?: string | null;
+          due_day?: number;
+          duration_min?: number;
+          email?: string | null;
+          guardian_name?: string | null;
+          guardian_phone?: string | null;
+          id?: string;
+          instrument?: string | null;
+          level?: string | null;
+          modality?: string;
+          monthly_fee?: number;
+          name?: string;
+          notes?: string | null;
+          phone?: string | null;
+          start_time?: string | null;
+          started_at?: string | null;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+          weekday?: number | null;
+        };
+        Relationships: [];
+      };
+      lesson_records: {
+        Row: {
+          created_at: string;
+          id: string;
+          lesson_date: string;
+          notes: string | null;
+          status: string;
+          student_id: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          lesson_date: string;
+          notes?: string | null;
+          status?: string;
+          student_id: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          lesson_date?: string;
+          notes?: string | null;
+          status?: string;
+          student_id?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lesson_records_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "students";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       generated_documents: {
         Row: {
           client_id: string | null;
@@ -672,6 +791,7 @@ export type Database = {
       };
       profiles: {
         Row: {
+          activities: string[];
           active_formation_id: string | null;
           address: string | null;
           bank_account: string | null;
@@ -726,6 +846,7 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          activities?: string[];
           active_formation_id?: string | null;
           address?: string | null;
           bank_account?: string | null;
@@ -780,6 +901,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          activities?: string[];
           active_formation_id?: string | null;
           address?: string | null;
           bank_account?: string | null;
