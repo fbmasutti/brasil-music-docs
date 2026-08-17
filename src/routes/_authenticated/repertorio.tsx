@@ -44,6 +44,7 @@ import { useDocumentAccent } from "@/lib/active-formation";
 import type { Tables } from "@/integrations/supabase/types";
 import { duration, parseDuration, ECAD_ASSOCIATIONS, dateBR, razaoSocial } from "@/lib/format";
 import { downloadPdf } from "@/lib/pdf";
+import { songAuthors, downloadEcadRoteiro } from "@/lib/ecad-xlsx";
 import { fetchTrackMeta } from "@/lib/oembed";
 
 export const Route = createFileRoute("/_authenticated/repertorio")({
@@ -94,6 +95,7 @@ function RepertoirePage() {
   const { data: events = [] } = useList("events", {
     order: { column: "event_date", ascending: false },
   });
+  const { data: clients = [] } = useList("clients");
   const insertWriter = useInsert("song_writers", "Autor adicionado");
   const updateWriter = useUpdate("song_writers", "Autor atualizado");
   const removeSong = useRemove("songs", "Obra removida");
@@ -188,7 +190,7 @@ function RepertoirePage() {
             <EcadReportDialog
               trigger={
                 <Button variant="outline" size="sm" disabled={!allSongs.length}>
-                  <Download className="mr-1 size-4" /> Relatório ECAD
+                  <Download className="mr-1 size-4" /> Documentos ECAD
                 </Button>
               }
               allSongs={allSongs}
@@ -196,6 +198,7 @@ function RepertoirePage() {
               formationSongs={formationSongs}
               writers={writers}
               events={events}
+              clients={clients}
               profile={profile}
               accent={accent}
             />
@@ -209,6 +212,21 @@ function RepertoirePage() {
           </>
         }
       />
+
+      <p className="-mt-4 mb-6 text-xs text-muted-foreground">
+        Em "Documentos ECAD", escolha o repertório e vincule a um evento para baixar o roteiro
+        oficial (.xlsx, modelo Ecad Arr008) para envio de shows — o mesmo atalho também fica no
+        dossiê de cada evento, na seção ECAD.{" "}
+        <a
+          href="https://www4.ecad.org.br/wp-content/uploads/2026/08/Regulamento-de-Arrecadacao_ago26.pdf"
+          target="_blank"
+          rel="noreferrer"
+          className="underline underline-offset-2"
+        >
+          Regulamento de Arrecadação do Ecad
+        </a>
+        .
+      </p>
 
       <Section
         title={songsQuery.isLoading ? "Obras" : `Obras (${songs.length})`}
@@ -510,11 +528,16 @@ function RepertoirePage() {
 }
 
 /**
- * Fluxo de download do relatório ECAD, separado da navegação do repertório: o
- * usuário escolhe explicitamente quais obras entram (por formação, com a
- * padrão pré-selecionada) e, se quiser, um evento — que só entra no cabeçalho
- * do PDF, não filtra a tabela. Antes os dois selects moravam soltos na página
- * e pareciam controlar a mesma coisa; aqui fica claro que são independentes.
+ * Fluxo de download dos documentos ECAD, separado da navegação do
+ * repertório: o usuário escolhe explicitamente quais obras entram (por
+ * formação; "Todo o repertório" por padrão, para nunca esconder música que
+ * não foi vinculada a uma formação) e, se quiser, um evento.
+ *
+ * O PDF é um comprovante de execução pública — o evento é opcional e só
+ * entra no cabeçalho, não filtra a tabela. Já o .xlsx é o roteiro oficial
+ * (Arr008) que vai para o Ecad: exige um evento, porque o formulário oficial
+ * tem campos de cabeçalho (local, produtor, telefone) que só existem por
+ * evento.
  */
 function EcadReportDialog({
   trigger,
@@ -523,6 +546,7 @@ function EcadReportDialog({
   formationSongs,
   writers,
   events,
+  clients,
   profile,
   accent,
 }: {
@@ -532,18 +556,20 @@ function EcadReportDialog({
   formationSongs: Tables<"formation_songs">[];
   writers: Tables<"song_writers">[];
   events: Tables<"events">[];
+  clients: Tables<"clients">[];
   profile: Tables<"profiles"> | null | undefined;
   accent: string | undefined;
 }) {
   const [open, setOpen] = useState(false);
   const [formationId, setFormationId] = useState("");
   const [eventId, setEventId] = useState("");
+  const [downloadingXlsx, setDownloadingXlsx] = useState(false);
 
   useEffect(() => {
     if (!open) return;
-    setFormationId(formations.find((f) => f.is_default)?.id ?? "");
+    setFormationId("");
     setEventId("");
-  }, [open, formations]);
+  }, [open]);
 
   const songs = formationId
     ? allSongs.filter((s) =>
@@ -551,11 +577,7 @@ function EcadReportDialog({
       )
     : allSongs;
 
-  function authorsFor(s: Tables<"songs">) {
-    if (s.origin === "cover") return s.original_authors || "—";
-    const list = writers.filter((w) => w.song_id === s.id);
-    return list.map((w) => `${w.name} ${w.share_percent}%`).join("; ") || "—";
-  }
+  const authorsFor = (s: Tables<"songs">) => songAuthors(s, writers);
 
   function download() {
     const event = events.find((e) => e.id === eventId);
@@ -604,16 +626,42 @@ function EcadReportDialog({
     setOpen(false);
   }
 
+  async function downloadXlsx() {
+    const event = events.find((e) => e.id === eventId);
+    if (!event) return;
+    const client = clients.find((c) => c.id === event.client_id);
+    setDownloadingXlsx(true);
+    try {
+      await downloadEcadRoteiro({
+        header: {
+          eventTitle: event.title,
+          eventDate: event.event_date,
+          performer: profile?.stage_name || razaoSocial(profile) || "",
+          venue: event.venue,
+          city: event.city,
+          state: event.state,
+          producer: client?.contact_name || client?.name || null,
+          phone: client?.phone || null,
+        },
+        songs: songs.map((s) => ({ title: s.title, authors: authorsFor(s) })),
+        filenameBase: "roteiro-ecad",
+      });
+      setOpen(false);
+    } finally {
+      setDownloadingXlsx(false);
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Relatório ECAD</DialogTitle>
+          <DialogTitle>Documentos ECAD</DialogTitle>
         </DialogHeader>
         <p className="text-xs text-muted-foreground">
-          O repertório decide quais obras entram na tabela. O evento é opcional e só aparece no
-          cabeçalho do PDF — não filtra as obras.
+          O repertório decide quais obras entram na tabela. Para o roteiro oficial (.xlsx), o evento
+          é obrigatório — o cabeçalho do formulário do Ecad é por evento.
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-2">
@@ -637,7 +685,7 @@ function EcadReportDialog({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Evento (opcional)</Label>
+            <Label>Evento (obrigatório para o .xlsx)</Label>
             <Select
               value={eventId || "none"}
               onValueChange={(v) => setEventId(v === "none" ? "" : v)}
@@ -658,11 +706,15 @@ function EcadReportDialog({
         </div>
         <p className="text-xs text-muted-foreground">
           {songs.length} obra{songs.length === 1 ? "" : "s"} entrar{songs.length === 1 ? "á" : "ão"}{" "}
-          no relatório.
+          no documento.
         </p>
-        <DialogFooter>
-          <Button onClick={download} disabled={!songs.length}>
-            <Download className="mr-1 size-4" /> Baixar PDF
+        <DialogFooter className="sm:justify-between">
+          <Button onClick={download} variant="outline" disabled={!songs.length}>
+            <Download className="mr-1 size-4" /> Comprovante (PDF)
+          </Button>
+          <Button onClick={downloadXlsx} disabled={!songs.length || !eventId || downloadingXlsx}>
+            <Download className="mr-1 size-4" />
+            {downloadingXlsx ? "Gerando…" : "Roteiro oficial (.xlsx)"}
           </Button>
         </DialogFooter>
       </DialogContent>
