@@ -12,6 +12,7 @@ import {
   Wand2,
   MapPin,
   Megaphone,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -316,8 +317,13 @@ function Landing() {
                 </span>
                 <h3 className="mt-4 font-semibold">{m.title}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">{m.summary}</p>
-                <span className="mt-3 inline-block text-xs font-medium text-primary group-open:hidden">
-                  Ver o que inclui
+                {/* O rótulo troca em vez de sumir: antes ele era escondido
+                    quando aberto (group-open:hidden) e o card ficava sem
+                    nenhum controle visível para fechar de novo. */}
+                <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary">
+                  <span className="group-open:hidden">Ver o que inclui</span>
+                  <span className="hidden group-open:inline">Ocultar</span>
+                  <ChevronDown className="size-3.5 transition-transform group-open:rotate-180" />
                 </span>
               </summary>
               <p className="mt-2 text-sm text-muted-foreground">{m.details}</p>

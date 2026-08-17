@@ -22,13 +22,20 @@ const AccordionTrigger = React.forwardRef<
     <AccordionPrimitive.Trigger
       ref={ref}
       className={cn(
-        "flex flex-1 items-center justify-between py-4 text-sm font-medium cursor-pointer transition-all hover:underline text-left [&[data-state=open]>svg]:rotate-180",
+        // Sublinhar a linha inteira fazia a pergunta parecer link, não um
+        // controle que abre e fecha — e no toque não existe hover nenhum.
+        // A cor no hover, somada à seta que gira, é a pista que sobrevive
+        // ao celular.
+        "flex flex-1 cursor-pointer items-center justify-between gap-3 py-4 text-left text-sm font-medium transition-colors hover:text-primary [&[data-state=open]>svg]:rotate-180",
         className,
       )}
       {...props}
     >
       {children}
-      <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
+      {/* Sem cor própria: herda a do gatilho. No FAQ isso deixa a seta
+          legível (antes era muted sobre fundo claro, quase invisível) e na
+          barra lateral ela continua discreta, acompanhando o rótulo. */}
+      <ChevronDown className="size-4 shrink-0 transition-transform duration-200" />
     </AccordionPrimitive.Trigger>
   </AccordionPrimitive.Header>
 ));
