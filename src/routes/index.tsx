@@ -146,7 +146,11 @@ const STEPS = [
 
 // Ordenado da dúvida mais comum para a mais específica. A pergunta sobre
 // MEI saiu: quase ninguém faz essa associação espontaneamente.
-const FAQ = [
+// `bullets` e `note` são só de apresentação — o JSON-LD abaixo junta tudo
+// numa string, porque o schema FAQPage espera uma resposta em texto corrido.
+type FaqItem = { q: string; a: string; bullets?: string[]; note?: string };
+
+const FAQ: FaqItem[] = [
   {
     q: "Os contratos gerados têm validade jurídica?",
     a: "Sim. Os modelos seguem a estrutura de um contrato de prestação de serviços artísticos válido, com cláusulas de cachê, cancelamento, hora extra e ECAD. Para casos específicos ou de maior complexidade, recomendamos a revisão de um advogado.",
@@ -165,11 +169,25 @@ const FAQ = [
   },
   {
     q: "Com quais serviços o StageKit se integra?",
-    a: "Você cola a conversa do WhatsApp para criar o show e envia contratos e cobranças pelo próprio WhatsApp; manda cada show para o Google Agenda ou baixa o .ics para Apple e Outlook; abre o endereço do local no seu app de GPS; e gera QR Code e código Pix copia e cola. Não há integração bancária: o Pix gerado serve para você cobrar ou pagar pelo seu próprio banco.",
+    a: "O StageKit se conecta ao que você já usa, sem pedir para trocar de ferramenta:",
+    bullets: [
+      "WhatsApp — cole a conversa do fechamento e o show nasce preenchido; contratos, riders e cobranças saem pelo WhatsApp também.",
+      "Google Agenda, Apple e Outlook — mande o compromisso para a sua agenda em um clique ou baixe o arquivo .ics.",
+      "Google Maps, Waze e Apple Maps — no dia do show, o botão Como chegar abre o endereço no app que você preferir.",
+      "Pix — QR Code e código copia e cola para receber cachê e sinal, e o código de cada integrante no rateio da equipe.",
+      "YouTube e Spotify — cole o link da faixa no repertório e o título e o artista entram sozinhos.",
+      "OpenStreetMap — o campo de endereço sugere o local enquanto você digita, para o mapa e o contrato saírem certos.",
+      "ECAD — o relatório de execução pública sai na planilha oficial (Arr008), pronta para envio.",
+    ],
+    note: "Não há integração bancária: o Pix gerado serve para você cobrar ou pagar pelo seu próprio banco.",
   },
   {
     q: "O que muda na minha rotina depois de cadastrar tudo?",
     a: "Com perfil e formação prontos, cada show novo já nasce com contrato, rider, mapa de palco, post de divulgação e checklist de equipamento a um clique. Você deixa de reconstruir a mesma papelada a cada gig e passa a só conferir o que o sistema preencheu.",
+  },
+  {
+    q: "Dá para conectar o StageKit a um assistente de IA?",
+    a: "Sim. O StageKit publica um servidor MCP, o padrão que assistentes como o Claude usam para acessar aplicativos. Depois de você autorizar numa tela de consentimento, o assistente consegue consultar sua agenda, seu repertório e seus contratantes, e cadastrar shows e contratantes novos por conversa — útil para quem prefere resolver a agenda falando a digitando.",
   },
 ];
 
@@ -179,7 +197,10 @@ const faqJsonLd = {
   mainEntity: FAQ.map((item) => ({
     "@type": "Question",
     name: item.q,
-    acceptedAnswer: { "@type": "Answer", text: item.a },
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: [item.a, ...(item.bullets ?? []), item.note].filter(Boolean).join(" "),
+    },
   })),
 };
 
@@ -340,7 +361,23 @@ function Landing() {
           {FAQ.map((item) => (
             <AccordionItem key={item.q} value={item.q}>
               <AccordionTrigger>{item.q}</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">{item.a}</AccordionContent>
+              <AccordionContent className="text-muted-foreground">
+                <p>{item.a}</p>
+                {item.bullets ? (
+                  <ul className="mt-3 space-y-1.5">
+                    {item.bullets.map((b) => (
+                      <li key={b} className="flex gap-2">
+                        <span
+                          aria-hidden
+                          className="mt-2 size-1 shrink-0 rounded-full bg-primary"
+                        />
+                        <span>{b}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {item.note ? <p className="mt-3 text-xs">{item.note}</p> : null}
+              </AccordionContent>
             </AccordionItem>
           ))}
         </Accordion>
