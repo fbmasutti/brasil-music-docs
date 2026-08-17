@@ -105,7 +105,17 @@ function invalidate(qc: ReturnType<typeof useQueryClient>, table: TableName) {
   if (table === "profiles") qc.invalidateQueries({ queryKey: ["profile"] });
 }
 
-export function useInsert<T extends TableName>(table: T, successMessage = "Salvo com sucesso") {
+/**
+ * `silentError` desliga o toast de erro por mutação — para quem insere em
+ * lote e resume o resultado sozinho. Sem isso, um lote de 12 mensalidades
+ * que falha empilha 12 mensagens idênticas na tela. Quem passa a opção
+ * assume a responsabilidade de reportar.
+ */
+export function useInsert<T extends TableName>(
+  table: T,
+  successMessage = "Salvo com sucesso",
+  options: { silentError?: boolean } = {},
+) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (values: Omit<TablesInsert<T>, "user_id"> & { user_id?: string }) => {
@@ -122,9 +132,14 @@ export function useInsert<T extends TableName>(table: T, successMessage = "Salvo
     },
     onSuccess: () => {
       invalidate(qc, table);
-      toast.success(successMessage);
+      // Mensagem vazia = silêncio proposital. Sem esta guarda, quem passa ""
+      // para não notificar (inserção em lote de checklist, mensalidade,
+      // vínculo de música) recebia um toast em branco por linha inserida.
+      if (successMessage) toast.success(successMessage);
     },
-    onError: (error: Error) => toast.error(friendlyErrorMessage(error)),
+    onError: (error: Error) => {
+      if (!options.silentError) toast.error(friendlyErrorMessage(error));
+    },
   });
 }
 
@@ -144,7 +159,11 @@ export function useUpdate<T extends TableName>(table: T, successMessage = "Atual
   });
 }
 
-export function useRemove<T extends TableName>(table: T, successMessage = "Removido") {
+export function useRemove<T extends TableName>(
+  table: T,
+  successMessage = "Removido",
+  options: { silentError?: boolean } = {},
+) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
@@ -154,9 +173,12 @@ export function useRemove<T extends TableName>(table: T, successMessage = "Remov
     },
     onSuccess: () => {
       invalidate(qc, table);
-      toast.success(successMessage);
+      // Mesma guarda do useInsert: remoção em lote passa "" e resume no fim.
+      if (successMessage) toast.success(successMessage);
     },
-    onError: (error: Error) => toast.error(friendlyErrorMessage(error)),
+    onError: (error: Error) => {
+      if (!options.silentError) toast.error(friendlyErrorMessage(error));
+    },
   });
 }
 

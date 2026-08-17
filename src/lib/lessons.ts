@@ -99,6 +99,37 @@ export function todayLessons(students: StudentRow[], records: LessonRecordRow[])
   return lessonOccurrences(students, records, today, today);
 }
 
+/**
+ * Valores do CONTRATO_AULAS a partir da ficha do aluno.
+ *
+ * Todo campo do modelo tem origem no cadastro — o contrato sai para
+ * conferir, não para preencher. `frequency` é a única que não existe como
+ * coluna: é montada do horário fixo ("1 aula semanal de 50 minutos").
+ */
+export function contractValuesFromStudent(
+  student: StudentRow,
+  opts: { city?: string | null | undefined; signatureDate?: string | undefined } = {},
+): Record<string, string> {
+  const frequency =
+    student.weekday === null
+      ? `1 aula semanal de ${student.duration_min} minutos`
+      : `1 aula semanal de ${student.duration_min} minutos, às ${WEEKDAYS[student.weekday]?.toLowerCase()}${
+          student.start_time ? ` às ${student.start_time}` : ""
+        }`;
+
+  return {
+    student_name: student.name,
+    student_doc: student.doc ?? "",
+    modality: student.modality ?? "Presencial",
+    instrument: student.instrument ?? "",
+    frequency,
+    monthly_fee: student.monthly_fee ? String(student.monthly_fee) : "",
+    due_day: String(student.due_day ?? ""),
+    city: opts.city ?? "",
+    signature_date: opts.signatureDate ?? todayISO(),
+  };
+}
+
 /** Primeiro dia do mês em YYYY-MM-DD — a chave de `reference_month`. */
 export function monthKey(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-01`;

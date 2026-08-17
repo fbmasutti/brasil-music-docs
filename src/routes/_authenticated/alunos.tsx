@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { GraduationCap, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -29,8 +30,12 @@ import {
   ItemActions,
   ListState,
   StatusBadge,
+  BulkActionBar,
 } from "@/components/ui-kit";
 import { useList, useInsert, useUpdate, useRemove } from "@/lib/queries";
+import { useBulkSelection } from "@/lib/use-bulk-selection";
+import { friendlyErrorMessage } from "@/lib/friendly-error";
+import { Checkbox } from "@/components/ui/checkbox";
 import { maskCpfCnpj, maskPhone, maskMoney, parseMoney, money } from "@/lib/format";
 import { WEEKDAYS, STUDENT_STATUS } from "@/lib/lessons";
 import type { Tables } from "@/integrations/supabase/types";
@@ -108,7 +113,26 @@ function StudentsPage() {
   const studentsQuery = useList("students", { order: { column: "name" } });
   const students = studentsQuery.data ?? [];
   const remove = useRemove("students", "Aluno removido");
+  // Silencioso: o lote resume numa mensagem só, em vez de uma por aluno.
+  const removeQuiet = useRemove("students", "", { silentError: true });
   const [editingId, setEditingId] = useState<string | null>(null);
+  const selection = useBulkSelection(students.map((s) => s.id));
+
+  async function removeSelected() {
+    const ids = selection.ids;
+    const results = await Promise.allSettled(ids.map((id) => removeQuiet.mutateAsync(id)));
+    selection.clear();
+    const failed = results.filter((r) => r.status === "rejected").length;
+    if (failed === 0) {
+      toast.success(`${ids.length} aluno(s) removido(s).`);
+      return;
+    }
+    toast.error(
+      friendlyErrorMessage(
+        (results.find((r) => r.status === "rejected") as PromiseRejectedResult).reason,
+      ),
+    );
+  }
 
   const ativos = students.filter((s) => s.status === "ATIVO");
   const receitaMensal = ativos.reduce((sum, s) => sum + Number(s.monthly_fee), 0);
@@ -152,45 +176,70 @@ function StudentsPage() {
           }
         >
           {(items) => (
-            <ul className="divide-y divide-border">
-              {items.map((s) => (
-                <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                  <div className="min-w-0">
-                    <span className="flex items-center gap-2">
-                      {/* Ícone junto da cor: aula nunca é identificada só pelo roxo. */}
-                      <GraduationCap className="size-4 shrink-0 text-lesson" />
-                      <span className="truncate font-medium">{s.name}</span>
-                      <StatusBadge status={s.status} map={STUDENT_STATUS} />
-                    </span>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {[s.instrument, s.modality].filter(Boolean).join(" · ")}
-                      {s.instrument || s.modality ? " · " : ""}
-                      {scheduleLabel(s)}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-right text-sm">
-                      <span className="block font-semibold">{money(Number(s.monthly_fee))}</span>
-                      <span className="block text-xs text-muted-foreground">
-                        vence dia {s.due_day}
+            <>
+              <label className="mb-1 flex w-fit cursor-pointer items-center gap-2 py-1 text-xs text-muted-foreground">
+                <Checkbox
+                  checked={selection.allVisibleSelected}
+                  onCheckedChange={selection.toggleAll}
+                />
+                Selecionar todos
+              </label>
+              <ul className="divide-y divide-border">
+                {items.map((s) => (
+                  <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                    <div className="flex min-w-0 items-start gap-3">
+                      <Checkbox
+                        className="mt-1"
+                        checked={selection.isSelected(s.id)}
+                        onCheckedChange={() => selection.toggle(s.id)}
+                        aria-label={`Selecionar ${s.name}`}
+                      />
+                      <div className="min-w-0">
+                        <span className="flex items-center gap-2">
+                          {/* Ícone junto da cor: aula nunca é identificada só pelo roxo. */}
+                          <GraduationCap className="size-4 shrink-0 text-lesson" />
+                          <span className="truncate font-medium">{s.name}</span>
+                          <StatusBadge status={s.status} map={STUDENT_STATUS} />
+                        </span>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {[s.instrument, s.modality].filter(Boolean).join(" · ")}
+                          {s.instrument || s.modality ? " · " : ""}
+                          {scheduleLabel(s)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-right text-sm">
+                        <span className="block font-semibold">{money(Number(s.monthly_fee))}</span>
+                        <span className="block text-xs text-muted-foreground">
+                          vence dia {s.due_day}
+                        </span>
                       </span>
-                    </span>
-                    <ItemActions
-                      onEdit={() => setEditingId(s.id)}
-                      onDelete={() => remove.mutate(s.id)}
-                      deleteConfirm={{
-                        title: `Remover "${s.name}"?`,
-                        description:
-                          "O histórico de aulas deste aluno também será apagado. As mensalidades já geradas ficam no Financeiro, sem vínculo. Essa ação não pode ser desfeita.",
-                        confirmLabel: "Remover aluno",
-                      }}
-                    />
-                  </div>
-                </li>
-              ))}
-            </ul>
+                      <ItemActions
+                        onEdit={() => setEditingId(s.id)}
+                        onDelete={() => remove.mutate(s.id)}
+                        deleteConfirm={{
+                          title: `Remover "${s.name}"?`,
+                          description:
+                            "O histórico de aulas deste aluno também será apagado. As mensalidades já geradas ficam no Financeiro, sem vínculo. Essa ação não pode ser desfeita.",
+                          confirmLabel: "Remover aluno",
+                        }}
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </ListState>
+
+        <BulkActionBar
+          count={selection.count}
+          itemLabel="aluno"
+          onClear={selection.clear}
+          onDelete={removeSelected}
+          deleteDescription="O histórico de aulas desses alunos também será apagado. As mensalidades já geradas ficam no Financeiro, sem vínculo. Essa ação não pode ser desfeita."
+        />
       </Section>
 
       {editingId && (
@@ -219,7 +268,8 @@ function StudentFormDialog({
   open?: boolean;
   onOpenChange?: (o: boolean) => void;
 }) {
-  const insert = useInsert("students", "Aluno cadastrado");
+  const insert = useInsert("students", ""); // a confirmação com ação é emitida no onSuccess
+  const navigate = useNavigate();
   const update = useUpdate("students", "Aluno atualizado");
 
   const isControlled = controlledOpen !== undefined;
@@ -259,9 +309,23 @@ function StudentFormDialog({
       return;
     }
     insert.mutate(values, {
-      onSuccess: () => {
+      onSuccess: (created) => {
         setForm(empty);
         setOpen(false);
+        // O contrato é o próximo passo natural de quem acabou de cadastrar
+        // um aluno, e todos os campos dele já existem neste cadastro. Em vez
+        // de fechar em silêncio e deixar o professor procurar, a própria
+        // confirmação oferece o caminho.
+        toast.success("Aluno cadastrado.", {
+          action: {
+            label: "Gerar contrato",
+            onClick: () =>
+              navigate({
+                to: "/documentos",
+                search: { template: "CONTRATO_AULAS", student: created.id },
+              }),
+          },
+        });
       },
     });
   }

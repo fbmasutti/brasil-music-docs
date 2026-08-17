@@ -14,6 +14,14 @@ export type ParsedEvent = {
   fee_deposit: number | null;
   contact_name: string | null;
   contact_phone: string | null;
+  /**
+   * O texto sugere que o valor é por músico ("R$ 500 pra cada"), não o total
+   * do show. Não dá para decidir sozinho: a mesma frase pode significar as
+   * duas coisas dependendo de quem escreveu. A tela pergunta — multiplicar
+   * por conta própria erraria em silêncio, e erro silencioso em dinheiro é
+   * o pior tipo.
+   */
+  fee_is_per_musician: boolean;
 };
 
 const MONTHS: Record<string, number> = {
@@ -149,13 +157,153 @@ function parseTime(text: string): string | null {
   return `${pad(hour)}:${pad(minute)}`;
 }
 
+/**
+ * Cidades reconhecíveis sem a sigla do estado — capitais e municípios de
+ * porte, que é onde a esmagadora maioria dos shows acontece.
+ *
+ * Existe porque ninguém escreve "São Paulo/SP" no WhatsApp: escreve
+ * "São Paulo". Sem esta lista, o padrão Cidade/UF não casava e a cidade
+ * voltava nula. Carregar os 5.570 municípios do país resolveria o caso raro
+ * ao custo de peso em toda visita.
+ *
+ * A chave é normalizada (sem acento, minúscula) para casar com o que o
+ * usuário digitou de qualquer jeito.
+ */
+const KNOWN_CITIES: Record<string, [string, string]> = Object.fromEntries(
+  (
+    [
+      ["São Paulo", "SP"],
+      ["Guarulhos", "SP"],
+      ["Campinas", "SP"],
+      ["Santos", "SP"],
+      ["Santo André", "SP"],
+      ["São Bernardo do Campo", "SP"],
+      ["Osasco", "SP"],
+      ["Ribeirão Preto", "SP"],
+      ["Sorocaba", "SP"],
+      ["São José dos Campos", "SP"],
+      ["Bauru", "SP"],
+      ["Piracicaba", "SP"],
+      ["Jundiaí", "SP"],
+      ["São Carlos", "SP"],
+      ["Rio de Janeiro", "RJ"],
+      ["Niterói", "RJ"],
+      ["Petrópolis", "RJ"],
+      ["Nova Iguaçu", "RJ"],
+      ["Campos dos Goytacazes", "RJ"],
+      ["Cabo Frio", "RJ"],
+      ["Belo Horizonte", "MG"],
+      ["Uberlândia", "MG"],
+      ["Contagem", "MG"],
+      ["Juiz de Fora", "MG"],
+      ["Betim", "MG"],
+      ["Montes Claros", "MG"],
+      ["Ouro Preto", "MG"],
+      ["Curitiba", "PR"],
+      ["Londrina", "PR"],
+      ["Maringá", "PR"],
+      ["Ponta Grossa", "PR"],
+      ["Foz do Iguaçu", "PR"],
+      ["Cascavel", "PR"],
+      ["Porto Alegre", "RS"],
+      ["Caxias do Sul", "RS"],
+      ["Pelotas", "RS"],
+      ["Canoas", "RS"],
+      ["Santa Maria", "RS"],
+      ["Gramado", "RS"],
+      ["Florianópolis", "SC"],
+      ["Joinville", "SC"],
+      ["Blumenau", "SC"],
+      ["Chapecó", "SC"],
+      ["Criciúma", "SC"],
+      ["Balneário Camboriú", "SC"],
+      ["Salvador", "BA"],
+      ["Feira de Santana", "BA"],
+      ["Vitória da Conquista", "BA"],
+      ["Ilhéus", "BA"],
+      ["Porto Seguro", "BA"],
+      ["Juazeiro", "BA"],
+      ["Recife", "PE"],
+      ["Olinda", "PE"],
+      ["Caruaru", "PE"],
+      ["Petrolina", "PE"],
+      ["Jaboatão dos Guararapes", "PE"],
+      ["Fortaleza", "CE"],
+      ["Juazeiro do Norte", "CE"],
+      ["Sobral", "CE"],
+      ["Natal", "RN"],
+      ["Mossoró", "RN"],
+      ["João Pessoa", "PB"],
+      ["Campina Grande", "PB"],
+      ["Maceió", "AL"],
+      ["Aracaju", "SE"],
+      ["Teresina", "PI"],
+      ["São Luís", "MA"],
+      ["Imperatriz", "MA"],
+      ["Belém", "PA"],
+      ["Santarém", "PA"],
+      ["Ananindeua", "PA"],
+      ["Manaus", "AM"],
+      ["Macapá", "AP"],
+      ["Boa Vista", "RR"],
+      ["Porto Velho", "RO"],
+      ["Rio Branco", "AC"],
+      ["Palmas", "TO"],
+      ["Brasília", "DF"],
+      ["Goiânia", "GO"],
+      ["Anápolis", "GO"],
+      ["Aparecida de Goiânia", "GO"],
+      ["Caldas Novas", "GO"],
+      ["Rio Verde", "GO"],
+      ["Campo Grande", "MS"],
+      ["Dourados", "MS"],
+      ["Cuiabá", "MT"],
+      ["Várzea Grande", "MT"],
+      ["Vitória", "ES"],
+      ["Vila Velha", "ES"],
+      ["Serra", "ES"],
+      ["Guarapari", "ES"],
+    ] as [string, string][]
+  ).map(([name, uf]) => [normalizeCity(name), [name, uf] as [string, string]]),
+);
+
+function normalizeCity(value: string) {
+  // ̀-ͯ é a faixa dos acentos combinantes que o NFD separa da
+  // letra base — escrita em escapes para o arquivo não depender de
+  // caracteres invisíveis sobreviverem a edições futuras.
+  return value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+}
+
 function parseCityState(text: string): { city: string | null; state: string | null } {
+  // 1) "Cidade/UF", "Cidade, UF", "Cidade - UF" — o formato mais explícito,
+  //    então continua tendo prioridade sobre qualquer inferência.
   const m = text.match(/([A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+){0,3})\s*[/,-]\s*([A-Z]{2})\b/);
   const uf = m?.[2];
   const city = m?.[1];
   if (city && uf && UFS.includes(uf)) {
     return { city: city.trim(), state: uf };
   }
+
+  // 2) Cidade conhecida sem sigla. Procura da mais longa para a mais curta
+  //    para "São José dos Campos" não ser confundido com "São José".
+  const haystack = normalizeCity(text);
+  const found = Object.keys(KNOWN_CITIES)
+    .filter((key) =>
+      new RegExp(`\\b${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(haystack),
+    )
+    .sort((a, b) => b.length - a.length)[0];
+  if (found) {
+    const [name, stateUf] = KNOWN_CITIES[found]!;
+    return { city: name, state: stateUf };
+  }
+
+  // 3) Preposição: "em Campinas", "na cidade de Santos". Última tentativa,
+  //    porque casa com qualquer palavra capitalizada e erra mais.
+  const prep = text.match(
+    /\b(?:em|na cidade de|no munic[ií]pio de)\s+([A-ZÀ-Ú][a-zà-ú]+(?:\s+(?:d[aeo]s?\s+)?[A-ZÀ-Ú][a-zà-ú]+){0,3})/,
+  );
+  if (prep?.[1]) return { city: prep[1].trim(), state: null };
+
   return { city: null, state: null };
 }
 
@@ -223,6 +371,19 @@ function stripWhatsAppMetadata(text: string): string {
   return text.replace(WHATSAPP_HEADER, " ");
 }
 
+/**
+ * Fraseado que indica valor por integrante, não o total do show.
+ *
+ * Só marca a ambiguidade — quem decide é o usuário, na tela de conferência.
+ * Para um quarteto, tratar "R$ 500 pra cada" como total erra por quatro.
+ */
+const PER_MUSICIAN =
+  /\b(?:por|pra|para)\s+(?:cada|m[uú]sico|integrante|pessoa)\b|\bcada\s+um\b|\bseu\s+cach[êe]\b|\bpor\s+cabe[çc]a\b/i;
+
+function detectPerMusician(text: string): boolean {
+  return PER_MUSICIAN.test(text);
+}
+
 export function parseWhatsAppText(rawText: string): ParsedEvent {
   const text = stripWhatsAppMetadata(rawText);
   const { city, state } = parseCityState(text);
@@ -237,5 +398,6 @@ export function parseWhatsAppText(rawText: string): ParsedEvent {
     fee_deposit: deposit,
     contact_name: parseContactName(text),
     contact_phone: parsePhone(text),
+    fee_is_per_musician: total !== null && detectPerMusician(text),
   };
 }

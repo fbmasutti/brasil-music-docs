@@ -631,7 +631,11 @@ export const DOC_TEMPLATES: DocTemplate[] = [
     category: "Educação & Serviços",
     description:
       "Contrato de prestação de serviços educacionais com frequência, valores e política de faltas.",
-    useClient: true,
+    // Sem contratante: o aluno É a contraparte, e os campos abaixo já o
+    // identificam. Exigir um "contratante" aqui era burocracia inventada —
+    // o professor teria que cadastrar o aluno duas vezes, em lugares
+    // diferentes, para emitir um contrato.
+    useClient: false,
     fields: [
       { name: "student_name", label: "Aluno(a) / Responsável", type: "text" },
       { name: "student_doc", label: "CPF do aluno/responsável", type: "text" },

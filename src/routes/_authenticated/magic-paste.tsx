@@ -70,6 +70,8 @@ function MagicPastePage() {
   const { data: gearItems = [] } = useList("gear_checklist_items", {
     order: { column: "position" },
   });
+  // Necessário para calcular o total quando o cachê vier por músico.
+  const { data: formationMembers = [] } = useList("formation_members");
   const insertEvent = useInsert("events", "Evento criado");
   const insertTask = useInsert("event_checklists", "");
 
@@ -79,9 +81,21 @@ function MagicPastePage() {
   const [savedEvent, setSavedEvent] = useState<Tables<"events"> | null>(null);
   const set = (k: keyof typeof emptyForm) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
+  // Some o aviso de cachê ambíguo depois que o usuário decide, sem alterar
+  // o resultado do parser (que é só o registro do que o texto dizia).
+  const [perMusicianResolved, setPerMusicianResolved] = useState(false);
+  const rosterSize = formationMembers.filter((m) => m.formation_id === form.formation_id).length;
+
+  function applyPerMusician() {
+    if (rosterSize === 0) return;
+    setForm((f) => ({ ...f, fee_total: String(Number(f.fee_total || 0) * rosterSize) }));
+    setPerMusicianResolved(true);
+  }
+
   function extract() {
     const result = parseWhatsAppText(rawText);
     setParsed(result);
+    setPerMusicianResolved(false);
     setForm({
       title: result.venue ? `Show — ${result.venue}` : "Novo show",
       event_type: "SHOW",
@@ -348,6 +362,32 @@ function MagicPastePage() {
               type="number"
             />
           </FieldGrid>
+
+          {/* A conversa dizia "pra cada" / "por músico". Multiplicar sozinho
+              erraria em silêncio sempre que a formação do show não fosse a
+              que está selecionada — então a conta é oferecida, não imposta. */}
+          {parsed?.fee_is_per_musician && !perMusicianResolved && (
+            <div className="mt-4 rounded-lg border border-warning/30 bg-warning/10 p-4">
+              <p className="text-sm font-medium">Esse valor é o total do show ou por músico?</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                A conversa sugere valor por integrante. Se for, o total precisa ser multiplicado —
+                confira antes de salvar.
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => setPerMusicianResolved(true)}>
+                  É o total do show
+                </Button>
+                <Button size="sm" onClick={applyPerMusician} disabled={rosterSize === 0}>
+                  É por músico — multiplicar por {rosterSize || "?"}
+                </Button>
+              </div>
+              {rosterSize === 0 && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Escolha uma formação com integrantes acima para calcular o total.
+                </p>
+              )}
+            </div>
+          )}
 
           <Button
             className="mt-4"

@@ -161,6 +161,22 @@ export function AppLayout() {
             >
               <Menu className="size-5" />
             </Button>
+            {/* Volta ao painel de qualquer tela. Existe porque no celular a
+                barra lateral fica fechada: sem isto, o único caminho de volta
+                era abrir o menu sanduíche e procurar "Painel". */}
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              aria-label="Ir para o painel"
+              title="Ir para o painel"
+            >
+              <Link to="/dashboard">
+                <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <Radio className="size-4" />
+                </span>
+              </Link>
+            </Button>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-foreground">
                 {pageTitleFor(pathname)}

@@ -7,6 +7,7 @@ import { Section, StatCard, EmptyState, StatusBadge } from "@/components/ui-kit"
 import { useList, useInsert, useUpdate, useProfile } from "@/lib/queries";
 import { buildPixPayload } from "@/lib/pix";
 import { money, dateBR, razaoSocial, todayISO, CHARGE_STATUS } from "@/lib/format";
+import { friendlyErrorMessage } from "@/lib/friendly-error";
 import { monthKey, monthLabel, pendingMonthlies, parseISODate } from "@/lib/lessons";
 
 /** Move o mês de referência N meses, mantendo sempre o dia 1º. */
@@ -21,7 +22,8 @@ export function MonthlyFees() {
   const { data: charges = [] } = useList("charges", {
     order: { column: "due_date", ascending: true },
   });
-  const insert = useInsert("charges", "");
+  // Silencioso nos dois sentidos: o resumo de generate() é a única mensagem.
+  const insert = useInsert("charges", "", { silentError: true });
   const update = useUpdate("charges", "Cobrança atualizada");
 
   const [reference, setReference] = useState(monthKey());
@@ -45,16 +47,24 @@ export function MonthlyFees() {
     (c) => c.status !== "PAGA" && c.status !== "CANCELADA" && (c.due_date ?? "") < today,
   );
 
-  function generate() {
+  /**
+   * Gera o lote e resume em UMA mensagem.
+   *
+   * A versão anterior disparava N mutações soltas: se o banco recusasse,
+   * saíam N toasts de erro idênticos empilhados. Aqui os erros são coletados
+   * e relatados juntos, com a causa da primeira falha.
+   *
+   * Quem realmente impede cobrança duplicada é o índice único
+   * charges_student_month_key; a lista `pending` é só conveniência de tela.
+   */
+  async function generate() {
     if (pending.length === 0) return;
     setGenerating(true);
-    let done = 0;
-    // O índice único charges_student_month_key é a garantia real contra
-    // duplicata; esta contagem é só para a mensagem final.
-    for (const item of pending) {
-      const description = `Mensalidade ${monthLabel(reference)} — ${item.student.name}`;
-      insert.mutate(
-        {
+
+    const results = await Promise.allSettled(
+      pending.map((item) => {
+        const description = `Mensalidade ${monthLabel(reference)} — ${item.student.name}`;
+        return insert.mutateAsync({
           student_id: item.student.id,
           reference_month: reference,
           amount: item.amount,
@@ -70,20 +80,24 @@ export function MonthlyFees() {
                 amount: item.amount,
                 description,
               }),
-        },
-        {
-          onSettled: () => {
-            done += 1;
-            if (done === pending.length) {
-              setGenerating(false);
-              toast.success(
-                `${pending.length} mensalidade(s) de ${monthLabel(reference)} geradas.`,
-              );
-            }
-          },
-        },
-      );
+        });
+      }),
+    );
+
+    setGenerating(false);
+    const failed = results.filter((r) => r.status === "rejected");
+    const ok = results.length - failed.length;
+
+    if (failed.length === 0) {
+      toast.success(`${ok} mensalidade(s) de ${monthLabel(reference)} geradas.`);
+      return;
     }
+    const first = failed[0] as PromiseRejectedResult;
+    toast.error(
+      ok > 0
+        ? `${ok} gerada(s), ${failed.length} falharam. ${friendlyErrorMessage(first.reason)}`
+        : friendlyErrorMessage(first.reason),
+    );
   }
 
   if (students.length === 0) {

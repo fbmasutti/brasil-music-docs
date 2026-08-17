@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { FileText, Download, Save, Send, Maximize2, CheckSquare, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,11 +33,20 @@ import { useDocumentAccent } from "@/lib/active-formation";
 import { DOC_TEMPLATES, getTemplate } from "@/lib/documents";
 import { downloadPdf, pdfPreviewUrl, pdfBlob, type PdfDoc } from "@/lib/pdf";
 import { dateBR, todayISO, DOCUMENT_STATUS } from "@/lib/format";
+import { contractValuesFromStudent } from "@/lib/lessons";
 import { useDebounced } from "@/lib/use-debounced";
 import { shareFile } from "@/lib/share";
 import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/documentos")({
+  // A ficha do aluno manda ?template=CONTRATO_AULAS&student=<id> para o
+  // contrato já abrir escolhido e preenchido.
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { template?: string | undefined; student?: string | undefined } => ({
+    template: typeof search["template"] === "string" ? search["template"] : undefined,
+    student: typeof search["student"] === "string" ? search["student"] : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Contratos e Documentos — StageKit" },
@@ -69,12 +78,31 @@ function DocumentsPage() {
   const remove = useRemove("generated_documents", "Documento removido");
   const updateDoc = useUpdate("generated_documents", "Documento atualizado");
 
-  const [templateId, setTemplateId] = useState(DOC_TEMPLATES[0]!.id);
+  const { template: templateParam, student: studentParam } = Route.useSearch();
+  const { data: students = [] } = useList("students", { order: { column: "name" } });
+
+  const [templateId, setTemplateId] = useState(
+    templateParam && getTemplate(templateParam) ? templateParam : DOC_TEMPLATES[0]!.id,
+  );
   const [values, setValues] = useState<Record<string, string>>({});
   const [clientId, setClientId] = useState("");
   const [eventId, setEventId] = useState("");
+  const [studentId, setStudentId] = useState(studentParam ?? "");
 
   const template = getTemplate(templateId)!;
+  const isLessonContract = templateId === "CONTRATO_AULAS";
+  const student = students.find((st) => st.id === studentId) ?? null;
+
+  // Escolher um aluno reescreve os campos do contrato a partir do cadastro.
+  // Só dispara na troca de aluno: se rodasse a cada render, apagaria o que o
+  // usuário ajustasse à mão depois de escolher.
+  useEffect(() => {
+    if (!isLessonContract || !student) return;
+    setValues((prev) => ({
+      ...prev,
+      ...contractValuesFromStudent(student, { city: profile?.city }),
+    }));
+  }, [student?.id, isLessonContract]); // eslint-disable-line react-hooks/exhaustive-deps
   const client = clients.find((c) => c.id === clientId) ?? null;
   const event = events.find((e) => e.id === eventId) ?? null;
   const accent = useDocumentAccent(event?.formation_id);
@@ -219,6 +247,35 @@ function DocumentsPage() {
               </Link>
               , junto com o cadastro das músicas.
             </p>
+
+            {/* Contrato de aulas puxa tudo da ficha do aluno: nome, CPF,
+                modalidade, instrumento, mensalidade, vencimento e a
+                frequência montada do horário fixo. */}
+            {isLessonContract && students.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <Label>Aluno</Label>
+                <Select
+                  value={studentId || "none"}
+                  onValueChange={(v) => setStudentId(v === "none" ? "" : v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Preencher a partir de um aluno" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum — preencher à mão</SelectItem>
+                    {students.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Os campos abaixo são preenchidos com os dados do cadastro — confira antes de
+                  gerar.
+                </p>
+              </div>
+            )}
 
             {(template.useClient || template.useEvent) && (
               <FieldGrid className="mt-4">

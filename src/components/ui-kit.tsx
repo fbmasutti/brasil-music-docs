@@ -401,6 +401,115 @@ export function FieldGrid({
   return <div className={cn("grid gap-4 sm:grid-cols-2", className)}>{children}</div>;
 }
 
+/**
+ * Seletor com saída. Por padrão oferece "Nenhum" — quem abre a lista por
+ * curiosidade precisa poder sair sem escolher, e antes ficava preso na
+ * primeira opção que tocasse.
+ *
+ * O Radix proíbe `value=""`, então "nenhum" exige um valor sentinela. A
+ * conversão vive aqui, uma vez: as telas trabalham com string vazia e nunca
+ * veem o sentinela — era essa repetição manual que fazia só 2 dos 27
+ * seletores do app terem a opção.
+ */
+const NONE = "__none__";
+
+export function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+  placeholder = "Selecionar",
+  noneLabel = "Nenhum",
+  required = false,
+  hint,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  placeholder?: string | undefined;
+  noneLabel?: string | undefined;
+  /** Campo obrigatório não recebe "Nenhum" — status, modalidade, categoria. */
+  required?: boolean | undefined;
+  hint?: string | undefined;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label>
+        {label}
+        {required && (
+          <span className="ml-0.5 text-destructive" aria-hidden>
+            *
+          </span>
+        )}
+      </Label>
+      <Select
+        value={value === "" ? NONE : value}
+        onValueChange={(v) => onChange(v === NONE ? "" : v)}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {!required && <SelectItem value={NONE}>{noneLabel}</SelectItem>}
+          {options.map((o) => (
+            <SelectItem key={o.value} value={o.value}>
+              {o.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
+/**
+ * Barra de ação em lote — aparece só quando há algo marcado, para não ocupar
+ * espaço no uso normal. Fica fixa no rodapé porque a seleção costuma
+ * acontecer no fim de uma lista longa.
+ */
+export function BulkActionBar({
+  count,
+  onClear,
+  onDelete,
+  itemLabel,
+  deleteDescription,
+}: {
+  count: number;
+  onClear: () => void;
+  onDelete: () => void;
+  /** Singular do item, para a frase não sair robótica: "3 alunos". */
+  itemLabel: string;
+  deleteDescription: ReactNode;
+}) {
+  if (count === 0) return null;
+  const plural = count === 1 ? itemLabel : `${itemLabel}s`;
+  return (
+    <div className="sticky bottom-0 z-20 mt-4 flex flex-wrap items-center justify-between gap-3 rounded-t-lg border border-b-0 border-border bg-background/95 px-4 py-3 shadow-lg backdrop-blur-sm">
+      <span className="text-sm font-medium">
+        {count} {plural} selecionado{count === 1 ? "" : "s"}
+      </span>
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="sm" onClick={onClear}>
+          Limpar seleção
+        </Button>
+        <ConfirmDelete
+          title={`Remover ${count} ${plural}?`}
+          description={deleteDescription}
+          confirmLabel={`Remover ${count}`}
+          onConfirm={onDelete}
+          trigger={
+            <Button variant="destructive" size="sm">
+              <Trash2 className="mr-1.5 size-3.5" /> Remover
+            </Button>
+          }
+        />
+      </div>
+    </div>
+  );
+}
+
 export function TextField({
   label,
   value,
