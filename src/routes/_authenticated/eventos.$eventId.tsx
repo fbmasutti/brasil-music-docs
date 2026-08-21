@@ -431,7 +431,7 @@ function EventDetail() {
               <EcadRoteiroDialog
                 trigger={
                   <Button variant="outline" size="sm" className="text-xs">
-                    <Download className="mr-1 size-4" /> Baixar roteiro (.xlsx)
+                    <Download className="mr-1 size-4" /> Formulário oficial do ECAD (Arr008)
                   </Button>
                 }
                 event={event}

@@ -817,6 +817,7 @@ export type Database = {
           inscricao_municipal: string | null;
           legal_name: string | null;
           logo_url: string | null;
+          maintenance_reserve_percent: number;
           onboarded: boolean;
           pf_address: string | null;
           pf_cep: string | null;
@@ -872,6 +873,7 @@ export type Database = {
           inscricao_municipal?: string | null;
           legal_name?: string | null;
           logo_url?: string | null;
+          maintenance_reserve_percent?: number;
           onboarded?: boolean;
           pf_address?: string | null;
           pf_cep?: string | null;
@@ -927,6 +929,7 @@ export type Database = {
           inscricao_municipal?: string | null;
           legal_name?: string | null;
           logo_url?: string | null;
+          maintenance_reserve_percent?: number;
           onboarded?: boolean;
           pf_address?: string | null;
           pf_cep?: string | null;

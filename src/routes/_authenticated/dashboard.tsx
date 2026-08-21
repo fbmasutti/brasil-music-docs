@@ -253,8 +253,8 @@ function Dashboard() {
             <ToolCard
               to="/repertorio"
               icon={<Music4 className="size-5" />}
-              title="Setlist"
-              hint="Repertório e direitos autorais"
+              title="Repertório & ECAD"
+              hint="Setlist, direitos autorais e roteiro do ECAD"
             />
           )}
         </div>

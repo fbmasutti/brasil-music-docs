@@ -514,6 +514,7 @@ export function TextField({
   label,
   value,
   onChange,
+  onBlur,
   placeholder,
   type = "text",
   error,
@@ -523,6 +524,8 @@ export function TextField({
   label: string;
   value: string;
   onChange: (v: string) => void;
+  /** Para gravar ao sair do campo, em vez de a cada tecla digitada. */
+  onBlur?: (() => void) | undefined;
   placeholder?: string | undefined;
   type?: string | undefined;
   error?: string | undefined;
@@ -543,6 +546,7 @@ export function TextField({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur ?? undefined}
         placeholder={placeholder ?? ""}
         aria-invalid={Boolean(error)}
         className={error ? "border-destructive focus-visible:ring-destructive" : undefined}

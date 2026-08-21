@@ -714,7 +714,7 @@ function EcadReportDialog({
           </Button>
           <Button onClick={downloadXlsx} disabled={!songs.length || !eventId || downloadingXlsx}>
             <Download className="mr-1 size-4" />
-            {downloadingXlsx ? "Gerando…" : "Roteiro oficial (.xlsx)"}
+            {downloadingXlsx ? "Gerando…" : "Formulário oficial do ECAD (Arr008)"}
           </Button>
         </DialogFooter>
       </DialogContent>

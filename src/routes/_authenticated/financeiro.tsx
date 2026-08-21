@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
@@ -38,9 +38,10 @@ import {
   ConfirmDelete,
   StatusBadge,
 } from "@/components/ui-kit";
-import { useList, useInsert, useUpdate, useRemove } from "@/lib/queries";
+import { useList, useInsert, useUpdate, useRemove, useProfile } from "@/lib/queries";
 import { dateBR, money, cacheStatus, CACHE_STATUS } from "@/lib/format";
 import { shareText } from "@/lib/share";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/financeiro")({
   head: () => ({
@@ -49,7 +50,7 @@ export const Route = createFileRoute("/_authenticated/financeiro")({
       {
         name: "description",
         content:
-          "Cachês a receber, DRE rápido por show, rateio de equipe e fundo de manutenção de instrumentos.",
+          "Cachês a receber, fechamento de cada show, rateio de equipe e fundo de manutenção de instrumentos.",
       },
       { property: "og:title", content: "Financeiro & Cachês — StageKit" },
       {
@@ -70,6 +71,30 @@ const EXPENSE_CATEGORIES: Record<string, string> = {
   PARCEIRO: "Pagamento a parceiro",
   OUTRO: "Outro",
 };
+
+/** O rateio grava valor e tipo na mesma coluna `split_percent`: em "percent"
+ *  ele é a fatia do cachê, em "fixed" já é o valor em reais fechado. Ignorar
+ *  o tipo — como esta tela fazia — lê "R$ 500 fixo" como 500% e devolve vinte
+ *  vezes o cachê no rateio, com o lucro despencando para o negativo. */
+type SplitMember = { split_percent: number; split_type?: string | null };
+
+function memberCut(m: SplitMember, base: number) {
+  return m.split_type === "fixed"
+    ? Number(m.split_percent)
+    : (base * Number(m.split_percent)) / 100;
+}
+
+/** O que aparece ao lado do nome: "25%" ou "R$ 500". */
+function memberSplitLabel(m: SplitMember) {
+  return m.split_type === "fixed" ? money(Number(m.split_percent)) : `${m.split_percent}%`;
+}
+
+/** Fatia do cachê que uma linha representa, para a conta fechar visivelmente
+ *  em 100% mesmo quando há integrante com valor fixo. */
+function shareOf(value: number, total: number) {
+  if (!total) return "—";
+  return `${Math.round((value / total) * 100)}%`;
+}
 
 function FinanceiroPage() {
   const { doesShows, doesTeaching, teachesOnly } = useActivities();
@@ -98,13 +123,22 @@ function FinanceiroPage() {
   const updateGear = useUpdate("gear_assets", "Instrumento atualizado");
   const removeGear = useRemove("gear_assets", "Instrumento removido");
   const insertFund = useInsert("maintenance_fund_entries", "Registrado no fundo de manutenção");
+  const { data: profile } = useProfile();
+  const updateProfile = useUpdate("profiles", "");
+  const updateEvent = useUpdate("events", "Cachê marcado como recebido");
 
   const [expenseForm, setExpenseForm] = useState({ category: "OUTRO", amount: "", notes: "" });
   // id do lançamento em edição; null = formulário está criando um novo
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [gearForm, setGearForm] = useState({ name: "", category: "", value: "" });
   const [editingGearId, setEditingGearId] = useState<string | null>(null);
+  // Espelha o percentual do perfil num estado local para o campo continuar
+  // respondendo a cada tecla; a gravação sai no blur, não a cada dígito.
+  const savedReservePercent = profile?.maintenance_reserve_percent;
   const [reservaPercent, setReservaPercent] = useState("5");
+  useEffect(() => {
+    if (savedReservePercent != null) setReservaPercent(String(savedReservePercent));
+  }, [savedReservePercent]);
   const [quickFund, setQuickFund] = useState("");
 
   // Cachês a receber / pagos
@@ -124,7 +158,7 @@ function FinanceiroPage() {
   );
   const semesterIncome = realizedThisSemester.reduce((sum, e) => sum + Number(e.fee_total), 0);
 
-  // DRE do show selecionado
+  // Fechamento do show selecionado
   const selectedEvent = events.find((e) => e.id === eventId);
   const roster = formationMembers.filter((m) => m.formation_id === selectedEvent?.formation_id);
   const feeTotal = Number(selectedEvent?.fee_total ?? 0);
@@ -134,13 +168,26 @@ function FinanceiroPage() {
   const operationalExpenses = expenses.filter((e) => e.category !== "PARCEIRO");
   const partnerExpenses = expenses.filter((e) => e.category === "PARCEIRO");
   const custosOperacionais = operationalExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
-  const rateioTotal = roster.reduce(
-    (sum, m) => sum + (feeTotal * Number(m.split_percent)) / 100,
-    0,
-  );
+  const rateioTotal = roster.reduce((sum, m) => sum + memberCut(m, feeTotal), 0);
   const reservaValor = (feeTotal * Number(reservaPercent || 0)) / 100;
   const lucroReal = feeTotal - custosOperacionais - rateioTotal - reservaValor;
   const alreadyInFund = fundEntries.some((f) => f.event_id === eventId);
+
+  // "Você" é o resto, nunca um número digitado: assim a conta fecha sozinha no
+  // cachê inteiro e ninguém precisa manter dois percentuais coerentes à mão.
+  const seuValor = lucroReal;
+
+  const fechamentoRef = useRef<HTMLDivElement>(null);
+
+  /** Um clique na lista de cachês escolhe o show e leva até o fechamento —
+   *  antes a lista e o seletor eram widgets independentes e o show tinha de
+   *  ser escolhido duas vezes. */
+  function abrirFechamento(id: string) {
+    setEventId(id);
+    requestAnimationFrame(() =>
+      fechamentoRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+  }
 
   async function copyPix(pix: string) {
     try {
@@ -158,15 +205,15 @@ function FinanceiroPage() {
         subtitle={
           teachesOnly
             ? "Mensalidades do mês, quem já pagou e quem está em atraso."
-            : "Cachês pendentes, DRE rápido por show e reserva financeira de instrumentos."
+            : "Cachês pendentes, fechamento de cada show e reserva financeira de instrumentos."
         }
       />
 
       {/* A aba inicial segue a atividade: professor abre no que usa todo mês,
-          músico continua caindo no DRE por show. */}
+          músico continua caindo no fechamento por show. */}
       <Tabs defaultValue={teachesOnly ? "mensalidades" : "cache"}>
         <TabsList>
-          {doesShows && <TabsTrigger value="cache">Cachês & DRE</TabsTrigger>}
+          {doesShows && <TabsTrigger value="cache">Cachês & Fechamento</TabsTrigger>}
           {doesTeaching && <TabsTrigger value="mensalidades">Mensalidades</TabsTrigger>}
           <TabsTrigger value="pix">Cobrança via PIX</TabsTrigger>
         </TabsList>
@@ -232,7 +279,7 @@ function FinanceiroPage() {
                           {client ? ` · ${client.name}` : ""}
                         </p>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-2">
                         <StatusBadge
                           status={cacheStatus(Number(e.fee_total), Number(e.fee_deposit))}
                           map={CACHE_STATUS}
@@ -241,12 +288,28 @@ function FinanceiroPage() {
                         {client?.phone ? (
                           <Button
                             size="sm"
-                            variant="outline"
+                            variant="ghost"
                             onClick={() => shareText({ phone: client.phone, message })}
                           >
-                            <MessageCircle className="mr-1 size-4" /> Enviar Lembrete de Cachê
+                            <MessageCircle className="mr-1 size-4" /> Lembrete
                           </Button>
                         ) : null}
+                        {/* Marcar o recebimento aqui evita a viagem até o
+                            formulário do evento, onde o valor recebido mora num
+                            campo rotulado "Sinal". Já deixa o show escolhido no
+                            fechamento, que é o passo seguinte: repassar. */}
+                        <Button
+                          size="sm"
+                          disabled={updateEvent.isPending}
+                          onClick={() =>
+                            updateEvent.mutate(
+                              { id: e.id, values: { fee_deposit: Number(e.fee_total) } },
+                              { onSuccess: () => abrirFechamento(e.id) },
+                            )
+                          }
+                        >
+                          <CheckCircle2 className="mr-1 size-4" /> Recebi
+                        </Button>
                       </div>
                     </li>
                   );
@@ -272,11 +335,14 @@ function FinanceiroPage() {
                       </Link>
                       <p className="text-xs text-muted-foreground">{dateBR(e.event_date)}</p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
                       <StatusBadge status="QUITADO" map={CACHE_STATUS} />
                       <span className="text-sm font-semibold text-success">
                         {money(Number(e.fee_total))}
                       </span>
+                      <Button size="sm" variant="outline" onClick={() => abrirFechamento(e.id)}>
+                        <HandCoins className="mr-1 size-4" /> Fechar contas
+                      </Button>
                     </div>
                   </li>
                 ))}
@@ -284,253 +350,323 @@ function FinanceiroPage() {
             )}
           </Section>
 
-          <Section
-            title="DRE rápido por show"
-            description="Cachê bruto menos custos, rateio de equipe e reserva de manutenção."
-          >
-            <div className="max-w-sm space-y-2">
-              <Label>Show</Label>
-              <Select value={eventId} onValueChange={setEventId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecionar" />
-                </SelectTrigger>
-                <SelectContent>
-                  {events.map((e) => (
-                    <SelectItem key={e.id} value={e.id}>
-                      {e.title} — {dateBR(e.event_date)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div ref={fechamentoRef} className="scroll-mt-24">
+            <Section
+              title="Fechamento do show"
+              description="Para onde foi cada real do cachê — e quanto sobrou pra você."
+            >
+              <div className="max-w-sm space-y-2">
+                <Label>Show</Label>
+                <Select value={eventId} onValueChange={setEventId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {events.map((e) => (
+                      <SelectItem key={e.id} value={e.id}>
+                        {e.title} — {dateBR(e.event_date)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {selectedEvent ? (
-              <div className="mt-5 space-y-5">
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                  <StatCard label="Cachê bruto" value={money(feeTotal)} />
-                  <StatCard label="Custos" value={money(custosOperacionais)} tone="amber" />
-                  <StatCard label="Rateio equipe" value={money(rateioTotal)} tone="cyan" />
-                  <StatCard label="Reserva manutenção" value={money(reservaValor)} tone="muted" />
-                  <StatCard
-                    label="Lucro real"
-                    value={money(lucroReal)}
-                    tone={lucroReal >= 0 ? "lime" : "amber"}
-                  />
-                </div>
+              {selectedEvent ? (
+                <div className="mt-5 space-y-5">
+                  {/* Três números, não cinco: entrou, saiu e sobrou. A abertura
+                    do "saiu" fica nas linhas do rateio, logo abaixo. */}
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <StatCard label="Entrou" value={money(feeTotal)} />
+                    <StatCard
+                      label="Saiu"
+                      value={money(custosOperacionais + rateioTotal + reservaValor)}
+                      tone="amber"
+                      hint="Custos, equipe e caixa"
+                    />
+                    <StatCard
+                      label="Sobrou pra você"
+                      value={money(seuValor)}
+                      tone={seuValor >= 0 ? "lime" : "amber"}
+                    />
+                  </div>
 
-                <div className="grid gap-5 lg:grid-cols-2">
-                  <div>
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Custos operacionais
-                    </p>
-                    <ul className="space-y-1.5">
-                      {operationalExpenses.map((exp) => (
-                        <li
-                          key={exp.id}
-                          className="flex items-center justify-between gap-2 text-sm"
-                        >
-                          <span className="text-muted-foreground">
-                            {EXPENSE_CATEGORIES[exp.category] ?? exp.category} —{" "}
-                            {money(Number(exp.amount))}
-                            {exp.notes ? ` · ${exp.notes}` : ""}
-                          </span>
-                          <ItemActions
-                            onEdit={() => {
-                              setEditingExpenseId(exp.id);
-                              setExpenseForm({
-                                category: exp.category ?? "OUTRO",
-                                amount: String(exp.amount ?? ""),
-                                notes: exp.notes ?? "",
-                              });
-                            }}
-                            onDelete={() => removeExpense.mutate(exp.id)}
-                            deleteConfirm={{
-                              title: "Remover este custo?",
-                              description: `${EXPENSE_CATEGORIES[exp.category] ?? exp.category} de ${money(Number(exp.amount))} sai do cálculo de lucro real deste show.`,
-                              confirmLabel: "Remover custo",
-                            }}
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="mt-3 flex flex-wrap items-end gap-2">
-                      <div className="space-y-2">
-                        <Label>Categoria</Label>
-                        <Select
-                          value={expenseForm.category}
-                          onValueChange={(v) => setExpenseForm((f) => ({ ...f, category: v }))}
-                        >
-                          <SelectTrigger className="w-44">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(EXPENSE_CATEGORIES).map(([value, label]) => (
-                              <SelectItem key={value} value={value}>
-                                {label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <TextField
-                        label="Valor (R$)"
-                        value={expenseForm.amount}
-                        onChange={(v) => setExpenseForm((f) => ({ ...f, amount: v }))}
-                        type="number"
-                      />
-                      <TextField
-                        label="Notas"
-                        value={expenseForm.notes}
-                        onChange={(v) => setExpenseForm((f) => ({ ...f, notes: v }))}
-                      />
-                      <Button
-                        size="sm"
-                        disabled={!expenseForm.amount}
-                        onClick={() => {
-                          const values = {
-                            category: expenseForm.category,
-                            amount: Number(expenseForm.amount || 0),
-                            notes: expenseForm.notes || null,
-                          };
-                          const done = {
-                            onSuccess: () => {
-                              setExpenseForm({ category: "OUTRO", amount: "", notes: "" });
-                              setEditingExpenseId(null);
-                            },
-                          };
-                          if (editingExpenseId) {
-                            updateExpense.mutate({ id: editingExpenseId, values }, done);
-                          } else {
-                            insertExpense.mutate({ event_id: eventId, ...values }, done);
-                          }
-                        }}
-                      >
-                        <Plus className="mr-1 size-4" /> {editingExpenseId ? "Salvar" : "Lançar"}
-                      </Button>
-                      {editingExpenseId ? (
+                  <div className="grid gap-5 lg:grid-cols-2">
+                    <div>
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Custos operacionais
+                      </p>
+                      <ul className="space-y-1.5">
+                        {operationalExpenses.map((exp) => (
+                          <li
+                            key={exp.id}
+                            className="flex items-center justify-between gap-2 text-sm"
+                          >
+                            <span className="text-muted-foreground">
+                              {EXPENSE_CATEGORIES[exp.category] ?? exp.category} —{" "}
+                              {money(Number(exp.amount))}
+                              {exp.notes ? ` · ${exp.notes}` : ""}
+                            </span>
+                            <ItemActions
+                              onEdit={() => {
+                                setEditingExpenseId(exp.id);
+                                setExpenseForm({
+                                  category: exp.category ?? "OUTRO",
+                                  amount: String(exp.amount ?? ""),
+                                  notes: exp.notes ?? "",
+                                });
+                              }}
+                              onDelete={() => removeExpense.mutate(exp.id)}
+                              deleteConfirm={{
+                                title: "Remover este custo?",
+                                description: `${EXPENSE_CATEGORIES[exp.category] ?? exp.category} de ${money(Number(exp.amount))} sai do cálculo de lucro real deste show.`,
+                                confirmLabel: "Remover custo",
+                              }}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="mt-3 flex flex-wrap items-end gap-2">
+                        <div className="space-y-2">
+                          <Label>Categoria</Label>
+                          <Select
+                            value={expenseForm.category}
+                            onValueChange={(v) => setExpenseForm((f) => ({ ...f, category: v }))}
+                          >
+                            <SelectTrigger className="w-44">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Object.entries(EXPENSE_CATEGORIES).map(([value, label]) => (
+                                <SelectItem key={value} value={value}>
+                                  {label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <TextField
+                          label="Valor (R$)"
+                          value={expenseForm.amount}
+                          onChange={(v) => setExpenseForm((f) => ({ ...f, amount: v }))}
+                          type="number"
+                        />
+                        <TextField
+                          label="Notas"
+                          value={expenseForm.notes}
+                          onChange={(v) => setExpenseForm((f) => ({ ...f, notes: v }))}
+                        />
                         <Button
                           size="sm"
-                          variant="ghost"
+                          disabled={!expenseForm.amount}
                           onClick={() => {
-                            setEditingExpenseId(null);
-                            setExpenseForm({ category: "OUTRO", amount: "", notes: "" });
+                            const values = {
+                              category: expenseForm.category,
+                              amount: Number(expenseForm.amount || 0),
+                              notes: expenseForm.notes || null,
+                            };
+                            const done = {
+                              onSuccess: () => {
+                                setExpenseForm({ category: "OUTRO", amount: "", notes: "" });
+                                setEditingExpenseId(null);
+                              },
+                            };
+                            if (editingExpenseId) {
+                              updateExpense.mutate({ id: editingExpenseId, values }, done);
+                            } else {
+                              insertExpense.mutate({ event_id: eventId, ...values }, done);
+                            }
                           }}
                         >
-                          Cancelar
+                          <Plus className="mr-1 size-4" /> {editingExpenseId ? "Salvar" : "Lançar"}
                         </Button>
+                        {editingExpenseId ? (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setEditingExpenseId(null);
+                              setExpenseForm({ category: "OUTRO", amount: "", notes: "" });
+                            }}
+                          >
+                            Cancelar
+                          </Button>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Para onde vai o cachê
+                      </p>
+                      <p className="mb-3 text-xs text-muted-foreground">
+                        {money(feeTotal)} distribuídos entre equipe, custos, caixa e você.
+                      </p>
+                      {roster.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                          {selectedEvent.formation_id
+                            ? "Essa formação não tem integrantes cadastrados — o cachê inteiro fica com você."
+                            : "Esse show não tem formação vinculada — o cachê inteiro fica com você."}
+                        </p>
+                      ) : (
+                        <ul className="space-y-1.5">
+                          {roster.map((m) => {
+                            const person = teamMembers.find((t) => t.id === m.team_member_id);
+                            const cut = memberCut(m, feeTotal);
+                            const pixKey = person?.pix_key;
+                            const paidExpense = partnerExpenses.find(
+                              (e) => e.team_member_id === m.team_member_id,
+                            );
+                            return (
+                              <li
+                                key={m.id}
+                                className="flex flex-wrap items-center justify-between gap-2 text-sm"
+                              >
+                                <span className="text-muted-foreground">
+                                  {person?.name ?? "Integrante removido"} · {memberSplitLabel(m)} ={" "}
+                                  <strong className="font-semibold text-foreground">
+                                    {money(cut)}
+                                  </strong>
+                                </span>
+                                <div className="flex items-center gap-1.5">
+                                  {pixKey ? (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => copyPix(pixKey)}
+                                    >
+                                      <Copy className="mr-1 size-3.5" /> Copiar Chave PIX
+                                    </Button>
+                                  ) : null}
+                                  {paidExpense ? (
+                                    <ConfirmDelete
+                                      title="Desfazer pagamento?"
+                                      description={`Remove o registro de ${money(Number(paidExpense.amount))} pago a ${person?.name ?? "esse integrante"} nesse show.`}
+                                      confirmLabel="Desfazer"
+                                      onConfirm={() => removeExpense.mutate(paidExpense.id)}
+                                      trigger={
+                                        <Badge
+                                          variant="outline"
+                                          className="cursor-pointer text-success"
+                                        >
+                                          <CheckCircle2 className="mr-1 size-3.5" /> Pago
+                                        </Badge>
+                                      }
+                                    />
+                                  ) : (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={!person || insertExpense.isPending}
+                                      onClick={() =>
+                                        insertExpense.mutate({
+                                          event_id: eventId,
+                                          category: "PARCEIRO",
+                                          amount: cut,
+                                          team_member_id: m.team_member_id,
+                                          notes: `Rateio de ${person?.name ?? "integrante"} (${memberSplitLabel(m)})`,
+                                        })
+                                      }
+                                    >
+                                      <HandCoins className="mr-1 size-3.5" /> Registrar pagamento
+                                    </Button>
+                                  )}
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+
+                      {/* O que faltava para a conta fechar: custos, caixa e a
+                        sua própria fatia. "Você" é sempre o resto — some os
+                        quatro e dá o cachê cheio, sem número digitado a mais. */}
+                      <ul className="mt-2 space-y-1.5 border-t border-border pt-2 text-sm">
+                        {custosOperacionais > 0 ? (
+                          <li className="flex items-center justify-between gap-2">
+                            <span className="text-muted-foreground">
+                              Custos do show · {shareOf(custosOperacionais, feeTotal)}
+                            </span>
+                            <span className="font-semibold">{money(custosOperacionais)}</span>
+                          </li>
+                        ) : null}
+                        <li className="flex items-center justify-between gap-2">
+                          <span className="text-muted-foreground">
+                            Caixa / manutenção · {shareOf(reservaValor, feeTotal)}
+                          </span>
+                          <span className="font-semibold">{money(reservaValor)}</span>
+                        </li>
+                        <li className="flex items-center justify-between gap-2">
+                          <span className="font-medium">Você · {shareOf(seuValor, feeTotal)}</span>
+                          <span
+                            className={cn(
+                              "font-semibold",
+                              seuValor >= 0 ? "text-success" : "text-destructive",
+                            )}
+                          >
+                            {money(seuValor)}
+                          </span>
+                        </li>
+                        <li className="flex items-center justify-between gap-2 border-t border-border pt-1.5 text-xs text-muted-foreground">
+                          <span>Total</span>
+                          <span>{money(feeTotal)}</span>
+                        </li>
+                      </ul>
+
+                      {seuValor < 0 ? (
+                        <p className="mt-2 text-xs text-destructive">
+                          O rateio, os custos e a reserva somam mais que o cachê. Revise os
+                          percentuais da formação ou os custos lançados.
+                        </p>
+                      ) : null}
+
+                      <div className="mt-4 flex flex-wrap items-end gap-2">
+                        <TextField
+                          label="Reserva de manutenção (%)"
+                          value={reservaPercent}
+                          onChange={setReservaPercent}
+                          onBlur={() => {
+                            const value = Number(reservaPercent || 0);
+                            if (!profile || value === Number(profile.maintenance_reserve_percent))
+                              return;
+                            updateProfile.mutate({
+                              id: profile.id,
+                              values: { maintenance_reserve_percent: value },
+                            });
+                          }}
+                          type="number"
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={
+                            alreadyInFund ||
+                            selectedEvent.status !== "REALIZADO" ||
+                            reservaValor <= 0
+                          }
+                          onClick={() =>
+                            insertFund.mutate({
+                              event_id: eventId,
+                              amount: reservaValor,
+                              reason: `${reservaPercent}% do cachê de "${selectedEvent.title}"`,
+                            })
+                          }
+                        >
+                          <PiggyBank className="mr-1 size-4" />
+                          {alreadyInFund ? "Já registrado" : "Registrar no fundo"}
+                        </Button>
+                      </div>
+                      {selectedEvent.status !== "REALIZADO" && !alreadyInFund ? (
+                        <p className="mt-1.5 text-xs text-muted-foreground">
+                          Só pode registrar a reserva depois que o show for marcado como
+                          "Realizado".
+                        </p>
                       ) : null}
                     </div>
                   </div>
-
-                  <div>
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Rateio da equipe ({roster.length})
-                    </p>
-                    {roster.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">
-                        {selectedEvent.formation_id
-                          ? "Essa formação não tem integrantes cadastrados."
-                          : "Esse show não tem formação vinculada."}
-                      </p>
-                    ) : (
-                      <ul className="space-y-1.5">
-                        {roster.map((m) => {
-                          const person = teamMembers.find((t) => t.id === m.team_member_id);
-                          const cut = (feeTotal * Number(m.split_percent)) / 100;
-                          const pixKey = person?.pix_key;
-                          const paidExpense = partnerExpenses.find(
-                            (e) => e.team_member_id === m.team_member_id,
-                          );
-                          return (
-                            <li
-                              key={m.id}
-                              className="flex flex-wrap items-center justify-between gap-2 text-sm"
-                            >
-                              <span className="text-muted-foreground">
-                                {person?.name ?? "Integrante removido"} · {m.split_percent}% ={" "}
-                                {money(cut)}
-                              </span>
-                              <div className="flex items-center gap-1.5">
-                                {pixKey ? (
-                                  <Button variant="ghost" size="sm" onClick={() => copyPix(pixKey)}>
-                                    <Copy className="mr-1 size-3.5" /> Copiar Chave PIX
-                                  </Button>
-                                ) : null}
-                                {paidExpense ? (
-                                  <ConfirmDelete
-                                    title="Desfazer pagamento?"
-                                    description={`Remove o registro de ${money(Number(paidExpense.amount))} pago a ${person?.name ?? "esse integrante"} nesse show.`}
-                                    confirmLabel="Desfazer"
-                                    onConfirm={() => removeExpense.mutate(paidExpense.id)}
-                                    trigger={
-                                      <Badge
-                                        variant="outline"
-                                        className="cursor-pointer text-success"
-                                      >
-                                        <CheckCircle2 className="mr-1 size-3.5" /> Pago
-                                      </Badge>
-                                    }
-                                  />
-                                ) : (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={!person || insertExpense.isPending}
-                                    onClick={() =>
-                                      insertExpense.mutate({
-                                        event_id: eventId,
-                                        category: "PARCEIRO",
-                                        amount: cut,
-                                        team_member_id: m.team_member_id,
-                                        notes: `Rateio de ${person?.name ?? "integrante"} (${m.split_percent}%)`,
-                                      })
-                                    }
-                                  >
-                                    <HandCoins className="mr-1 size-3.5" /> Registrar pagamento
-                                  </Button>
-                                )}
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-
-                    <div className="mt-4 flex flex-wrap items-end gap-2">
-                      <TextField
-                        label="Reserva de manutenção (%)"
-                        value={reservaPercent}
-                        onChange={setReservaPercent}
-                        type="number"
-                      />
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={
-                          alreadyInFund || selectedEvent.status !== "REALIZADO" || reservaValor <= 0
-                        }
-                        onClick={() =>
-                          insertFund.mutate({
-                            event_id: eventId,
-                            amount: reservaValor,
-                            reason: `${reservaPercent}% do cachê de "${selectedEvent.title}"`,
-                          })
-                        }
-                      >
-                        <PiggyBank className="mr-1 size-4" />
-                        {alreadyInFund ? "Já registrado" : "Registrar no fundo"}
-                      </Button>
-                    </div>
-                    {selectedEvent.status !== "REALIZADO" && !alreadyInFund ? (
-                      <p className="mt-1.5 text-xs text-muted-foreground">
-                        Só pode registrar a reserva depois que o show for marcado como "Realizado".
-                      </p>
-                    ) : null}
-                  </div>
                 </div>
-              </div>
-            ) : null}
-          </Section>
+              ) : null}
+            </Section>
+          </div>
 
           <Section
             title="Reserva Financeira"

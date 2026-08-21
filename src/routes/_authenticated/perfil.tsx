@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { CalendarDays, Check, Unlink, Copy } from "lucide-react";
+import { CalendarDays, Check, Unlink, Copy, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -216,6 +216,16 @@ function ProfilePage() {
   }
 
   // "Usar mesmos dados da PJ" → copia endereço/contato da PJ para a PF
+  async function copyMcpUrl() {
+    const url = `${window.location.origin}/mcp`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Endereço copiado. Cole na configuração de MCP do seu assistente.");
+    } catch {
+      toast.error(`Não foi possível copiar. O endereço é ${url}`);
+    }
+  }
+
   function copyPjToPf() {
     setForm((f) => ({
       ...f,
@@ -530,6 +540,29 @@ function ProfilePage() {
                   Em breve
                 </Badge>
               )}
+            </div>
+
+            {/* O servidor MCP existia só no FAQ da landing: quem já tinha conta
+                não tinha como descobrir que ele existe. O endereço vem do
+                origin para valer em qualquer deploy, não só no domínio de
+                produção. */}
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-4">
+              <div className="flex items-center gap-3">
+                <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Bot className="size-4.5" />
+                </span>
+                <div>
+                  <p className="text-sm font-medium">Assistentes de IA (MCP)</p>
+                  <p className="text-xs text-muted-foreground">
+                    Conecte o Claude ou outro assistente compatível e resolva a agenda conversando:
+                    consultar shows, repertório e contratantes, e cadastrar shows novos. Você
+                    autoriza numa tela de consentimento antes de qualquer acesso.
+                  </p>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" onClick={copyMcpUrl}>
+                <Copy className="mr-1 size-4" /> Copiar endereço
+              </Button>
             </div>
           </Section>
         </TabsContent>
